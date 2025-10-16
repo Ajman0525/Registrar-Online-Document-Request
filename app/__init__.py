@@ -43,9 +43,8 @@ def create_app(test_config=None):
             
     
     # Register Blueprints
+    from .admin.authentication import authentication_admin_bp as auth_admin_blueprint
+    app.register_blueprint(auth_admin_blueprint)
     
-    #SAMPLE
-    #from .user import user_bp as user_blueprint
-    #app.register_blueprint(user_blueprint)
 
     return app
