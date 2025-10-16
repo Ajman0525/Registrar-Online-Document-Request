@@ -55,5 +55,7 @@ def create_app(test_config=None):
     #USER BLUEPRINTS
     from .user.authentication import authentication_user_bp as auth_user_blueprint
     app.register_blueprint(auth_user_blueprint)
+    from .user.document_list import document_list_bp as document_list_blueprint
+    app.register_blueprint(document_list_blueprint)
     
     return app
