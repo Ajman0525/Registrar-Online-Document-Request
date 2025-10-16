@@ -52,4 +52,7 @@ def create_app(test_config=None):
     from .admin.document_manage import document_management_bp as document_management_blueprint
     app.register_blueprint(document_management_blueprint)
     
+    from .admin.logging import logging_bp as logging_blueprint
+    app.register_blueprint(logging_blueprint)
+    
     return app
