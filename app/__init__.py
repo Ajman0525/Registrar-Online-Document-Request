@@ -42,17 +42,18 @@ def create_app(test_config=None):
             db_pool.putconn(conn)
             
     
-    # Register Blueprints
+    #ADMIN BLUEPRINTS
     from .admin.authentication import authentication_admin_bp as auth_admin_blueprint
     app.register_blueprint(auth_admin_blueprint)
-    
     from .admin.dashboard import dashboard_bp as dashboard_blueprint
-    app.register_blueprint(dashboard_blueprint)#
-
+    app.register_blueprint(dashboard_blueprint)
     from .admin.document_manage import document_management_bp as document_management_blueprint
     app.register_blueprint(document_management_blueprint)
-    
     from .admin.logging import logging_bp as logging_blueprint
     app.register_blueprint(logging_blueprint)
+    
+    #USER BLUEPRINTS
+    from .user.authentication import authentication_user_bp as auth_user_blueprint
+    app.register_blueprint(auth_user_blueprint)
     
     return app
