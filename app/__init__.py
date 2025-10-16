@@ -57,5 +57,9 @@ def create_app(test_config=None):
     app.register_blueprint(auth_user_blueprint)
     from .user.document_list import document_list_bp as document_list_blueprint
     app.register_blueprint(document_list_blueprint)
+    from .user.landing import landing_bp as landing_blueprint
+    app.register_blueprint(landing_blueprint)
+    
+    
     
     return app
