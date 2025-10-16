@@ -47,6 +47,9 @@ def create_app(test_config=None):
     app.register_blueprint(auth_admin_blueprint)
     
     from .admin.dashboard import dashboard_bp as dashboard_blueprint
-    app.register_blueprint(dashboard_blueprint)
+    app.register_blueprint(dashboard_blueprint)#
 
+    from .admin.document_manage import document_management_bp as document_management_blueprint
+    app.register_blueprint(document_management_blueprint)
+    
     return app
