@@ -61,6 +61,7 @@ def create_app(test_config=None):
     app.register_blueprint(landing_blueprint)
     from .user.request import request_bp as request_blueprint
     app.register_blueprint(request_blueprint)
-    
+    from .user.tracking import tracking_bp as tracking_blueprint
+    app.register_blueprint(tracking_blueprint)
     
     return app
