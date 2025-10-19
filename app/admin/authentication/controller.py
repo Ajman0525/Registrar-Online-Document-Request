@@ -1,16 +1,7 @@
 from . import authentication_admin_bp
-from flask import render_template, session, redirect, url_for
+from flask import render_template, session, redirect, url_for, jsonify
 
-
-#testing
-@authentication_admin_bp.route("/")
-def index():
-    return render_template('index.html')
-#testing
-
-
-
-@authentication_admin_bp.route('/admin/login')
+@authentication_admin_bp.route('/api/admin/login', methods=['GET'])
 def admin_login():
- 
-    return render_template('/admin/admin_login.html', username=session.get('username'), active='admin_login')
+    # This can later handle login logic
+    return jsonify({"message": "Hello from Flask!"})

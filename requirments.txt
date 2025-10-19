@@ -1,0 +1,7 @@
+for react
+
+npm install react-router-dom
+
+
+
+Nte: rename the .js and .css in the index.html file in the templates based on the asset-manifest.json

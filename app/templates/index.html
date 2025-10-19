@@ -1,20 +1,12 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Testing Links</title>
+  <meta charset="UTF-8">
+  <title>React App</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='static/css/main.e6c13ad2.css') }}">
 </head>
 <body>
-    <h2>Admin Links</h2>
-    <a href="{{ url_for('.admin_login') }}">Admin Login</a>
-    <a href="{{ url_for('dashboard.dashboard') }}">Dashboard</a>
-    <a href="{{ url_for('document_management.document_management') }}">Document Management</a>
-    <a href="{{ url_for('logging.logs') }}">Logging</a>
-
-    <h2>User Links</h2>
-    <a href="{{ url_for('authentication_user.user_login') }}">User Login</a>
-    <a href="{{ url_for('document_list.document_list') }}">Document List</a>
-    <a href="{{ url_for('landing.landing') }}">Landing</a>
-    <a href="{{ url_for('request.request') }}">Request</a>
-    <a href="{{ url_for('tracking.tracking') }}">Tracking</a>
+  <div id="root"></div>
+  <script src="{{ url_for('static', filename='static/js/main.ef74f994.js') }}"></script>
 </body>
 </html>

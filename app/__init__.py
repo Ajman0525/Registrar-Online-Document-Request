@@ -1,4 +1,5 @@
-from flask import Flask, g
+from flask import Flask, g, render_template, send_from_directory
+import os
 from config import DB_USERNAME, DB_PASSWORD, DB_NAME, DB_HOST, DB_PORT, SECRET_KEY
 from flask_wtf.csrf import CSRFProtect
 from psycopg2 import pool
@@ -8,8 +9,13 @@ from flask_bootstrap import Bootstrap
 db_pool = None
 
 def create_app(test_config=None):
-    app = Flask(__name__, instance_relative_config=True)
+    
+    #in production
+    app = Flask(__name__, instance_relative_config=True, static_folder="static/react", template_folder="templates")
   
+    #in development
+    #app = Flask(__name__, static_folder="../frontend/build/static", template_folder="../frontend/")
+    
     app.config['SECRET_KEY'] = SECRET_KEY 
     
     CSRFProtect(app)
@@ -63,5 +69,13 @@ def create_app(test_config=None):
     app.register_blueprint(request_blueprint)
     from .user.tracking import tracking_bp as tracking_blueprint
     app.register_blueprint(tracking_blueprint)
+
+    # === FRONTEND ROUTES (React) ===
+    @app.route("/", defaults={"path": ""})
+    @app.route("/<path:path>")
+    def serve_react(path):
+        if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
+            return send_from_directory(app.static_folder, path)
+        return render_template("index.html")
     
     return app
