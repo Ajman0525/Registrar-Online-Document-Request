@@ -21,7 +21,7 @@ def login_required(role=None):
         @wraps(f)
         def decorated(*args, **kwargs):
             if not session.get("user_id"):  # not logged in
-                return jsonify({"error": "Unauthorized"}), 401
+                return jsonify({"error": "Please Login first"}), 401
             if role and session.get("role") != role:  # wrong role
                 return jsonify({"error": "Forbidden"}), 403
             return f(*args, **kwargs)
