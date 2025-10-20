@@ -1,9 +1,9 @@
-from flask import Flask, g, render_template, send_from_directory
+from flask import Flask, g, render_template, send_from_directory, request
 import os
 from config import DB_USERNAME, DB_PASSWORD, DB_NAME, DB_HOST, DB_PORT, SECRET_KEY
-from flask_wtf.csrf import CSRFProtect
+from flask_wtf.csrf import CSRFProtect, generate_csrf
 from psycopg2 import pool
-from flask_bootstrap import Bootstrap
+from .utils.error_handlers import register_error_handlers
 
 
 db_pool = None
@@ -18,9 +18,9 @@ def create_app(test_config=None):
     
     app.config['SECRET_KEY'] = SECRET_KEY 
     
-    CSRFProtect(app)
-    Bootstrap(app)
-    
+    # Initialize CSRF protection
+    csrf = CSRFProtect(app)
+
     
     #Initialize connection pool ONCE
     global db_pool
@@ -78,4 +78,21 @@ def create_app(test_config=None):
             return send_from_directory(app.static_folder, path)
         return render_template("index.html")
     
+    # Generate CSRF token ONCE per session
+    @app.after_request
+    def set_csrf_cookie(response):
+        response.set_cookie(
+            'csrf_token',
+            generate_csrf(),
+            httponly=False,         # React JS can read it
+            secure=False,           # True in production with HTTPS
+            samesite='Lax'          # 'Strict' can block requests from localhost:3000
+        )
+        return response
+
+    
+    register_error_handlers(app)
+    
     return app
+
+

@@ -8,9 +8,7 @@ flask = "*"
 psycopg2-binary = "*"
 flask-wtf = "*"
 email-validator = "*"
-flask-bootstrap = "*"
 python-dotenv = "*"
-flask-bootstrap5 = "*"
 
 [dev-packages]
 

@@ -4,4 +4,7 @@ npm install react-router-dom
 
 
 
-Nte: rename the .js and .css in the index.html file in the templates based on the asset-manifest.json
+Note: rename the .js and .css in the index.html file in the templates based on the asset-manifest.json
+
+every post request make sure to put csrf_protect like the authentication
+every route should have a login_required so that it is required to login before accessing other pages and restricted with roles (admin/user)
