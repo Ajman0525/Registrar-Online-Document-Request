@@ -1,45 +1,122 @@
-**Edit a file, create a new file, and clone from Bitbucket in under 2 minutes**
+# 🎓 Registrar: Online-Doc-Req System (ODR)
 
-When you're done, you can delete the content in this README and update the file with details for others getting started with your repository.
+## 🎯 Overview
 
-*We recommend that you open this README in another tab as you perform the tasks below. You can [watch our video](https://youtu.be/0ocf7u76WSo) for a full demo of all the steps in this tutorial. Open the video in a new tab to avoid leaving Bitbucket.*
+The **Registrar: Online Document Request (ODR)** system is a web-based application designed to streamline the process of requesting academic documents.  
+By digitizing this process, the system reduces manual workload for registrar staff, improves efficiency, and provides a more transparent and convenient experience for students.
 
----
-
-## Edit a file
-
-You’ll start by editing this README file to learn how to edit a file in Bitbucket.
-
-1. Click **Source** on the left side.
-2. Click the README.md link from the list of files.
-3. Click the **Edit** button.
-4. Delete the following text: *Delete this line to make a change to the README from Bitbucket.*
-5. After making your change, click **Commit** and then **Commit** again in the dialog. The commit page will open and you’ll see the change you just made.
-6. Go back to the **Source** page.
+Students can submit requests for academic documents, track their status, and receive notifications when their documents are processed and ready.
 
 ---
 
-## Create a file
+## ✨ Key Features
 
-Next, you’ll add a new file to this repository.
+### 👩‍🎓 User Capabilities (Students)
+- **Request Documents:** Easily submit requests for various academic records (e.g., transcripts, certifications) through a guided online form.  
+- **Track Requests:** View real-time status updates (e.g., *Pending, Processing, Ready for Pickup/Delivery*) for all submitted requests.  
+- **Payment Integration:** Securely handle any associated fees directly within the system.  
 
-1. Click the **New file** button at the top of the **Source** page.
-2. Give the file a filename of **contributors.txt**.
-3. Enter your name in the empty file space.
-4. Click **Commit** and then **Commit** again in the dialog.
-5. Go back to the **Source** page.
-
-Before you move on, go ahead and explore the repository. You've already seen the **Source** page, but check out the **Commits**, **Branches**, and **Settings** pages.
+### 🧑‍💼 Admin Capabilities (Registrar Staff)
+- **Manage Requests:** Review, approve, reject, or update the status of student requests.  
+- **Manage Documents:** Maintain and categorize document types, fees, and processing times.  
+- **Logging:** Track administrative actions and system usage for auditing and security purposes.  
 
 ---
 
-## Clone a repository
+## 🛠️ Technology Stack
 
-Use these steps to clone from SourceTree, our client for using the repository command-line free. Cloning allows you to work on your files locally. If you don't yet have SourceTree, [download and install first](https://www.sourcetreeapp.com/). If you prefer to clone from the command line, see [Clone a repository](https://confluence.atlassian.com/x/4whODQ).
+| Component | Technology |
+|------------|-------------|
+| **Backend** | Python (Flask) |
+| **Frontend** | HTML, CSS, JavaScript |
+| **Database** | PostgreSQL (PSQL) |
+| **Environment Management** | Pipenv |
 
-1. You’ll see the clone button under the **Source** heading. Click that button.
-2. Now click **Check out in SourceTree**. You may need to create a SourceTree account or log in.
-3. When you see the **Clone New** dialog in SourceTree, update the destination path and name if you’d like to and then click **Clone**.
-4. Open the directory you just created to see your repository’s files.
+---
 
-Now that you're more familiar with your Bitbucket repository, go ahead and add a new file locally. You can [push your change back to Bitbucket with SourceTree](https://confluence.atlassian.com/x/iqyBMg), or you can [add, commit,](https://confluence.atlassian.com/x/8QhODQ) and [push from the command line](https://confluence.atlassian.com/x/NQ0zDQ).
+## 🚀 Deployment & Local Setup
+
+### 1️⃣ Prerequisites
+Ensure you have the following installed:
+- **Python 3.13**
+- **Pipenv**
+- **PostgreSQL** (running instance)
+
+---
+
+### 2️⃣ Environment Setup
+
+#### Clone the repository and set up the virtual environment:
+
+```bash
+git clone https://online-doc-req-admin@bitbucket.org/registrar-online-document-request/registrar-odr.git
+```
+```bash
+cd registrar-odr
+```
+
+
+Activate virtual environment
+```bash
+pipenv shell
+```
+
+Install dependencies
+```bash
+pipenv install
+```
+
+### 3️⃣ Database and Configuration
+
+#### 🧩 Create Database
+
+Make sure your PostgreSQL server is running, then open your PostgreSQL terminal (e.g., `psql`) and create a new database for the ODR system:
+
+
+-- Connect to PostgreSQL (optional if already connected)
+```bash
+psql -U postgres
+```
+
+-- Create the database
+```bash
+CREATE DATABASE odr_system;
+```
+
+Note: Replace "odr_system" with your preferred database Name 
+
+#### ⚙️ Create `.env` File
+
+In the project root directory, create a new file named **`.env`** and add the following environment variables:
+
+```bash
+# ===============================
+# 🌐 Flask Application Settings
+# ===============================
+FLASK_APP=run.py
+FLASK_ENV=development
+FLASK_RUN_HOST=0.0.0.0
+FLASK_RUN_PORT=8000
+
+# ===============================
+# 🔒 Security
+# ===============================
+SECRET_KEY="YOUR_SECRET_KEY_HERE"
+
+# ===============================
+# 🗄️ PostgreSQL Database Settings
+# ===============================
+DB_NAME="YOUR_DATABASE_NAME"
+DB_USERNAME="YOUR_DATABASE_USERNAME"
+DB_PASSWORD="YOUR_DATABASE_PASSWORD"
+DB_HOST="localhost"
+DB_PORT="5432"
+```
+
+### 4️⃣ Run the Application
+
+#### With your environment activated:
+
+```bash
+flask --app run.py run
+```
