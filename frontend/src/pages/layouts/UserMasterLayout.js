@@ -1,5 +1,6 @@
 import React from "react";
 import Header from "../../components/user/Header";
+import Footer from "../../components/user/Footer";
 import "./UserMasterLayout.css";
 
 function UserMasterLayout() {
@@ -7,8 +8,9 @@ function UserMasterLayout() {
         <div className="user-master-layout">
             <Header />
         <div className="content-area">
-            {/* Content will be rendered here based on user navigation */}
+            <p>Content will be rendered here based on user navigation</p>
         </div>
+            <Footer />
         </div>
     )
     }
