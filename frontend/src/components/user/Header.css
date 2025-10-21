@@ -1,0 +1,43 @@
+.user-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 0px;
+
+    height: 90px;
+    background-color: var(--color-secondary);
+}
+.brand-section {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 0px 50px 0px 40px;
+    gap: 10px;
+
+    width: 170px;
+    height: inherit;
+    background: #333333;
+
+    /* Inside auto layout */
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+}
+.brand-logo {
+    width: 66px;
+    height: 66px;
+}
+.brand-name {
+    width: 110px;
+    font-family: 'Inter', sans-serif;
+    font-weight: bold;
+    line-height: 1.0;
+}
+.brand-name-text{
+    color: #FFFFFF;
+    font-size: 16px;
+    line-height: 5px;
+}
+#online{
+    color: #F3D358;
+}
