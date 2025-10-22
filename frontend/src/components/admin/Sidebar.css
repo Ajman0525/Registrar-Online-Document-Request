@@ -14,10 +14,11 @@
 /*-----------------*/
 .sidebar-header {
     flex-direction: row;
-    padding: 20px 30px;
+    padding: 20px 20px;
     display: flex;
     align-items: center;
     background-color: var(--color-tertiary);
+    gap: 10px;
 }
 
 .brand-name{
@@ -31,10 +32,11 @@
     margin: 0;
     font-family: var(--font-family-base);
     font-size: var(--font-size-regular);
+    font-weight: bold;
     line-height: 1.1;
 }
 
-.brand-logo {
+.sidebar-brand-logo {
     width: 66px;
     height: 66px;
     margin-bottom: 8px;
@@ -51,8 +53,6 @@
     color: white;
     font-family: var(--font-family-base);
     font-size: var(--font-size-big);
-    font-weight: bold;
-    transition: background-color 0.2s;
 }
 
 .nav-icon{
@@ -67,12 +67,14 @@
 
 .admin-sidebar .nav-item.active,
 .admin-sidebar .nav-item.active .nav-icon{
-    background-color: white;
-    color: var(--color-secondary);
+    background-color: #9C191E;
+    color: white;
+    font-weight: 550;
 }
 
 .admin-sidebar .nav-item:not(.active):hover,
 .admin-sidebar .nav-item:not(.active):hover .nav-icon{
-    background-color: #8A0000; 
+    background-color: #9C191E; 
     color: white;
+    font-weight: 550;
 }
