@@ -1,8 +1,7 @@
-import React from "react";
 import Header from "../../components/user/Header";
 import Footer from "../../components/user/Footer";
-import ContentBox from "../../components/user/ContentBox";
 import "./UserMasterLayout.css";
+import { Outlet } from "react-router-dom";
 
 function UserMasterLayout() {
     return (
@@ -10,9 +9,7 @@ function UserMasterLayout() {
             <Header />
 
         <div className="content-area">
-            <ContentBox>
-                <p>Content will be rendered here based on user navigation</p>
-            </ContentBox>
+            <Outlet />
         </div>
 
             <Footer />

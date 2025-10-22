@@ -7,9 +7,9 @@ function Landing() {
         <div className="landing-page">
             <h2>Welcome to the Online Document Request System</h2>
             <p>Please log in to access your dashboard and manage your document requests.</p>
-            <Link to="/user">Track Document</Link>
-            <button>Request Document</button>
-            <button>View Document</button>
+            <Link to="/user/Track">Track Document</Link>
+            <Link to="/user/UserLogin">Request Document</Link>
+            <Link to="/user/View">View Document</Link>
         </div>
     );
 }
