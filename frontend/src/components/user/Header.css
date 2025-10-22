@@ -4,17 +4,16 @@
     align-items: center;
     padding: 0px;
 
-    height: 90px;
+    height: 60px;
     background-color: var(--color-secondary);
 }
 .brand-section {
     display: flex;
     flex-direction: row;
     align-items: center;
-    padding: 0px 50px 0px 40px;
-    gap: 10px;
+    padding: 0px 20px 0px 20px;
+    gap: 20px;
 
-    width: 170px;
     height: inherit;
     background: #333333;
 
@@ -23,21 +22,22 @@
     order: 0;
     flex-grow: 0;
 }
-.brand-logo {
-    width: 66px;
-    height: 66px;
+.brand-text{
+    display: flex;
+    flex-direction: row;
+    gap: 5px;
 }
-.brand-name {
-    width: 110px;
+.header-text{
     font-family: 'Inter', sans-serif;
     font-weight: bold;
-    line-height: 1.0;
-}
-.brand-name-text{
+    font-size: 18px;
     color: #FFFFFF;
-    font-size: 16px;
-    line-height: 5px;
 }
+.brand-logo {
+    width: 40px;
+    height: 40px;
+}
+
 #online{
     color: #F3D358;
 }

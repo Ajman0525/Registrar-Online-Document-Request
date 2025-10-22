@@ -6,10 +6,9 @@ function Header() {
         <header className="user-header">
             <Link to="/user/Landing" className="brand-section">
                 <img src="/assets/MSUIITLogo.png" alt="MSUIIT Logo" className="brand-logo" />
-                <div className="brand-name">
-                    <p className="brand-name-text" id="online">Online</p>
-                    <p className="brand-name-text" id="document">Document</p>
-                    <p className="brand-name-text" id="request">Request</p>
+                <div className="brand-text">
+                    <p className="header-text" id="online">Online</p>
+                    <p className="header-text" id="document-request">Document Request</p>
                 </div>
             </Link>
         </header>
