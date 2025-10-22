@@ -5,6 +5,10 @@ import Index from "./pages/Index";
 import Landing from "./pages/user/Landing";
 import UserMasterLayout from "./pages/layouts/UserMasterLayout";
 import RegistrarMasterLayout from "./pages/layouts/RegistrarMasterLayout";
+import UserLogin from "./pages/user/UserLogin";
+import Tracking from "./pages/user/Tracking";
+import DocumentList from "./pages/user/DocumentList";
+import Request from "./pages/user/Request";
 
 const PlaceholderDocument = () => (
     <div>
@@ -20,13 +24,20 @@ const PlaceholderLogs = () => (
     </div>
 );
 
+
 function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={< Index />} />
         <Route path="/user/Landing" element={< Landing />} />
-        <Route path="/user" element={<UserMasterLayout />} />
+
+        <Route path="/user" element={<UserMasterLayout />}>
+          <Route path="UserLogin" element={< UserLogin />}/>
+          <Route path="Request" element={< Request />} />
+          <Route path="View" element={< DocumentList />} />
+          <Route path="Track" element={< Tracking />} />
+        </Route>
         
         <Route path="/admin/login" element={< AdminLogin />} />
         <Route path="/admin" element={<RegistrarMasterLayout />}>
