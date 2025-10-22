@@ -8,7 +8,7 @@ function RegistrarMasterLayout(){
       <div className="registrar-master-layout">
         <Sidebar />
 
-        <main className="content-area">
+        <main className="registrar-content-area">
           <Outlet />
         </main>
       </div>
