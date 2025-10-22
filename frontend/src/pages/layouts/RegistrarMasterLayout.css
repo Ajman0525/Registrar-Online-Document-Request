@@ -6,9 +6,8 @@
 }
 
 .content-area {
-  background: var(--color-primary);
+  background: white;
   flex-grow: 1;
   padding: 20px 30px;
-  min-height: 100vh;
   overflow-y: auto;
 }
