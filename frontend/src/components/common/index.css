@@ -6,4 +6,11 @@
     --color-tertiary: #333333;
     --color-button-primary: #0070E2;
     --color-white: #FFFFFF;
+
+     /* Typography */
+  --font-family-base: 'Inter', sans-serif;
+  --font-size-big: 18px;
+  --font-size-regular: 16px;
+  --font-size-small: 12px;
+  
 }
