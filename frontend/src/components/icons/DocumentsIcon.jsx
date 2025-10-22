@@ -1,9 +1,22 @@
-import React from 'react';
+import React from "react";
 
-const DocumentsIcon = (props) => (
-    <svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
-    <path d="M17.25 18.25V19.25C17.25 20.3546 16.3546 21.25 15.25 21.25H6.75C5.64543 21.25 4.75 20.3546 4.75 19.25V7.75C4.75 6.64543 5.64543 5.75 6.75 5.75H7.75M15.25 2.75H9.75C8.64543 2.75 7.75 3.64543 7.75 4.75V16.25C7.75 17.3546 8.64543 18.25 9.75 18.25H18.25C19.3546 18.25 20.25 17.3546 20.25 16.25V7.75M15.25 2.75L20.25 7.75M15.25 2.75V5.75C15.25 6.85457 16.1454 7.75 17.25 7.75H20.25" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
+const DocumentsIcon = ({ active, className }) => (
+  <svg
+    className={className}
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill={active ? "currentColor" : "none"}
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M2.75 5.75V17.25C2.75 18.3546 3.64543 19.25 4.75 19.25H19.25C20.3546 19.25 21.25 18.3546 21.25 17.25V8.75C21.25 7.64543 20.3546 6.75 19.25 6.75H13.0704C12.4017 6.75 11.7772 6.4158 11.4063 5.8594L10.5937 4.6406C10.2228 4.0842 9.59834 3.75 8.92963 3.75H4.75C3.64543 3.75 2.75 4.64543 2.75 5.75Z" />
+  </svg>
 );
 
 export default DocumentsIcon;
+
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
+  </svg>
