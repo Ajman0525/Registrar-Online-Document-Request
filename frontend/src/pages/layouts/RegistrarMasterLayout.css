@@ -1,0 +1,14 @@
+.registrar-master-layout {
+  min-height: 100vh;
+  display: flex;
+  width: 100%;
+  overflow: hidden;
+}
+
+.content-area {
+  background: var(--color-primary);
+  flex-grow: 1;
+  padding: 20px 30px;
+  min-height: 100vh;
+  overflow-y: auto;
+}
