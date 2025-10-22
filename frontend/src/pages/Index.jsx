@@ -7,8 +7,13 @@ function Index() {
       <h2>Admin Links</h2>
       <ul>
         <li>
+          <Link to="/user/Landing">User Landing Page</Link>
+        </li>
+
+        <li>
           <Link to="/admin/login">Admin Login</Link>
         </li>
+
         <li>
           <Link to="/admin/dashboard">Dashboard</Link>
         </li>
