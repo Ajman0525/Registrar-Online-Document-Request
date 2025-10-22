@@ -8,7 +8,7 @@ import LogsIcon from '../icons/LogsIcon';
 
 const navItems = [
     {name: 'Dashboard', path: '/admin/dashboard', icon: DashboardIcon},
-    {name: 'Document', path: '/admin/document', icon: DocumentsIcon},
+    {name: 'Documents', path: '/admin/document', icon: DocumentsIcon},
     {name: 'Logs', path: '/admin/logs', icon: LogsIcon}
 ]
 

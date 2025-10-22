@@ -21,7 +21,7 @@
 }
 
 .brand-name{
-    font-weight: bold;
+    font-weight: 500;
     margin-left: 5px;
     color: white;
     line-height: 1.5;
@@ -29,9 +29,9 @@
 
 .sidebar-header p{
     margin: 0;
-    font-size: 14px; 
-    font-weight: 500;
-    line-height: 1.2;
+    font-family: var(--font-family-base);
+    font-size: var(--font-size-regular);
+    line-height: 1.1;
 }
 
 .brand-logo {
@@ -43,29 +43,26 @@
 /*-------------------------*/
 /*      NAVIGATION        */
 /*-----------------------*/
-
-
 .admin-sidebar .nav-item {
     display: flex;
     align-items: center;
-    padding: 15px 20px;
+    padding: 20px 20px;
     text-decoration: none;
     color: white;
-    font-size: 16px;
+    font-family: var(--font-family-base);
+    font-size: var(--font-size-big);
+    font-weight: bold;
     transition: background-color 0.2s;
 }
 
 .nav-icon{
-    width: 20px;
-    height: 20px;
-    margin-right: 15px; 
-    color: white;
+    width: 25px;
+    height: 25px;
+    margin-right: 10px; 
+    color: white;   
+    transform: translateY(-2px);
 
     background-color: transparent !important;
-}
-
-.admin-sidebar .nav-icon {
-    margin-right: 10px;
 }
 
 .admin-sidebar .nav-item.active,
