@@ -3,13 +3,14 @@ import { NavLink } from "react-router-dom";
 import DashboardIcon from '../icons/DashboardIcon';
 import DocumentsIcon from '../icons/DocumentsIcon';
 import LogsIcon from '../icons/LogsIcon';
-// import RequestsIcon from '../icons/RequestsIcon';
+import RequestsIcon from '../icons/RequestsIcon';
 
 const navItems = [
     { name: 'Dashboard', path: '/admin/dashboard', icon: DashboardIcon },
+    { name: 'Requests', path: '/admin/requests', icon: RequestsIcon },
     { name: 'Documents', path: '/admin/document', icon: DocumentsIcon },
-    { name: 'Logs', path: '/admin/logs', icon: LogsIcon },
-    // { name: 'Requests', path: '/admin/requests', icon: RequestsIcon }
+    { name: 'Logs', path: '/admin/logs', icon: LogsIcon }
+    
 ];
 
 const Sidebar = () => {

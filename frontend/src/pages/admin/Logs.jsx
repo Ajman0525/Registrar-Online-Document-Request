@@ -1,13 +1,13 @@
 import React from "react";
-import "./Requests.css"
+import "./Logs.css"
 
-function Requests(){
+function Logs(){
     return(
         <div className="header">
-            <h1>Manage Requests</h1>
+            <h1>Logs</h1>
             <h1 className= "placeholder">Area Reserved for organization tools</h1>
         </div>
     );
 }
 
-export default Requests;
+export default Logs;

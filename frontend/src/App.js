@@ -1,28 +1,18 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import AdminLogin from "./pages/admin/AdminLogin";
-import Dashboard from "./pages/admin/Dashboard";
+
 import Index from "./pages/Index";
 import Landing from "./pages/user/Landing";
 import UserMasterLayout from "./pages/layouts/UserMasterLayout";
-import RegistrarMasterLayout from "./pages/layouts/RegistrarMasterLayout";
 import UserLogin from "./pages/user/UserLogin";
 import Tracking from "./pages/user/Tracking";
 import DocumentList from "./pages/user/DocumentList";
 import Request from "./pages/user/Request";
-
-const PlaceholderDocument = () => (
-    <div>
-      <h1>Document Management</h1>
-      <p>Placeholder component</p>
-    </div>
-);
-
-const PlaceholderLogs = () => (
-    <div>
-      <h1>Activity Logs</h1>
-      <p>Placeholder component</p>
-    </div>
-);
+import RegistrarMasterLayout from "./pages/layouts/RegistrarMasterLayout";
+import Dashboard from "./pages/admin/Dashboard";
+import Documents from "./pages/admin/Documents";
+import Requests from "./pages/admin/Requests";
+import Logs from "./pages/admin/Logs";
 
 
 function App() {
@@ -42,8 +32,9 @@ function App() {
         <Route path="/admin/login" element={< AdminLogin />} />
         <Route path="/admin" element={<RegistrarMasterLayout />}>
           <Route path="/admin/dashboard" element={<Dashboard />} />
-          <Route path = "/admin/document" element = {<PlaceholderDocument />} />
-          <Route path = "/admin/logs" element = {<PlaceholderLogs />} />
+          <Route path="/admin/requests" element={<Requests />} />
+          <Route path = "/admin/document" element = {<Documents />} />
+          <Route path = "/admin/logs" element = {<Logs />} />
         </Route>
         
       </Routes>
