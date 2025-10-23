@@ -20,9 +20,9 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={< Index />} />
-        <Route path="/user/Landing" element={< Landing />} />
 
         <Route path="/user" element={<UserMasterLayout />}>
+          <Route path="Landing" element={< Landing />} />
           <Route path="UserLogin" element={< UserLogin />}/>
           <Route path="Request" element={< Request />} />
           <Route path="View" element={< DocumentList />} />
@@ -31,10 +31,10 @@ function App() {
         
         <Route path="/admin/login" element={< AdminLogin />} />
         <Route path="/admin" element={<RegistrarMasterLayout />}>
-          <Route path="/admin/dashboard" element={<Dashboard />} />
-          <Route path="/admin/requests" element={<Requests />} />
-          <Route path = "/admin/document" element = {<Documents />} />
-          <Route path = "/admin/logs" element = {<Logs />} />
+          <Route path="Dashboard" element={<Dashboard />} />
+          <Route path="Requests" element={<Requests />} />
+          <Route path ="Document" element = {<Documents />} />
+          <Route path ="Logs" element = {<Logs />} />
         </Route>
         
       </Routes>
