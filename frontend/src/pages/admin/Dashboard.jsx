@@ -7,38 +7,36 @@ import { useNavigate } from "react-router-dom";
 //   const [error, setError] = useState("");
 //   const navigate = useNavigate();
 
-//   useEffect(() => {
-//     fetch("/api/admin/dashboard", {
-//       method: "GET",
-//       credentials: "include",
-//       headers: {
-//         "X-CSRFToken": getCSRFToken(),
-//         "X-Requested-With": "XMLHttpRequest",
-//       },
-//     })
-//       .then(async (res) => {
-//         const text = await res.text();
-//         if (!res.ok) throw new Error(text || "Unauthorized");
-//         try {
-//           return JSON.parse(text);
-//         } catch {
-//           throw new Error("Invalid JSON response from server");
-//         }
-//       })
-//       .then((data) => setStats(data))
-//       .catch((err) => setError(err.message));
-//   }, []);
+  // useEffect(() => {
+  //   fetch("/api/admin/dashboard", {
+  //     method: "GET",
+  //     credentials: "include",
+  //     headers: {
+  //       "X-CSRF-TOKEN": getCSRFToken()
+  //     },
+  //   })
+  //     .then(async (res) => {
+  //       const text = await res.text();
+  //       if (!res.ok) throw new Error(text || "Unauthorized");
+  //       try {
+  //         return JSON.parse(text);
+  //       } catch {
+  //         throw new Error("Invalid JSON response from server");
+  //       }
+  //     })
+  //     .then((data) => setStats(data))
+  //     .catch((err) => setError(err.message));
+  // }, []);
 
-//   const handleLogout = async () => {
-//     try {
-//       const res = await fetch("/api/admin/logout", {
-//         method: "POST", 
-//         credentials: "include",
-//         headers: {
-//           "X-CSRFToken": getCSRFToken(),
-//           "X-Requested-With": "XMLHttpRequest",
-//         },
-//       });
+  // const handleLogout = async () => {
+  //   try {
+  //     const res = await fetch("/api/admin/logout", {
+  //       method: "POST", 
+  //       credentials: "include",
+  //       headers: {
+  //         "X-CSRF-TOKEN": getCSRFToken()
+  //       },
+  //     });
 
 //       const data = await res.json();
 //       if (res.ok) {

@@ -1,25 +1,36 @@
 from . import authentication_admin_bp
-from flask import session, jsonify, request
-from app.utils.decorator import csrf_protect
+from flask import Blueprint, jsonify, request, current_app
+from flask_jwt_extended import create_access_token, set_access_cookies
+from datetime import timedelta
 
 @authentication_admin_bp.route("/api/admin/login", methods=["POST"])
-@csrf_protect
 def admin_login():
+    """Secure admin login endpoint using JWT + CSRF-protected cookies."""
+    current_app.config["JWT_COOKIE_CSRF_PROTECT"] = False
     
-    # Extract login data
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
     username = data.get("username")
     password = data.get("password")
 
+    if not username or not password:
+        return jsonify({"error": "Username and password are required"}), 400
+
     # Dummy user for illustration
-    user = {"id": 1, "username": "admin", "role": "admin"} if username == "admin" and password == "1234" else None
-    
-    # Example authentication 
+    user = {"id": 1, "username": "admin", "role": "user"} if username == "user" and password == "1234" else None
+
     if user:
-        # Login successful
-        session['user_id'] = user["id"]
-        session['role'] = user["role"]
-        return jsonify({"message": "Admin login successful", "role": "admin" })
-    else:
-        return jsonify({"error": "Invalid credentials"}), 401
-    
+        
+        access_token = create_access_token(
+            identity=user["username"],                 # string identity
+            additional_claims={"id": user["id"], "role": user["role"]}
+        )
+        
+        response = jsonify({"message": "Admin login successful", "role": user["role"]})
+        set_access_cookies(response, access_token)
+
+        current_app.logger.info(f"Admin {username} logged in successfully.")
+        return response, 200
+
+    current_app.logger.warning(f"Failed admin login attempt for username: {username}")
+    current_app.config["JWT_COOKIE_CSRF_PROTECT"] = True
+    return jsonify({"error": "Invalid credentials"}), 401

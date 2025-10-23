@@ -6,9 +6,9 @@ name = "pypi"
 [packages]
 flask = "*"
 psycopg2-binary = "*"
-flask-wtf = "*"
-email-validator = "*"
 python-dotenv = "*"
+flask-cors = "*"
+flask-jwt-extended = "*"
 
 [dev-packages]
 

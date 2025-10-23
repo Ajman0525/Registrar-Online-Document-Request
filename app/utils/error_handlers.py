@@ -1,5 +1,5 @@
 from flask import jsonify
-from flask_wtf.csrf import CSRFError
+from flask_jwt_extended.exceptions import CSRFError as JWTCSRFError
 
 def register_error_handlers(app):
 
@@ -21,9 +21,9 @@ def register_error_handlers(app):
 
     @app.errorhandler(500)
     def internal_server_error(e):
-        app.logger.error(f"Internal Server Error: {e}")  # logs to console
+        app.logger.error(f"Internal Server Error: {e}")
         return jsonify({"error": "Internal Server Error"}), 500
 
-    @app.errorhandler(CSRFError)
-    def handle_csrf_error(e):
-        return jsonify({"error": e.description or "CSRF token missing/invalid"}), 400
+    @app.errorhandler(JWTCSRFError)
+    def handle_jwt_csrf_error(e):
+        return jsonify({"error": "CSRF token missing or invalid"}), 400

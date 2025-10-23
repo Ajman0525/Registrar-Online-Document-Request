@@ -1,10 +1,14 @@
-from flask import Flask, g, render_template, send_from_directory, request
+from flask import Flask, g, render_template, send_from_directory
 import os
-from config import DB_USERNAME, DB_PASSWORD, DB_NAME, DB_HOST, DB_PORT, SECRET_KEY
-from flask_wtf.csrf import CSRFProtect, generate_csrf
+from config import DB_USERNAME, DB_PASSWORD, DB_NAME, DB_HOST, DB_PORT, JWT_SECRET_KEY
 from psycopg2 import pool
 from .utils.error_handlers import register_error_handlers
-
+from flask_cors import CORS
+from flask_jwt_extended import (
+    JWTManager, create_access_token, set_access_cookies, 
+    unset_jwt_cookies, jwt_required, get_jwt_identity
+)
+from datetime import timedelta
 
 db_pool = None
 
@@ -16,12 +20,32 @@ def create_app(test_config=None):
     #in development
     #app = Flask(__name__, static_folder="../frontend/build/static", template_folder="../frontend/")
     
-    app.config['SECRET_KEY'] = SECRET_KEY 
     
-    # Initialize CSRF protection
-    csrf = CSRFProtect(app)
+    # =====================
+    #  CONFIG
+    # =====================
+    app.config["JWT_SECRET_KEY"] = JWT_SECRET_KEY
+    app.config["JWT_TOKEN_LOCATION"] = ["cookies"]  # store JWT in cookies
+    app.config["JWT_COOKIE_CSRF_PROTECT"] = True     # enable CSRF protection
+    app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
+    app.config["JWT_COOKIE_SECURE"] = False  # set True in production (HTTPS only)
+    app.config["JWT_COOKIE_SAMESITE"] = "Lax"
 
+    # Allow frontend origin
+    CORS(
+        app,
+        supports_credentials=True,
+        origins=["http://localhost:3000"],  # your React dev server
+    )
     
+    # Initialize JWT Manager
+    jwt = JWTManager(app)
+    
+    
+    # =====================
+    #  DATABASE CONNECTION POOL
+    # =====================
+
     #Initialize connection pool ONCE
     global db_pool
     if db_pool is None:
@@ -47,6 +71,9 @@ def create_app(test_config=None):
         if conn is not None:
             db_pool.putconn(conn)
             
+    # =====================
+    #  REGISTER BLUEPRINTS
+    # =====================
     
     #ADMIN BLUEPRINTS
     from .admin.authentication import authentication_admin_bp as auth_admin_blueprint
@@ -78,21 +105,8 @@ def create_app(test_config=None):
             return send_from_directory(app.static_folder, path)
         return render_template("index.html")
     
-    # Generate CSRF token ONCE per session
-    @app.after_request
-    def set_csrf_cookie(response):
-        response.set_cookie(
-            'csrf_token',
-            generate_csrf(),
-            httponly=False,         # React JS can read it
-            secure=False,           # True in production with HTTPS
-            samesite='Lax'          # 'Strict' can block requests from localhost:3000
-        )
-        return response
-
-    
     register_error_handlers(app)
-    
     return app
+
 
 
