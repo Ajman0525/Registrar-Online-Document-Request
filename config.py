@@ -1,6 +1,6 @@
 from os import getenv
 
-SECRET_KEY = getenv("SECRET_KEY")
+JWT_SECRET_KEY = getenv("JWT_SECRET_KEY")
 DB_NAME = getenv("DB_NAME")
 DB_USERNAME = getenv("DB_USERNAME")
 DB_PASSWORD = getenv("DB_PASSWORD")
