@@ -8,7 +8,7 @@ function UserMasterLayout() {
         <div className="user-master-layout">
             <Header />
 
-        <div className="content-area">
+        <div className="user-content-area">
             <Outlet />
         </div>
 

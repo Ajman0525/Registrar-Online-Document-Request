@@ -1,0 +1,80 @@
+/*-------------------*/
+/*     SIDEBAR      */
+/*-----------------*/
+.admin-sidebar {
+    width: 250px;
+    background-color: var(--color-secondary);
+    min-height: 100vh;
+    padding-top: 0px;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+}
+
+/*-------------------*/
+/*      LOGO        */
+/*-----------------*/
+.sidebar-header {
+    flex-direction: row;
+    padding: 20px 20px;
+    display: flex;
+    align-items: center;
+    background-color: var(--color-tertiary);
+    gap: 10px;
+}
+
+.brand-name{
+    font-weight: 500;
+    margin-left: 5px;
+    color: white;
+    line-height: 1.5;
+}
+
+.sidebar-header p{
+    margin: 0;
+    font-family: var(--font-family-base);
+    font-size: var(--font-size-regular);
+    font-weight: bold;
+    line-height: 1.1;
+}
+
+.sidebar-brand-logo {
+    width: 66px;
+    height: 66px;
+    margin-bottom: 8px;
+}
+
+/*-------------------------*/
+/*      NAVIGATION        */
+/*-----------------------*/
+.admin-sidebar .nav-item {
+    display: flex;
+    align-items: center;
+    padding: 20px 20px;
+    text-decoration: none;
+    color: white;
+    font-family: var(--font-family-base);
+    font-size: var(--font-size-big);
+}
+
+.nav-icon{
+    width: 25px;
+    height: 25px;
+    margin-right: 10px; 
+    color: white;   
+    transform: translateY(-2px);
+
+    background-color: transparent !important;
+}
+
+.admin-sidebar .nav-item.active,
+.admin-sidebar .nav-item.active .nav-icon{
+    background-color: #9C191E;
+    color: white;
+    font-weight: 550;
+}
+
+.admin-sidebar .nav-item:not(.active):hover,
+.admin-sidebar .nav-item:not(.active):hover .nav-icon{
+    background-color: #9C191E; 
+    color: white;
+    font-weight: 550;
+}
