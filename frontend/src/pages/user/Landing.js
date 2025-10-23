@@ -12,7 +12,7 @@ function Landing() {
       <div className="cards-wrapper">
         <ContentBox className="dashboard-box">
           <h3>Track Request</h3>
-          <p>Track the status of your document request by entering your tracking number and Student ID</p>
+          <p>Track the progress of your document request using your tracking number and student ID. Payment and pickup options are provided once the requested document is ready.</p>
           <Link to="/user/Track" className="btn">Track</Link>
         </ContentBox>
 
@@ -24,7 +24,7 @@ function Landing() {
 
         <ContentBox className="dashboard-box">
           <h3>View Documents</h3>
-          <p>View Available Documents</p>
+          <p>Explore all available documents you can request and see what requirements are needed for each. Make sure you have the required materials ready before starting your request.</p>
           <Link to="/user/View" className="btn">View</Link>
         </ContentBox>
       </div>
