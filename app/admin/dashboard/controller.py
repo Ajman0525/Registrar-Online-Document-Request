@@ -1,22 +1,36 @@
 from . import dashboard_bp
-from flask import render_template, session, redirect, url_for, jsonify
-from app.utils.decorator import csrf_protect, login_required
+from flask import jsonify
+from flask_jwt_extended import unset_jwt_cookies
+from app.utils.decorator import jwt_required_with_role
 
-@dashboard_bp.route("/api/admin/dashboard")
-@csrf_protect
-@login_required(role="admin")
+# Admin role
+role = "admin"
+
+@dashboard_bp.route("/api/admin/dashboard", methods=["GET"])
+@jwt_required_with_role(role)
 def admin_dashboard():
-    # Example data
+    """
+    Protected admin dashboard endpoint.
+    Only accessible by users with role='admin'.
+    """
+    # Example dashboard data
     stats = {
         "users_count": 25,
         "documents_pending": 7,
-        "recent_activity": ["User1 requested transcript", "User2 submitted request"]
+        "recent_activity": [
+            "User1 requested transcript",
+            "User2 submitted request"
+        ]
     }
-    return jsonify(stats)
+    return jsonify(stats), 200
+
 
 @dashboard_bp.route("/api/admin/logout", methods=["POST"])
-@csrf_protect
-@login_required(role="admin")
+@jwt_required_with_role(role)
 def admin_logout():
-    session.clear()
-    return jsonify({"message": "Logged out successfully"})
+    """
+    Logout admin by clearing JWT cookies.
+    """
+    response = jsonify({"message": "Logged out successfully"})
+    unset_jwt_cookies(response)  # clears JWT + CSRF cookies
+    return response, 200

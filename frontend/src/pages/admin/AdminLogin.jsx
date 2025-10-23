@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getCSRFToken } from "../../utils/csrf";
 
 export default function AdminLogin() {
   const [username, setUsername] = useState("");
@@ -10,11 +9,10 @@ export default function AdminLogin() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    const csrfToken = getCSRFToken();
 
     const res = await fetch("/api/admin/login", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
+      headers: { "Content-Type": "application/json" },
       credentials: "include",
       body: JSON.stringify({ username, password }),
     });

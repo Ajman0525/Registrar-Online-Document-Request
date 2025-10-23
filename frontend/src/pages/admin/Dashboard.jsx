@@ -12,8 +12,7 @@ export default function Dashboard() {
       method: "GET",
       credentials: "include",
       headers: {
-        "X-CSRFToken": getCSRFToken(),
-        "X-Requested-With": "XMLHttpRequest",
+        "X-CSRF-TOKEN": getCSRFToken()
       },
     })
       .then(async (res) => {
@@ -35,8 +34,7 @@ export default function Dashboard() {
         method: "POST", 
         credentials: "include",
         headers: {
-          "X-CSRFToken": getCSRFToken(),
-          "X-Requested-With": "XMLHttpRequest",
+          "X-CSRF-TOKEN": getCSRFToken()
         },
       });
 
