@@ -19,7 +19,7 @@ function Landing() {
         <ContentBox className="dashboard-box">
           <h3>Request Document</h3>
           <p>Need your transcript, certificate of enrollment, or other official documents? Start your request here and follow the guided process.</p>
-          <Link to="/user/UserLogin" className="btn">Request</Link>
+          <Link to="/user/login" className="btn">Request</Link>
         </ContentBox>
 
         <ContentBox className="dashboard-box">
