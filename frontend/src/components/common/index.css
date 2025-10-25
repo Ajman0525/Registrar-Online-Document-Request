@@ -4,12 +4,14 @@
     --color-primary: #EAEAEA;
     --color-secondary: #B81D23;
     --color-tertiary: #333333;
-    --color-button-primary: #0070E2;
+    --color-button-primary-default: #0070E2;
+    --color-button-primary-hover: #80A2FF;
     --color-white: #FFFFFF;
 
      /* Typography */
   --font-family-base: 'Inter', sans-serif;
   --font-size-big: 18px;
+  --font-size-placeholder: 14px;
   --font-size-regular: 16px;
   --font-size-small: 12px;
   
