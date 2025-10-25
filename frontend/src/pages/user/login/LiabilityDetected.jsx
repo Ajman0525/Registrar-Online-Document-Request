@@ -3,7 +3,7 @@ import "./Login.css";
 import ButtonLink from "../../../components/common/ButtonLink";
 import ContentBox from "../../../components/user/ContentBox";
 
-function LiabilityDetected({ onNext, onBack }) {
+function LiabilityDetected({ onNext }) {
     return (
         <div className="Login-page">
             <ContentBox>
@@ -17,16 +17,15 @@ function LiabilityDetected({ onNext, onBack }) {
 
                 <div className="action-section">
                     <ButtonLink 
-                    onClick={onBack}
+                    onClick={onNext}
                     placeholder="Return"
                     className="proceed-button"
-                    variant="primary"
                     />
                     <div className="support-section">
-                        <p className="subtext">For more details, contact the</p>
+                        <p className="forgot-id-text">For more details, contact the</p>
                         <a href="mailto:support@example.com" className="forgot-id-link">support.</a>
                     </div>
-                </div>
+                    </div>
             </ContentBox>
         </div>
     );
