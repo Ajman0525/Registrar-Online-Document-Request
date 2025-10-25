@@ -1,10 +1,9 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import AdminLogin from "./pages/admin/AdminLogin";
-
 import Index from "./pages/Index";
 import Landing from "./pages/user/Landing";
 import UserMasterLayout from "./pages/layouts/UserMasterLayout";
-import UserLogin from "./pages/user/UserLogin";
+import EnterId from "./pages/user/login/EnterId";
 import Tracking from "./pages/user/Tracking";
 import DocumentList from "./pages/user/DocumentList";
 import Request from "./pages/user/Request";
@@ -23,7 +22,7 @@ function App() {
 
         <Route path="/user" element={<UserMasterLayout />}>
           <Route path="Landing" element={< Landing />} />
-          <Route path="UserLogin" element={< UserLogin />}/>
+          <Route path="login" element={< EnterId />}/>
           <Route path="Request" element={< Request />} />
           <Route path="View" element={< DocumentList />} />
           <Route path="Track" element={< Tracking />} />
