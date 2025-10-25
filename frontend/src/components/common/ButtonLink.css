@@ -1,0 +1,21 @@
+.button-link {
+  background-color: var(--color-button-primary-default);
+  padding: 10px;
+  border-radius: 20px;
+  border: none;
+  width: 100%;
+
+  /* Placeholder */
+  color: var(--color-white);
+  font-family: var(--font-family-base);
+  font-weight: bold;
+  font-size: var(--font-size-regular);
+}
+
+.button-link:hover {
+  background-color: var(--color-button-primary-hover);
+  color: var(--color-white);
+  text-decoration: none;
+}
+
+
