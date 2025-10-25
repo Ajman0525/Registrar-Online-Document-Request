@@ -1,0 +1,16 @@
+.input-section{
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 8px;
+}
+.action-section{
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+.support-section{
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
+}
