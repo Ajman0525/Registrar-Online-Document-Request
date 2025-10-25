@@ -1,18 +1,20 @@
 
 :root {
-    /* Color Variables */
-    --color-primary: #EAEAEA;
-    --color-secondary: #B81D23;
-    --color-tertiary: #333333;
-    --color-button-primary-default: #0070E2;
-    --color-button-primary-hover: #80A2FF;
-    --color-white: #FFFFFF;
+  /* Color Variables */
+  --color-primary: #EAEAEA;
+  --color-secondary: #B81D23;
+  --color-tertiary: #333333;
+  --color-button-primary-default: #0070E2;
+  --color-button-primary-hover: #80A2FF;
+  --color-white: #FFFFFF;
+  --color-black: #000000;
+  --color-text-subtext: #6B7280;
 
-     /* Typography */
+  /* Typography */
   --font-family-base: 'Inter', sans-serif;
-  --font-size-big: 18px;
+  --font-size-title: 28px;
   --font-size-placeholder: 14px;
   --font-size-regular: 16px;
-  --font-size-small: 12px;
-  
+  --font-size-subtext: 14px;
+  --font-weight-regular: 500;
 }
