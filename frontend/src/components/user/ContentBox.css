@@ -4,7 +4,7 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 60px 100px 60px 100px;
+  padding: 60px 100px 80px 100px;
   gap: 24px;
 
   background: var(--color-white);
@@ -17,7 +17,6 @@
 }
 
 .content-box h3 {
-  color: var(--color-black);
   font-size: var(--font-size-title);
   font-weight: bold;
   margin: 0px;
@@ -25,12 +24,31 @@
 }
 
 .content-box p {
+  color: var(--color-text-subtext);
+  font-size: var(--font-size-subtext);
   font-weight: var(--font-weight-regular);
   margin: 0px;
 }
 
-.content-box a:hover {
-  background-color: var(--color-button-primary-hover);
+input{
+    background-color: var(--color-primary);
+    border-radius: 10px;
+    padding: 0px 16px;
+    flex-grow: 1;
+    height: 40px;
+    border: none;
+    outline: none;
+
+    /* Placeholder */
+    font-size: var(--font-size-regular);
+    font-family: var(--font-family-base);
+}
+
+.content-box a{
+  text-decoration: none;
+  font-size: var(--font-size-subtext);
+  font-weight: var(--font-weight-regular);
+  margin: 0px;
 }
 
 .content-box.dashboard-box {
