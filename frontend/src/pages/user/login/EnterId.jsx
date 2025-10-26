@@ -29,11 +29,11 @@ function EnterId({ onNext, onBack }) {
         <div className="Login-page">
             <ContentBox>
                 <div className="text-section">
-                    <h3 className="title">Enter Student Id</h3>
+                    <h3 className="title">Enter Student ID</h3>
                 </div>
 
                 <div className="input-section">
-                    <p className="subtext">Id Number</p>
+                    <p className="subtext">ID Number</p>
                     <input 
                         id="student-id" 
                         type="text" 
@@ -65,7 +65,7 @@ function EnterId({ onNext, onBack }) {
                     </div>
 
                     <div className="support-section">
-                        <p className="subtext">Forgot ID Number?, contact the </p>
+                        <p className="subtext">Forgot ID Number? Contact the </p>
                         <a href="mailto:support@example.com" className="forgot-id-link">support.</a>
                     </div>
                     </div>
