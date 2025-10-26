@@ -1,5 +1,4 @@
 .button-link {
-  background-color: var(--color-button-primary-default);
   padding: 10px;
   border-radius: 20px;
   border: none;
@@ -14,8 +13,31 @@
   font-size: var(--font-size-regular);
 }
 
-.button-link:hover {
+.button-link.primary {
+  background-color: var(--color-button-primary-default);
+}
+
+.button-link.primary:hover {
   background-color: var(--color-button-primary-hover);
   color: var(--color-white);
   text-decoration: none;
+}
+
+.button-link.secondary {
+  background-color: var(--color-white);
+  color: var(--color-button-primary-default);
+  border: 2px solid var(--color-button-primary-default);
+}
+
+.button-link.secondary:hover {
+  background-color: var(--color-button-primary-default);
+  color: var(--color-white);
+  text-decoration: none;
+}
+
+.button-link.primary:disabled,
+.button-link.secondary:disabled {
+  background-color: var(--color-button-disabled);
+  color: #999997;
+  cursor: not-allowed;
 }

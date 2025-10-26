@@ -1,21 +1,24 @@
 import { useNavigate } from "react-router-dom";
 import "./ButtonLink.css";
 
-function ButtonLink({ to, placeholder, className, onClick }) {
+function ButtonLink({ to, placeholder, className, variant="primary", onClick, disabled}) {
     const navigate = useNavigate();
 
     const handleClick = () => {
+    if (disabled) return;
+
         if (onClick) {
             onClick();
         } else if (to) {
             navigate(to);
         }
     };
-    
+
     return (
         <button
             onClick={handleClick}
-            className={`button-link ${className ? `${className}` : ""}`}
+            className={`button-link ${variant} ${className ? className : ""}`}
+            disabled={disabled}
         >
             {placeholder}
         </button>
