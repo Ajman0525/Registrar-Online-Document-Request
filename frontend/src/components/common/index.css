@@ -16,6 +16,7 @@
     --color-white: #FFFFFF;
     --color-black: #000000;
     --color-text-subtext: #6B7280;
+    --color-destructive: #EA3D2F;
 
   /* Typography */
   --font-family-base: 'Inter', sans-serif;
