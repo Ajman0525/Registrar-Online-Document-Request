@@ -9,11 +9,15 @@
 .text-section p{
     text-align: center;
 }
+
 .input-section{
     display: flex;
     flex-direction: column;
     width: 100%;
     gap: 8px;
+}
+.otp-input{
+    text-align: center;
 }
 .action-section{
     display: flex;
@@ -21,6 +25,15 @@
     width: 100%;
     gap: 24px;
 }
+
+.button-section{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
 .support-section{
     display: flex;
     flex-direction: row;
