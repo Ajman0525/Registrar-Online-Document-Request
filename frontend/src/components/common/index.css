@@ -1,14 +1,21 @@
 
 :root {
   /* Color Variables */
-  --color-primary: #EAEAEA;
-  --color-secondary: #B81D23;
-  --color-tertiary: #333333;
-  --color-button-primary-default: #0070E2;
-  --color-button-primary-hover: #80A2FF;
-  --color-white: #FFFFFF;
-  --color-black: #000000;
-  --color-text-subtext: #6B7280;
+    --color-primary: #EAEAEA;
+    --color-secondary: #B81D23;
+    --color-tertiary: #333333;
+
+    /* Button Colors */
+    --color-button-primary-default: #0070E2;
+    --color-button-primary-hover: #80A2FF;
+    --color-button-destructive-default: #EA3D2F;
+    --color-button-destructive-hover: #FEE4E3;
+    --color-button-disabled: #E3E3E1;
+
+    /* Text Colors */
+    --color-white: #FFFFFF;
+    --color-black: #000000;
+    --color-text-subtext: #6B7280;
 
   /* Typography */
   --font-family-base: 'Inter', sans-serif;
