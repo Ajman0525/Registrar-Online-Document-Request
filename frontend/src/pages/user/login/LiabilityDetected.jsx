@@ -26,7 +26,7 @@ function LiabilityDetected({ onNext, onBack }) {
                         <p className="forgot-id-text">For more details, contact the</p>
                         <a href="mailto:support@example.com" className="forgot-id-link">support.</a>
                     </div>
-                    </div>
+                </div>
             </ContentBox>
         </div>
     );
