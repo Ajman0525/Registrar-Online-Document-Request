@@ -30,7 +30,7 @@ function OtpVerification({ onNext, onBack }) {
         <div className="Login-page">
             <ContentBox>
                 <div className="text-section">
-                    <h3 className="title">Enter 6 Digit Code</h3>
+                    <h3 className="title">Enter 6-Digit Code</h3>
                     <div className="subtext">
                         <p>We have sent a OTP to your school registered mobile number</p>
                         <p>*********54.</p>
