@@ -3,9 +3,11 @@
     flex-direction: column;
     gap: 8px;
 }
+
 .text-section .liability-title{
    color: var(--color-secondary);
 }
+
 .text-section p{
     text-align: center;
 }
@@ -16,9 +18,25 @@
     width: 100%;
     gap: 8px;
 }
+
 .otp-input{
     text-align: center;
 }
+
+.error-section{
+    padding: 0px 16px;
+    display: flex;
+    height: 8px;
+    width: 100%;
+}
+
+.error-text{
+    color: var(--color-destructive);
+    font-size: 10px;
+    text-align: center;
+    margin: 0px;
+}
+
 .action-section{
     display: flex;
     flex-direction: column;

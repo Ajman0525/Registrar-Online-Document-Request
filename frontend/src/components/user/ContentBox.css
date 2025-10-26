@@ -24,10 +24,13 @@
 }
 
 .content-box p {
-  color: var(--color-text-subtext);
-  font-size: var(--font-size-subtext);
   font-weight: var(--font-weight-regular);
   margin: 0px;
+}
+
+.subtext{
+    color: var(--color-text-subtext);
+    font-size: var(--font-size-subtext);
 }
 
 input{
