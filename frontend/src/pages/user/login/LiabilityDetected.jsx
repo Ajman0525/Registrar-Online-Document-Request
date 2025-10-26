@@ -3,7 +3,7 @@ import "./Login.css";
 import ButtonLink from "../../../components/common/ButtonLink";
 import ContentBox from "../../../components/user/ContentBox";
 
-function LiabilityDetected({ onNext }) {
+function LiabilityDetected({ onNext, onBack }) {
     return (
         <div className="Login-page">
             <ContentBox>
@@ -17,9 +17,10 @@ function LiabilityDetected({ onNext }) {
 
                 <div className="action-section">
                     <ButtonLink 
-                    onClick={onNext}
+                    onClick={onBack}
                     placeholder="Return"
                     className="proceed-button"
+                    variant="primary"
                     />
                     <div className="support-section">
                         <p className="forgot-id-text">For more details, contact the</p>
