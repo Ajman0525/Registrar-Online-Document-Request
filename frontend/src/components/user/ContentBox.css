@@ -34,17 +34,25 @@
 }
 
 input{
-    background-color: var(--color-primary);
+    background-color: var(--color-white);
     border-radius: 10px;
     padding: 0px 16px;
     flex-grow: 1;
     height: 40px;
-    border: none;
+    border: 2px solid var(--color-primary);
     outline: none;
 
     /* Placeholder */
     font-size: var(--font-size-regular);
     font-family: var(--font-family-base);
+}
+
+input:hover{
+   border: 2px solid var(--color-button-primary-default);
+}
+
+input:focus{
+   border: 2px solid var(--color-button-primary-default);
 }
 
 .content-box a{
