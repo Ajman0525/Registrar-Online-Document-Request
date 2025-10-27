@@ -42,7 +42,7 @@ function OtpVerification({ onNext, onBack }) {
     <div className="Login-page">
       <ContentBox>
         <div className="text-section">
-          <h3 className="title">Enter 6 Digit Code</h3>
+          <h3 className="title">Enter 6-Digit Code</h3>
           <div className="subtext">
             <p>We have sent a OTP to your school registered mobile number</p>
             <p>*********54.</p>
@@ -51,7 +51,7 @@ function OtpVerification({ onNext, onBack }) {
         </div>
 
         <div className="input-section">
-          <p className="subtext">6 Digit Code</p>
+          <p className="subtext">6-Digit Code</p>
           <input
             id="Code"
             type="numeric"
@@ -85,7 +85,7 @@ function OtpVerification({ onNext, onBack }) {
           </div>
 
           <div className="support-section">
-            <p className="subtext">Didn’t receive the code?, </p>
+            <p className="subtext">Didn’t receive the code? </p>
             <a href="mailto:support@example.com" className="forgot-id-link">
               Resend OTP.
             </a>
