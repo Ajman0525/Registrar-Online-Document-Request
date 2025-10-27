@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect} from "react";
 import "./Login.css";
 import ButtonLink from "../../../components/common/ButtonLink";
 import ContentBox from "../../../components/user/ContentBox";
@@ -7,6 +7,7 @@ import ContentBox from "../../../components/user/ContentBox";
 function EnterId({ onNext, onBack }) {
     const [studentId, setStudentId] = useState("");
     const [error, setError] = useState("");
+    const [shake, setShake] = useState(false);
 
     const handleInputChange = (e) => {
         let value = e.target.value.replace(/[^0-9]/g, ""); // keep only numbers
@@ -16,14 +17,27 @@ function EnterId({ onNext, onBack }) {
 
     const handleSubmit = (e) => {
         if (studentId.length === 0) {
-            setError("Please fill in the Student ID.");
+            triggerError("Please fill in the Student ID.");
         } else if (studentId.length < 9) {
-            setError("Please enter a valid Student ID.");
+            triggerError("Please enter a valid Student ID.");
         } else {
             setError("");
             onNext();
         }
     }
+
+    const triggerError = (message) => {
+        setError(message);
+        setShake(true);
+      };
+    
+      useEffect(() => {
+        if (shake) {
+          const timer = setTimeout(() => setShake(false), 400);
+          return () => clearTimeout(timer);
+        }
+      }, [shake]);
+    
 
     return (
         <div className="Login-page">
@@ -36,14 +50,15 @@ function EnterId({ onNext, onBack }) {
                     <p className="subtext">ID Number</p>
                     <input 
                         id="student-id" 
-                        type="text" 
+                        type="text"
+                        className={`otp-input ${shake ? "shake" : ""}`} 
                         placeholder="0000-0000" 
                         value={studentId}
                         onChange={handleInputChange}
                         maxLength={9}
                     />
                     <div className="error-section">
-                    {error && <p className="error-text">{error}</p>}
+                    {error && <p className={`error-text ${shake ? "shake" : ""}`}>{error}</p>}
                     </div>
                 </div>
 
