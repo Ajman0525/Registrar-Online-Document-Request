@@ -51,7 +51,7 @@ function EnterId({ onNext, onBack }) {
                     <input 
                         id="student-id" 
                         type="text"
-                        className={`otp-input ${shake ? "shake" : ""}`} 
+                        className={`id-input ${error ? "input-error" : ""} ${shake ? "shake" : ""}`}
                         placeholder="0000-0000" 
                         value={studentId}
                         onChange={handleInputChange}

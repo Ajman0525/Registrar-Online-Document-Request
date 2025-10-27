@@ -19,13 +19,13 @@
     gap: 8px;
 }
 
-.otp-input{
+.id-input, .otp-input{
     text-align: center;
 }
 
 .error-section{
-    padding: 0px 16px;
     display: flex;
+    justify-content: center;
     height: 8px;
     width: 100%;
 }
@@ -71,4 +71,8 @@
 
 .shake {
   animation: shake 0.3s ease-in-out;
+}
+
+.input-error {
+  border: 2px solid var(--color-destructive) !important; 
 }

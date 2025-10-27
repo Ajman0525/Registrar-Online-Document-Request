@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import "./Login.css";
 import ButtonLink from "../../../components/common/ButtonLink";
 import ContentBox from "../../../components/user/ContentBox";
@@ -7,6 +8,7 @@ function OtpVerification({ onNext, onBack }) {
   const [otpCode, setOtpCode] = useState("");
   const [error, setError] = useState("");
   const [shake, setShake] = useState(false);
+  const navigate = useNavigate();
 
   const handleInputChange = (e) => {
     const value = e.target.value.replace(/[^0-9]/g, "");
@@ -20,7 +22,7 @@ function OtpVerification({ onNext, onBack }) {
       triggerError("Please enter a valid 6-digit OTP code.");
     } else {
       setError("");
-      onNext();
+      navigate("/user/request");
     }
   };
 
@@ -53,7 +55,7 @@ function OtpVerification({ onNext, onBack }) {
           <input
             id="Code"
             type="numeric"
-            className={`otp-input ${shake ? "shake" : ""}`}
+            className={`otp-input ${error ? "input-error" : ""} ${shake ? "shake" : ""}`}
             placeholder="000000"
             autoComplete="one-time-code"
             value={otpCode}
