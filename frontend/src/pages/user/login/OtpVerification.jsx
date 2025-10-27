@@ -63,7 +63,9 @@ function OtpVerification({ onNext, onBack }) {
             inputMode="numeric"
             maxLength={6}
           />
-          {error && <p className={`error-text ${shake ? "shake" : ""}`}>{error}</p>}
+          <div className="error-section">
+            {error && <p className={`error-text ${shake ? "shake" : ""}`}>{error}</p>}
+          </div>
         </div>
 
         <div className="action-section">
