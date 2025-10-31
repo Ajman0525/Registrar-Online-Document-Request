@@ -1,73 +1,52 @@
-import hashlib
-import random
 import requests
-from ...db_init import get_connection
 
 class AuthenticationUser:
     @staticmethod
     def check_student_in_school_system(student_id):
         """
-        Checks the local 'students' table to confirm existence and liabilities.
+        Check if student exists in the school's external system
+        and whether they have liabilities.
+        Returns a dict:
+        {
+            "exists": bool,
+            "has_liability": bool
+        }
         """
+
+        # Placeholder API call (replace with real endpoint)
+        # Example structure only. School API docs will define the real one.
+        # Try/except to avoid app exploding if external site is down.
         try:
-            conn = get_connection()
-            cur = conn.cursor()
-            cur.execute(
-                "SELECT contact_number, liability_status FROM students WHERE student_id = %s",
-                (student_id,)
+            response = requests.post(
+                "https://school-api.example.com/check-student",
+                json={"student_id": student_id},
+                timeout=5
             )
-            row = cur.fetchone()
-            cur.close()
-            conn.close()
 
-            if not row:
-                return {
-                    "exists": False,
-                    "has_liability": False,
-                    "phone_number": None
-                }
+            if response.status_code != 200:
+                return {"exists": False, "has_liability": False}
 
-            contact_number, liability_status = row
+            data = response.json()
+
             return {
-                "exists": True,
-                "has_liability": liability_status,
-                "phone_number": contact_number
+                "exists": data.get("exists", False),
+                "has_liability": data.get("has_liability", False)
             }
 
-        except Exception as e:
-            print(f"Database error while checking student: {e}")
-            return {
-                "exists": False,
-                "has_liability": False,
-                "phone_number": None
-            }
+        except Exception:
+            # School site dead, server crying, whatever
+            return {"exists": False, "has_liability": False}
 
     @staticmethod
-    def generate_otp():
+    def save_otp(student_id, otp):
         """
-        Generate a random 6-digit OTP and return both plain and hash.
+        Placeholder for saving OTP to database later.
         """
-        otp = random.randint(100000, 999999)
-        otp_hash = hashlib.sha256(str(otp).encode()).hexdigest()
-        return otp, otp_hash
+        pass
 
     @staticmethod
-    def save_otp(student_id, otp_hash, session):
+    def verify_otp(student_id, otp):
         """
-        Save OTP hash to session (temporary) or database later.
+        Placeholder for OTP verification later.
         """
-        session["otp"] = otp_hash
-        session["student_id"] = student_id
-
-    @staticmethod
-    def verify_otp(otp_input, session):
-        """
-        Compare entered OTP hash with stored hash.
-        """
-        entered_hash = hashlib.sha256(str(otp_input).encode()).hexdigest()
-        stored_hash = session.get("otp")
-
-        if not stored_hash:
-            return False
-
-        return entered_hash == stored_hash
+        return False
