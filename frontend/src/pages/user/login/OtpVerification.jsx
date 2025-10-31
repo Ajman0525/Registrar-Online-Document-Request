@@ -15,14 +15,34 @@ function OtpVerification({ onNext, onBack }) {
     setOtpCode(value);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (otpCode.length === 0) {
       triggerError("Please fill in the OTP code.");
     } else if (otpCode.length < 6) {
       triggerError("Please enter a valid 6-digit OTP code.");
-    } else {
+    } 
+
+    try {
+      const response = await fetch("http://127.0.0.1:5000/verify-otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ otp: otpCode })
+      });
+      
+      const data = await response.json();
+
+      if (!data.valid){
+        return triggerError(data.message || "Invalid OTP code. Please try again.");
+      }
+
       setError("");
       navigate("/user/request");
+
+    } catch (error) {
+      triggerError("Server error. Please try again.");
+      console.error(error);
     }
   };
 
