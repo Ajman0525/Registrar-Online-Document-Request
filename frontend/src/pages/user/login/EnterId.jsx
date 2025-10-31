@@ -15,14 +15,40 @@ function EnterId({ onNext, onBack }) {
         setStudentId(value);
     }
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async () => {
         if (studentId.length === 0) {
             triggerError("Please fill in the Student ID.");
         } else if (studentId.length < 9) {
             triggerError("Please enter a valid Student ID.");
-        } else {
+            return;
+        }
+
+        try {
+            const response = await fetch("http://127.0.0.1:5000/check-id", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ student_id: studentId })
+            });
+
+            const data = await response.json();
+
+            if (response.status === 404) {
+                triggerError(data.message);
+                return;
+            }
+
+            if (data.status === "has_liability") {
+                triggerError(data.message);
+                return;
+            }
+
             setError("");
             onNext();
+        } catch (error) {
+            triggerError("An error occurred. Please try again.");
+            console.error(error);
         }
     }
 
