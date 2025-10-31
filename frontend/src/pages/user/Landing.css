@@ -20,7 +20,7 @@
 }
 
 .card {
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: all 0.3s ease-in-out;
   width: 260px;
   height: 300px;
   padding: 20px;
@@ -29,7 +29,7 @@
 
 .card:hover {
   transform: scale(1.05);
-  box-shadow: 0px 15px 25px rgba(0, 0, 0, 0.35);
+  box-shadow: 2px 4px 12px #00000014;
   cursor: pointer;
 }
 
