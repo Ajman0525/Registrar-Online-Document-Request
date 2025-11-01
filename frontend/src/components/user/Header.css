@@ -5,8 +5,10 @@
     padding: 0px;
 
     height: 60px;
-    background-color: var(--color-secondary);
+    background-color: #EAEAEA;
+    backdrop-filter: blur(5px);
 }
+
 .brand-section {
     display: flex;
     flex-direction: row;
@@ -17,7 +19,6 @@
     text-decoration: none;
 
     height: inherit;
-    background: #333333;
     flex: none;
     order: 0;
     flex-grow: 0;
