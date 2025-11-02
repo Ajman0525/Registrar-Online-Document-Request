@@ -5,16 +5,10 @@ import './Dashboard.css';
 
 function Dashboard() {
   return (
-    // The main content area wrapper
     <div >
-
-      {/* --- FOCUS: THE DASHBOARD HEADER --- */}
       <div className="header-simple">
         <h1>Dashboard</h1>
       </div>
-      {/* --- END DASHBOARD HEADER --- */}
-
-
     </div>
   );
 }
