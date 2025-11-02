@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { getCSRFToken } from "../../utils/csrf";
 import { useNavigate } from "react-router-dom";
 import './Dashboard.css';
+import NotificationIcon from '../../components/icons/NotificationIcon';
+
 
 function Dashboard() {
   return (
@@ -18,9 +20,8 @@ function Dashboard() {
             className="header-search"
           />
 
-          {/* Placeholder for Notifications */}
           <button className="header-icon-btn">
-            🔔 <span className="notification-count">3</span>
+            <NotificationIcon className="custom-icon" />
           </button>
 
           {/* Placeholder for User Profile/Settings */}
