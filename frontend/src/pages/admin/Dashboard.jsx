@@ -11,9 +11,7 @@ function Dashboard() {
       <div className="header-content">
         <h1>Dashboard</h1>
 
-        {/* --- NEW: Header Controls --- */}
         <div className="header-controls">
-          {/* Placeholder for Search Bar */}
           <input
             type="text"
             placeholder="Search requests, documents..."
@@ -29,7 +27,6 @@ function Dashboard() {
             <span className="user-initials">JD</span>
           </div>
         </div>
-        {/* --- END NEW CONTROLS --- */}
 
       </div>
     </div>
