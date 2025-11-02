@@ -9,7 +9,7 @@
     font-family: var(--font-family-base);
     font-size: var(--font-size-title);
     font-weight: 600;
-    color: #333;
+    color: var(--color-black);
     margin: 0; 
     padding: 0;
 }
@@ -40,47 +40,26 @@
     border: none;
     cursor: pointer;
     
-    /* CRITICAL FIX: Forces the container to define its space */
     display: flex; 
     justify-content: center;
     align-items: center; 
     
-    /* Define the exact space needed: 24px icon + 5px padding on all sides */
     width: 34px;    
     height: 34px;   
     
     position: relative; 
     
-    /* Remove conflicting rules */
     padding: 0; 
     font-size: 0; 
     line-height: 0; 
 }
 
-/* Also, update the notification count position to anchor correctly */
-.notification-count {
-    position: absolute;
-    /* Adjust these values to position the badge outside the 34x34 box */
-    top: -5px; 
-    right: -5px;
-    
-    background-color: #a41c2c; 
-    color: white;
-    border-radius: 50%;
-    padding: 1px 5px;
-    font-size: 0.7rem;
-    line-height: 1;
-    /* ADD THIS: Prevents the badge from being cut off by the button's edges */
-    z-index: 2;
-}
 
-/* Make sure your custom icon is still set to the right color and size */
 .custom-icon {
     width: 24px; 
     height: 24px; 
     display: block; 
     color: #666; 
-    /* Remove the temporary 'border: 1px solid green;' once it's fixed */
 }
 
 .user-profile {
