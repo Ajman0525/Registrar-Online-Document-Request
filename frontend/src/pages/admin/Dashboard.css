@@ -1,0 +1,15 @@
+.header-simple {
+    background-color: #e0e0e0;
+    padding: 20px 30px; 
+    margin-bottom: 30px;
+    border-radius: 20px;
+}
+
+.header-simple h1 {
+    font-family: var(--font-family-base);
+    font-size: var(--font-size-title);
+    font-weight: 600;
+    color: #333;
+    margin: 0; 
+    padding: 0;
+}
