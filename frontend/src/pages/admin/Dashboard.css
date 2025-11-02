@@ -1,5 +1,5 @@
 .header-simple {
-    background-color: #e0e0e0;
+    background-color: var(--color-white);
     padding: 20px 30px; 
     margin-bottom: 30px;
     border-radius: 20px;

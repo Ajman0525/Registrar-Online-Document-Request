@@ -6,7 +6,7 @@
 }
 
 .registrar-content-area {
-  background: white;
+  background: var(--color-primary);
   flex-grow: 1;
   padding: 20px 30px;
   overflow-y: auto;
