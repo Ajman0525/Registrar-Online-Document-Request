@@ -4,6 +4,9 @@ import { useNavigate } from "react-router-dom";
 import './Dashboard.css';
 import NotificationIcon from '../../components/icons/NotificationIcon';
 import SearchIcon from "../../components/icons/SearchIcon";
+import RequestsIcon from "../../components/icons/RequestsIcon";
+import PendingIcon from "../../components/icons/PendingIcon";
+import UnpaidIcon from "../../components/icons/UnpaidIcon";
 
 const StatCard = ({ title, icon: Icon, value, subText }) => (
   <div className="stat-card">
@@ -21,9 +24,32 @@ const StatCard = ({ title, icon: Icon, value, subText }) => (
 );
 
 function Dashboard() {
+  const cardData = [
+    {
+      title: "Total Requests",
+      icon: RequestsIcon,
+      value: "2,345",
+      subText: "↑ 5% from last month"
+    },
+    {
+      title: "Pending Requests",
+      icon: PendingIcon,
+      value: "78",
+      subText: "7 are overdue"
+    },
+    {
+      title: "Unpaid Requests",
+      icon: UnpaidIcon,
+      value: "₱1,250.00",
+      subText: "Total outstanding value"
+    },
+  ];
+
   return (
     <div className = "dashboard-content">
-      <div className="header-simple">
+
+      {/*--------------------- START OF HEADER CONTENT ---------------------*/}
+      <div className="header">
         <div className="header-content">
           <h1>Dashboard</h1>
 
@@ -57,9 +83,29 @@ function Dashboard() {
           </div>
         </div>
       </div>
-      
-      <section>
-        
+      {/*--------------------- END OF HEADER CONTENT ---------------------*/}
+
+      {/*--------------------- START OF STAT CARDS ---------------------*/}
+      <section className="stat-cards-wrapper">
+        {cardData.map((card, index) => (
+          <StatCard
+            key={index}
+            title={card.title}
+            icon={card.icon}
+            value={card.value}
+            subText={card.subText}
+          />
+        ))}
+
+        {/* The red slide arrow for scrolling indication */}
+        <div className="card-slide-arrow">
+          <span style={{ fontSize: '24px' }}>»</span>
+        </div>
+      </section>
+      {/*--------------------- END OF STAT CARDS ---------------------*/}
+
+      <section className="content-area">
+        <h2>Recent Activity</h2>
       </section>
     </div>
   );
