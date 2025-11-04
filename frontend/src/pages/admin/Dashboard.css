@@ -24,19 +24,18 @@
 .header-controls {
     display: flex;
     align-items: center;
-    gap: 15px; /* Spacing between elements */
+    gap: 15px; 
 }
 
 .header-search {
     border: 1px solid #ccc;
     border-radius: 20px;
     font-size: 0.9rem;
-    width: 250px; /* Gives the search bar a defined width */
+    width: 250px; 
 }
 
 .header-search:hover,
 .header-search:focus {
-    /* ONLY change the border color, keeping the thickness (1px) the same. */
     border: 1px solid var(--color-red, #a41c2c); 
 }
 
@@ -58,12 +57,17 @@
     font-size: 0; 
     line-height: 0; 
     margin-right: -5px;
+
+    border-radius: 20px;
 }
 
+.header-icon-btn:hover{
+    background-color: #f0f0f0;
+    box-shadow: 0 0 0 12px #f0f0f0;
+}
 
 .notification-icon {
     display: block; 
-    color: #666; 
 }
 
 .user-profile-wrapper{
