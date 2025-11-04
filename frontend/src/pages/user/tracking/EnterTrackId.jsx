@@ -24,8 +24,8 @@ function EnterTrackId({ onNext }) {
         // mock database for status checking
         try {
             const mockDatabase = {
-                "DOC-2021-2134": {
-                    studentId: "2021-0105",
+                "DOC-2021-0001": {
+                    studentId: "2021-0001",
                     status: "Ready for Pickup",
                     details: "Your document is ready for pickup at the registrar's office."
                 },
@@ -90,7 +90,7 @@ function EnterTrackId({ onNext }) {
                     <input
                         type="text"
                         className={`track-input ${error && !studentId ? "input-error" : ""} ${shake ? "shake" : ""}`}
-                        placeholder="e.g., 2023-ABCDE"
+                        placeholder="e.g., DOC-2021-2134"
                         value={trackingNumber}
                         onChange={(e) => setTrackingNumber(e.target.value)}
                     />
