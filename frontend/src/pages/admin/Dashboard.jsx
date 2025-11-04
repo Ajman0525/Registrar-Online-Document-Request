@@ -19,12 +19,21 @@ function Dashboard() {
           />
 
           <button className="header-icon-btn">
-            <NotificationIcon className="custom-icon" />
+            <NotificationIcon className="notification-icon" />
           </button>
 
-          {/* Placeholder for User Profile/Settings */}
-          <div className="user-profile">
-            <span className="user-initials">JD</span>
+          <div className = "user-profile-wrapper">
+            <div className="user-profile">
+              <span className="user-initials">A</span>
+            </div>
+
+            <div className = "user-info">
+              <div className = "user-name">Admin</div>
+            </div>
+
+            <span className="dropdown-menu">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </span>
           </div>
         </div>
 

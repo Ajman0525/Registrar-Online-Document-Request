@@ -49,9 +49,9 @@
     justify-content: center;
     align-items: center; 
     
-    width: 34px;    
-    height: 34px;   
-    
+    width: 28px;
+    height: 28px;
+
     position: relative; 
     
     padding: 0; 
@@ -60,11 +60,23 @@
 }
 
 
-.custom-icon {
-    width: 24px; 
-    height: 24px; 
+.notification-icon {
     display: block; 
     color: #666; 
+}
+
+.user-profile-wrapper{
+    display:flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    padding: 5px 10px 5px 5px;
+
+    transition: background-color 0.2s;
+    border-radius: 20px;
+}
+.user-profile-wrapper:hover {
+    background-color: #f0f0f0; 
 }
 
 .user-profile {
@@ -72,7 +84,10 @@
     height: 35px;
     border-radius: 50%;
     background-color: #a41c2c;
-    color: white;
+    color: var(--color-white);
+
+
+    /* Placeholder text */
     display: flex;
     justify-content: center;
     align-items: center;
