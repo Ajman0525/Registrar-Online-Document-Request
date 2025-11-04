@@ -3,6 +3,7 @@ import { getCSRFToken } from "../../utils/csrf";
 import { useNavigate } from "react-router-dom";
 import './Dashboard.css';
 import NotificationIcon from '../../components/icons/NotificationIcon';
+import SearchIcon from "../../components/icons/SearchIcon";
 
 
 function Dashboard() {
@@ -12,11 +13,14 @@ function Dashboard() {
         <h1>Dashboard</h1>
 
         <div className="header-controls">
-          <input
-            type="text"
-            placeholder="Search requests, documents..."
-            className="header-search"
-          />
+          <div className="search-input-wrapper">
+            <SearchIcon className="search-icon"/>
+            <input
+              type="text"
+              placeholder="Search requests, documents..."
+              className="header-search"
+            />
+          </div>
 
           <button className="header-icon-btn">
             <NotificationIcon className="notification-icon" />
