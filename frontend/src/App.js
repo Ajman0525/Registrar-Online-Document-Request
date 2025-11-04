@@ -4,7 +4,7 @@ import Index from "./pages/Index";
 import Landing from "./pages/user/Landing";
 import UserMasterLayout from "./pages/layouts/UserMasterLayout";
 import LoginFlow from "./pages/user/login/LoginFlow";
-import Tracking from "./pages/user/Tracking";
+import Tracking from "./pages/user/tracking/TrackingFlow";
 import DocumentList from "./pages/user/DocumentList";
 import Request from "./pages/user/Request";
 import RegistrarMasterLayout from "./pages/layouts/RegistrarMasterLayout";
