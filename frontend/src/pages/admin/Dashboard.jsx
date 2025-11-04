@@ -22,7 +22,7 @@ function Dashboard() {
             />
           </div>
 
-          <button className="header-icon-btn">
+          <button className="notification-icon-btn">
             <NotificationIcon className="notification-icon" />
           </button>
 
