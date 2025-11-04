@@ -49,7 +49,7 @@ function Dashboard() {
     <div className = "dashboard-content">
 
       {/*--------------------- START OF HEADER CONTENT ---------------------*/}
-      <div className="header">
+      <div className="dashboard-header">
         <div className="header-content">
           <h1>Dashboard</h1>
 

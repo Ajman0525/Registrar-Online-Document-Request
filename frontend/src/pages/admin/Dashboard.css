@@ -1,11 +1,11 @@
-.header {
+.dashboard-header {
     background-color: var(--color-white);
     padding: 15px 15px; 
     margin-bottom: 30px;
     border-radius: 20px;
 }
 
-.header h1 {
+.dashboard-header h1 {
     font-family: var(--font-family-base);
     font-size: var(--font-size-title);
     font-weight: 600;
