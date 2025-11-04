@@ -1,11 +1,11 @@
-.header-simple {
+.header {
     background-color: var(--color-white);
     padding: 15px 15px; 
     margin-bottom: 30px;
     border-radius: 20px;
 }
 
-.header-simple h1 {
+.header h1 {
     font-family: var(--font-family-base);
     font-size: var(--font-size-title);
     font-weight: 600;
@@ -162,4 +162,101 @@
     display: flex; 
     align-items: center;
     margin-left: 15px;
+}
+
+
+.stat-cards-wrapper {
+    /* Ensures the cards are arranged horizontally */
+    display: flex;
+    gap: 20px;
+    margin-bottom: 30px;
+    position: relative; 
+    /* Padding to align with the header content */
+    padding: 0 15px; 
+}
+
+.stat-card {
+    flex: 1; /* Makes all three cards equal width */
+    display: flex;
+    flex-direction: column;
+    background-color: var(--color-white, white); 
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.05); 
+    min-height: 150px; 
+    transition: transform 0.2s;
+}
+
+/* Optional: Subtle lift effect on hover */
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.card-icon {
+    margin-right: 10px;
+}
+
+.card-metric-icon {
+    /* Sizing for the SVG icons inside the cards */
+    width: 20px; 
+    height: 20px; 
+    color: #555; 
+}
+
+.card-title {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #555;
+    margin: 0;
+}
+
+.card-content-body {
+    flex-grow: 1;
+    /* Indent content slightly */
+    padding-left: 30px; 
+}
+
+.card-value {
+    font-size: 2.2rem;
+    font-weight: bold;
+    color: #333;
+    margin: 5px 0 0 0;
+}
+
+.card-subtext {
+    font-size: 0.8rem;
+    color: #888;
+    margin-top: 5px;
+}
+
+/* Red slide arrow for mobile/scroll functionality */
+.card-slide-arrow {
+    position: absolute;
+    right: 5px; 
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: #a41c2c;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    z-index: 10;
+}
+
+/* --- Placeholder for the section below --- */
+.content-area {
+    padding: 25px; 
+    margin: 0 15px 30px 15px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+    min-height: 400px;
 }
