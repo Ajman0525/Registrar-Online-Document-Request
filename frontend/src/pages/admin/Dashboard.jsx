@@ -28,7 +28,7 @@ function Dashboard() {
             </div>
 
             <div className = "user-info">
-              <div className = "user-name">Admin</div>
+              <div className = "user-name">Administrator</div>
             </div>
 
             <span className="dropdown-menu">
