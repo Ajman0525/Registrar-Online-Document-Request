@@ -216,13 +216,16 @@
 
 .card-icon {
     margin-right: 10px;
+    background-color: #f0f0f0;
+    box-shadow: 0 0 0 8px #f0f0f0;
+
+    border-radius: 5px;
 }
 
 .card-metric-icon {
-    /* Sizing for the SVG icons inside the cards */
     width: 20px; 
     height: 20px; 
-    color: #555; 
+    color: var(--color-secondary); 
 }
 
 .card-title {
