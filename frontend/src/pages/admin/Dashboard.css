@@ -189,6 +189,12 @@
     padding: 0; 
 }
 
+.stat-card-inner-scroll {
+    display: flex;
+    gap: 20px;
+    padding-bottom: 20px; 
+}
+
 .stat-card {
     flex: 1; /* Makes all three cards equal width */
     display: flex;
