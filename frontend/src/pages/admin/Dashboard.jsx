@@ -8,6 +8,8 @@ import RequestsIcon from "../../components/icons/RequestsIcon";
 import PendingIcon from "../../components/icons/PendingIcon";
 import UnpaidIcon from "../../components/icons/UnpaidIcon";
 import ProcessedIcon from "../../components/icons/ProcessedIcon";
+import ScrollLeft from "../../components/icons/ScrollLeft";
+import ScrollRight from "../../components/icons/ScrollRight";
 
 const StatCard = ({ title, icon: Icon, value, subText }) => (
   <div className="stat-card">
