@@ -196,7 +196,7 @@
 }
 
 .stat-card {
-    flex: 1; /* Makes all three cards equal width */
+    flex: 1; 
     display: flex;
     flex-direction: column;
     background-color: var(--color-white, white); 
