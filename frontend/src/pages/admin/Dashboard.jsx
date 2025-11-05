@@ -32,9 +32,8 @@ const ScrollButton = ({ direction, onClick, isVisible }) => {
 
   return (
     <div
-      className={`${baseClass} ${direction === 'left' ? 'left-0 ml-4' : 'right-0 mr-4'} ${isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+      className={`${baseClass} ${direction === 'left' ? 'arrow-left' : 'arrow-right'} ${isVisible ? 'arrow-visible' : 'arrow-hidden'}`}
       onClick={onClick}
-      style={{ display: isVisible ? 'flex' : 'none' }}
     >
       {direction === 'left' ? <ScrollLeft className={iconClass} /> : <ScrollRight className={iconClass} />}
     </div>

@@ -298,6 +298,24 @@
     transition: opacity 0.3s;
 }
 
+.card-slide-arrow.arrow-left {
+    left: 16px;
+}
+
+.card-slide-arrow.arrow-right {
+    right: 16px;
+}
+
+.card-slide-arrow.arrow-visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.card-slide-arrow.arrow-hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
 /* --- Placeholder for the section below --- */
 .content-area {
     padding: 25px; 
