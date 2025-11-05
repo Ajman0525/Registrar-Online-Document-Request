@@ -160,8 +160,11 @@ function Dashboard() {
       {/*--------------------- END OF HEADER CONTENT -------------------*/}
 
       {/*--------------------- START OF STAT CARDS ---------------------*/}
-      <div>
-        <section className="stat-cards-wrapper">
+      <div className="stat-cards-wrapper">
+        <section 
+          ref={scrollContainerReference}
+          className="stat-card-inner-scroll overflow-x-auto scroll-hide"
+        >
           {cardData.map((card, index) => (
             <StatCard
               key={index}
@@ -171,12 +174,19 @@ function Dashboard() {
               subText={card.subText}
             />
           ))}
-
-          {/* The red slide arrow for scrolling indication */}
-          {/* <div className="card-slide-arrow">
-            <span style={{ fontSize: '24px' }}>»</span>
-          </div> */}
         </section>
+        
+        <ScrollButton
+          direction="left"
+          onClick={() => scrollCards('left')}
+          isVisible={canScrollLeft}
+        />
+        <ScrollButton
+          direction="right"
+          onClick={() => scrollCards('right')}
+          isVisible={canScrollRight}
+        />
+        
       </div>
       {/*---------------------- END OF STAT CARDS ---------------------*/}
 
