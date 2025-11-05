@@ -160,7 +160,7 @@ function Dashboard() {
       {/*--------------------- END OF HEADER CONTENT -------------------*/}
 
       {/*--------------------- START OF STAT CARDS ---------------------*/}
-      <div className="stat-cards-wrapper">
+      <div className="stat-cards-wrapper scroll-hide">
         <section 
           ref={scrollContainerReference}
           className="stat-card-inner-scroll overflow-x-auto scroll-hide"
