@@ -184,12 +184,13 @@ def insert_sample_data():
 
         # Documents
         doc_values = [
-            ("DOC0001", "Certificate of Residency", "Issued by Barangay for proof of residence", "https://example.com/logos/residency.png"),
-            ("DOC0002", "Barangay Clearance", "Clearance certificate for local residents", "https://example.com/logos/clearance.png"),
-            ("DOC0003", "Business Permit", "Required for business registration", "https://example.com/logos/business.png")
+            ("DOC0001", "Certificate of Residency", "Issued by Barangay for proof of residence", "https://example.com/logos/residency.png", 50.00),
+            ("DOC0002", "Barangay Clearance", "Clearance certificate for local residents", "https://example.com/logos/clearance.png", 75.00),
+            ("DOC0003", "Business Permit", "Required for business registration", "https://example.com/logos/business.png", 100.00)
         ]
+
         cur.executemany(
-            "INSERT INTO documents (doc_id, doc_name, description, logo_link) VALUES (%s, %s, %s, %s) ON CONFLICT DO NOTHING",
+            "INSERT INTO documents (doc_id, doc_name, description, logo_link, cost) VALUES (%s, %s, %s, %s, %s) ON CONFLICT DO NOTHING",
             doc_values
         )
 
