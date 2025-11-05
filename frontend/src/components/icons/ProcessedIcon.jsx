@@ -1,20 +1,21 @@
 import React from 'react';
 
 const ProcessedIcon = (props) => (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" {...props}>
-        <path d="M9.75 21.25H6.75C5.64543 21.25 4.75 20.3546 4.75 19.25V4.75C4.75 3.64543 5.64543 2.75 6.75 2.75H17.25C18.3546 2.75 19.25 3.64543 19.25 4.75V10.75" 
-            stroke="currentColor" 
-            stroke-width="1.5" 
-            stroke-linecap="round" 
-            stroke-linejoin="round" 
-        />
-        
-        <path d="M13.25 19.0832L15.3929 21.25L20.75 14.75" 
-            stroke="currentColor" 
-            stroke-width="1.5" 
-            stroke-linecap="round" 
-            stroke-linejoin="round" 
-        />
+    <svg xmlns="http://www.w3.org/2000/svg" 
+        width="24" 
+        height="24" 
+        viewBox="0 0 24 24" 
+        fill="none" 
+        stroke="currentColor" 
+        stroke-width="2" 
+        stroke-linecap="round" 
+        stroke-linejoin="round" 
+        class="lucide lucide-file-check-icon lucide-file-check"
+        {...props}
+    >
+        <path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" />
+        <path d="M14 2v5a1 1 0 0 0 1 1h5" />
+        <path d="m9 15 2 2 4-4" />
     </svg>
 );
 
