@@ -1,5 +1,5 @@
 from . import request_bp
-from flask import jsonify, request
+from flask import jsonify, request, session
 from app.utils.decorator import jwt_required_with_role
 from flask_jwt_extended import get_jwt_identity
 from .models import Request
@@ -20,7 +20,7 @@ def get_request_page_data():
         # step 1: initialize the db
         request_id = Request.generate_unique_request_id()
         student_id = get_jwt_identity()
-        
+    
         ##store req_id and student_id to db
         Request.store_request(request_id, student_id)
         
@@ -38,6 +38,7 @@ def get_request_page_data():
         # Step 2: Fetch documents available for request
         documents = DocumentList.get_all_documents()
 
+        session[request_id] = request_id  # Store request_id in session for later use
         # Step 3: send the needed data to React
         return jsonify({
             "status": "success",
@@ -111,6 +112,7 @@ def submit_request_page():
 
         return jsonify({
             "success": True,
+            "request_id": data["request_id"],
             "notification": "Your request has been submitted successfully."
         }), 200
 
@@ -123,13 +125,12 @@ def submit_request_page():
         
 
 @request_bp.route("/api/list_requirements", methods=["GET"])
-@jwt_required_with_role("student")  # replace role variable as needed
+@jwt_required_with_role(role)  # replace role variable as needed
 def get_requirements():
     """
     Returns all unique requirements for a specific request.
-    Expects a query parameter: ?request_id=R0000123
     """
-    request_id = request.args.get("request_id")
+    request_id = session.get("request_id")
     
     if not request_id:
         return jsonify({
@@ -153,8 +154,103 @@ def get_requirements():
         "requirements": result["requirements"]
     }), 200
 
-#submit link
-@request_bp.route("/api/submit_requirement_links", methods=["POST"])
+#submit requirement links
+@request_bp.route("/api/submit_links", methods=["POST"])
 @jwt_required_with_role(role)
 def submit_requirement_links():
-    pass
+    """
+    Accepts requirement links from React and stores them to the database.
+    Expected JSON format:
+    {
+        "request_id": "R0000123",
+        "requirements": [
+            {"requirement_id": "REQ0001", "file_link": "https://example.com/id.png"},
+            {"requirement_id": "REQ0002", "file_link": "https://example.com/address.pdf"}
+        ]
+    }
+    """
+    
+    data = request.get_json()
+    request_id = session.get("request_id")
+    requirements = data.get("requirements")
+
+    #store requirement links to db
+    success, message = Request.submit_requirement_links(request_id, requirements)
+    status_code = 200 if success else 400
+    return jsonify({"success": success, "notification": message}), status_code
+
+#proceed upload req button
+#get preferred contact
+@request_bp.route("/api/get_contact", methods=["GET"])
+@jwt_required_with_role(role)
+def get_preferred_contact():
+    """
+    Fetches the preferred contact method for the logged-in student.
+    """
+    student_id = get_jwt_identity()
+    contact_info = Request.get_contact_info_by_student_id(student_id)
+
+    if contact_info:
+        return jsonify({
+            "success": True,
+            "contact_info": contact_info
+        }), 200
+    else:
+        return jsonify({
+            "success": False,
+            "notification": "Could not retrieve contact information."
+        }), 500
+        
+#next button in contact page
+#get the summary of request
+@request_bp.route("/api/request_summary", methods=["GET"])
+@jwt_required_with_role(role)
+def get_request_summary():
+    """
+    Fetches a summary of the request including documents.
+    """
+    request_id = session.get("request_id")
+
+    if not request_id:
+        return jsonify({
+            "success": False,
+            "notification": "Missing request_id parameter.",
+            "summary": {}
+        }), 400
+
+    summary = Request.get_request_documents_with_cost(request_id)
+
+    # Sample Output:
+    # {
+    #     "documents": [
+    #         {"doc_id": "DOC0001", "doc_name": "Certificate of Residency", "quantity": 2, "unit_cost": 50.0, "total_cost": 100.0},
+    #         {"doc_id": "DOC0002", "doc_name": "Barangay Clearance", "quantity": 1, "unit_cost": 75.0, "total_cost": 75.0}
+    #     ],
+    #     "total_cost": 175.0
+    # }
+    
+    
+    return jsonify({
+        "success": True,
+        "summary": summary
+    }), 200
+    
+#complete button in summary page
+@request_bp.route("/api/complete_request", methods=["POST"])
+@jwt_required_with_role(role)
+def complete_request():
+    
+    request_id = session.get("request_id")
+    try:
+        Request.mark_request_complete(request_id)
+        return jsonify({
+            "success": True,
+            "request_id": request_id, # for tracking purposes: TRACKING ID
+            "notification": "Your request has been completed successfully."
+        }), 200
+    except Exception as e:
+        print(f"Error in /api/complete_request: {e}")
+        return jsonify({
+            "success": False,
+            "notification": "An error occurred while completing your request. Please try again later."
+        }), 500
