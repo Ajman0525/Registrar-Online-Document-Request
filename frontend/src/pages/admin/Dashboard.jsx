@@ -61,6 +61,17 @@ function Dashboard() {
       });
     }
   };
+
+  const updateScrollState = () => {
+    if (scrollContainerReference.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollContainerReference.current;
+      const scrollTolerance = 1;
+
+      setCanScrollLeft(scrollLeft > scrollTolerance);
+
+      setCanScrollRight(scrollLeft + clientWidth < scrollWidth - scrollTolerance);
+    }
+  };
   
   const cardData = [
     {
