@@ -46,6 +46,21 @@ function Dashboard() {
   const scrollContainerReference = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
+
+  const scrollCards = (direction) => {
+    if (scrollContainerReference.current) {
+      const scrollAmount = 300; 
+      const currentScroll = scrollContainerReference.current.scrollLeft;
+      const newScroll = direction === 'left'
+        ? currentScroll - scrollAmount
+        : currentScroll + scrollAmount;
+
+      scrollContainerReference.current.scrollTo({
+        left: newScroll,
+        behavior: 'smooth'
+      });
+    }
+  };
   
   const cardData = [
     {
