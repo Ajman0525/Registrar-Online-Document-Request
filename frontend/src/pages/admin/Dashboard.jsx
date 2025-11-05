@@ -72,6 +72,22 @@ function Dashboard() {
       setCanScrollRight(scrollLeft + clientWidth < scrollWidth - scrollTolerance);
     }
   };
+
+  useEffect(() => {
+    const container = scrollContainerReference.current;
+    if (container) {
+
+      updateScrollState();
+
+      container.addEventListener('scroll', updateScrollState);
+      window.addEventListener('resize', updateScrollState);
+
+      return () => {
+        container.removeEventListener('scroll', updateScrollState);
+        window.removeEventListener('resize', updateScrollState);
+      };
+    }
+  }, []);
   
   const cardData = [
     {
