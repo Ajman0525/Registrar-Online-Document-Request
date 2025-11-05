@@ -160,22 +160,24 @@ function Dashboard() {
       {/*--------------------- END OF HEADER CONTENT -------------------*/}
 
       {/*--------------------- START OF STAT CARDS ---------------------*/}
-      <section className="stat-cards-wrapper">
-        {cardData.map((card, index) => (
-          <StatCard
-            key={index}
-            title={card.title}
-            icon={card.icon}
-            value={card.value}
-            subText={card.subText}
-          />
-        ))}
+      <div>
+        <section className="stat-cards-wrapper">
+          {cardData.map((card, index) => (
+            <StatCard
+              key={index}
+              title={card.title}
+              icon={card.icon}
+              value={card.value}
+              subText={card.subText}
+            />
+          ))}
 
-        {/* The red slide arrow for scrolling indication */}
-        {/* <div className="card-slide-arrow">
-          <span style={{ fontSize: '24px' }}>»</span>
-        </div> */}
-      </section>
+          {/* The red slide arrow for scrolling indication */}
+          {/* <div className="card-slide-arrow">
+            <span style={{ fontSize: '24px' }}>»</span>
+          </div> */}
+        </section>
+      </div>
       {/*---------------------- END OF STAT CARDS ---------------------*/}
 
       {/*------------------ START OF RECENT ACTIVITY ------------------*/}
