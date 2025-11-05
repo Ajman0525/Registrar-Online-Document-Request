@@ -43,6 +43,10 @@ const ScrollButton = ({ direction, onClick, isVisible }) => {
 }
 
 function Dashboard() {
+  const scrollContainerReference = useRef(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+  
   const cardData = [
     {
       title: "Total Requests",
