@@ -270,16 +270,20 @@
 /* Red slide arrow for mobile/scroll functionality */
 .card-slide-arrow {
     position: absolute;
-    right: 5px; 
     top: 50%;
     transform: translateY(-50%);
-    background-color: #a41c2c;
+    background-color: var(--color-secondary); 
     color: white;
-    padding: 10px 15px;
+    padding: 10px;
+    border: none;
     border-radius: 50%;
     cursor: pointer;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
     z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.3s;
 }
 
 /* --- Placeholder for the section below --- */
