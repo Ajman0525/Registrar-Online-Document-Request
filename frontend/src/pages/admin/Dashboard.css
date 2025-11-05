@@ -279,6 +279,8 @@
 
 /* Red slide arrow for mobile/scroll functionality */
 .card-slide-arrow {
+    width: 24px;
+    height: 24px;
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
