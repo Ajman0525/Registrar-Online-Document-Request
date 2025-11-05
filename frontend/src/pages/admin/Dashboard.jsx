@@ -7,6 +7,7 @@ import SearchIcon from "../../components/icons/SearchIcon";
 import RequestsIcon from "../../components/icons/RequestsIcon";
 import PendingIcon from "../../components/icons/PendingIcon";
 import UnpaidIcon from "../../components/icons/UnpaidIcon";
+import ProcessedIcon from "../../components/icons/ProcessedIcon";
 
 const StatCard = ({ title, icon: Icon, value, subText }) => (
   <div className="stat-card">
@@ -31,17 +32,26 @@ function Dashboard() {
       value: "2,345",
       subText: "↑ 5% from last month"
     },
+
     {
       title: "Pending Requests",
       icon: PendingIcon,
       value: "78",
       subText: "7 are overdue"
     },
+    
     {
       title: "Unpaid Requests",
       icon: UnpaidIcon,
       value: "₱1,250.00",
       subText: "Total outstanding value"
+    },
+
+    {
+      title: "Documents Ready",
+      icon: ProcessedIcon,
+      value: "50+",
+      subText: "Recently processed"
     },
   ];
 
