@@ -49,7 +49,7 @@ function Dashboard() {
 
   const scrollCards = (direction) => {
     if (scrollContainerReference.current) {
-      const scrollAmount = 300; 
+      const scrollAmount = 360; 
       const currentScroll = scrollContainerReference.current.scrollLeft;
       const newScroll = direction === 'left'
         ? currentScroll - scrollAmount
