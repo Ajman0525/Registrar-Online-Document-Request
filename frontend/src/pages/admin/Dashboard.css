@@ -1,3 +1,6 @@
+/* ----------------------------------- */
+/*       DASHBOARD HEADER CONTENT      */
+/* ----------------------------------- */
 .dashboard-header {
     background-color: var(--color-white);
     padding: 15px 15px; 
@@ -30,6 +33,7 @@
     gap: 15px; 
 }
 
+/* ---------- DASHBOARD SEARCH BAR ---------- */
 .search-input-wrapper {
     display: flex;
     align-items: center;
@@ -85,6 +89,7 @@
     border: none; 
 }
 
+/* ---------- DASHBOARD NOTIFICATION ---------- */
 .notification-icon-btn {
     background: none;
     border: none;
@@ -116,6 +121,7 @@
     display: block; 
 }
 
+/* ---------- DASHBOARD USER PROFILE ---------- */
 .user-profile-wrapper{
     display:flex;
     align-items: center;
@@ -168,7 +174,11 @@
     margin-left: 15px;
 }
 
+/* ----------------------------------- */
+/*     DASHBOARD MAIN BODY CONTENT     */
+/* ----------------------------------- */
 
+/* ---------- DASHBOARD STAT CARDS ---------- */
 .stat-cards-wrapper {
     display: flex;
     gap: 20px;
