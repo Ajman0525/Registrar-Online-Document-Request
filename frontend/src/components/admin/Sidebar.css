@@ -3,10 +3,16 @@
 /*-----------------*/
 .admin-sidebar {
     width: 250px;
-    background-color: var(--color-secondary);
+    min-width: 250px;
+    max-width: 250px;
     min-height: 100vh;
+
+    flex-grow: 0;
+    flex-shrink: 0;
+
     padding-top: 0px;
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+    background-color: var(--color-secondary);
 }
 
 /*-------------------*/
