@@ -26,6 +26,22 @@ const StatCard = ({ title, icon: Icon, value, subText }) => (
   </div>
 );
 
+const ScrollButton = ({ direction, onClick, isVisible }) => {
+  const iconClass = "w-6 h-6";
+  const baseClass = "scroll-arrow hidden md:flex";
+
+  return (
+    <div
+      className={`${baseClass} ${direction === 'left' ? 'left-0 ml-4' : 'right-0 mr-4'} ${isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+      onClick={onClick}
+      style={{ display: isVisible ? 'flex' : 'none' }}
+    >
+      {direction === 'left' ? <ScrollLeft className={iconClass} /> : <ScrollRight className={iconClass} />}
+    </div>
+
+  );
+}
+
 function Dashboard() {
   const cardData = [
     {
