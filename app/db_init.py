@@ -89,7 +89,8 @@ def ready_documents_table():
         doc_id VARCHAR(10) PRIMARY KEY,
         doc_name VARCHAR(255) NOT NULL,
         description VARCHAR(255),
-        logo_link VARCHAR(255)
+        logo_link VARCHAR(255),
+        cost NUMERIC(10,2) DEFAULT 0.00  
     )
     """
     execute_query(query)
@@ -105,7 +106,6 @@ def ready_document_requirements_table():
     """
     execute_query(query)
 
-
 def ready_requests_table():
     query = """
     CREATE TABLE IF NOT EXISTS requests (
@@ -116,6 +116,7 @@ def ready_requests_table():
         email VARCHAR(100),
         status VARCHAR(50) DEFAULT 'Pending',
         payment_status BOOLEAN DEFAULT FALSE,
+        total_cost NUMERIC(10,2) DEFAULT 0.00, 
         requested_at TIMESTAMP DEFAULT NOW()
     )
     """
@@ -183,12 +184,13 @@ def insert_sample_data():
 
         # Documents
         doc_values = [
-            ("DOC0001", "Certificate of Residency", "Issued by Barangay for proof of residence", "https://example.com/logos/residency.png"),
-            ("DOC0002", "Barangay Clearance", "Clearance certificate for local residents", "https://example.com/logos/clearance.png"),
-            ("DOC0003", "Business Permit", "Required for business registration", "https://example.com/logos/business.png")
+            ("DOC0001", "Certificate of Residency", "Issued by Barangay for proof of residence", "https://example.com/logos/residency.png", 50.00),
+            ("DOC0002", "Barangay Clearance", "Clearance certificate for local residents", "https://example.com/logos/clearance.png", 75.00),
+            ("DOC0003", "Business Permit", "Required for business registration", "https://example.com/logos/business.png", 100.00)
         ]
+
         cur.executemany(
-            "INSERT INTO documents (doc_id, doc_name, description, logo_link) VALUES (%s, %s, %s, %s) ON CONFLICT DO NOTHING",
+            "INSERT INTO documents (doc_id, doc_name, description, logo_link, cost) VALUES (%s, %s, %s, %s, %s) ON CONFLICT DO NOTHING",
             doc_values
         )
 
