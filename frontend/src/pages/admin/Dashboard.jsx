@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { getCSRFToken } from "../../utils/csrf";
 import { useNavigate } from "react-router-dom";
 import './Dashboard.css';
