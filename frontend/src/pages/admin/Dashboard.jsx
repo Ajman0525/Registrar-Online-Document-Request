@@ -165,16 +165,18 @@ function Dashboard() {
           className="stat-cards-wrapper scroll-hide"
           ref={scrollContainerReference}
         >
-          {cardData.map((card, index) => (
-            <StatCard
-              key={index}
-              title={card.title}
-              icon={card.icon}
-              value={card.value}
-              subText={card.subText}
-            />
-          ))}
-          
+          <div className="stat-card-inner-scroll">
+            {cardData.map((card, index) => (
+              <StatCard
+                key={index}
+                title={card.title}
+                icon={card.icon}
+                value={card.value}
+                subText={card.subText}
+              />
+            ))}
+          </div>
+        </div>
           <ScrollButton
             direction="left"
             onClick={() => scrollCards('left')}
@@ -185,8 +187,6 @@ function Dashboard() {
             onClick={() => scrollCards('right')}
             isVisible={canScrollRight}
           />
-          
-        </div>
       </div>
       {/*---------------------- END OF STAT CARDS ---------------------*/}
 
