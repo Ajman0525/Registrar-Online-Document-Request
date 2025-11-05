@@ -198,12 +198,9 @@
 /* ---------- DASHBOARD STAT CARDS ---------- */
 .stat-cards-wrapper {
     display: block;
-    margin-bottom: 30px;
-    position: relative; 
-
-    margin-left: 15px;
-    margin-right: 15px;
+    margin: 0;
     padding: 0; 
+    position: relative; 
 }
 
 .stat-card {
