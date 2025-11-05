@@ -215,10 +215,10 @@
 
 .card-icon {
     margin-right: 10px;
-    background-color: #f0f0f0;
-    box-shadow: 0 0 0 8px #f0f0f0;
+    background-color: var(--color-primary);
+    box-shadow: 0 0 0 8px var(--color-primary);
 
-    border-radius: 5px;
+    border-radius: 10px;
 }
 
 .card-metric-icon {
