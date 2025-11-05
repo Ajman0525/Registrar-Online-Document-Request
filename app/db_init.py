@@ -2,7 +2,7 @@ import psycopg2
 from psycopg2 import sql
 from config import DB_NAME, DB_USERNAME, DB_PASSWORD, DB_HOST, DB_PORT
 from dotenv import load_dotenv
-
+from psycopg2 import extras
 
 def create_database():
     """Connect to default 'postgres' DB and create DB_NAME if it doesn't exist."""
@@ -140,7 +140,7 @@ def ready_students_table():
 # ==========================
 
 def insert_sample_data():
-    conn = g.get("db_conn", None)
+    conn = get_connection()
     cur = conn.cursor()
 
     # =====================
