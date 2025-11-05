@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import './Dashboard.css';
 import NotificationIcon from '../../components/icons/NotificationIcon';
 import SearchIcon from "../../components/icons/SearchIcon";
-import RequestsIcon from "../../components/icons/RequestsIcon";
+import TotalRequestsIcon from "../../components/icons/TotalRequestsIcon";
 import PendingIcon from "../../components/icons/PendingIcon";
 import UnpaidIcon from "../../components/icons/UnpaidIcon";
 import ProcessedIcon from "../../components/icons/ProcessedIcon";
@@ -30,7 +30,7 @@ function Dashboard() {
   const cardData = [
     {
       title: "Total Requests",
-      icon: RequestsIcon,
+      icon: TotalRequestsIcon,
       value: "2,345",
       subText: "↑ 5% from last month"
     },
