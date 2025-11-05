@@ -177,6 +177,14 @@
 /* ----------------------------------- */
 /*     DASHBOARD MAIN BODY CONTENT     */
 /* ----------------------------------- */
+
+.scroll-shell{
+    position: relative; 
+    margin-left: 15px;
+    margin-right: 15px;
+    margin-bottom: 30px;
+}
+
 /* ------ HIDE SCROLLBAR ON STAT CARDS ------ */
 .scroll-hide {
     -ms-overflow-style: none;  /* IE and Edge */
