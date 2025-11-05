@@ -1,3 +1,4 @@
+/* text and input sections */
 .text-section{
     display: flex;
     flex-direction: column;
@@ -23,6 +24,7 @@
     text-align: center;
 }
 
+/* error section */
 .error-section{
     display: flex;
     justify-content: center;
@@ -37,6 +39,7 @@
     margin: 0px;
 }
 
+/* btn sections */
 .action-section{
     display: flex;
     flex-direction: column;
@@ -52,6 +55,7 @@
     gap: 10px;
 }
 
+/* support section */
 .support-section{
     display: flex;
     flex-direction: row;
@@ -59,3 +63,4 @@
     justify-content: center;
     gap: 4px;
 }
+
