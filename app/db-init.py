@@ -22,9 +22,9 @@ def create_database():
 
     if not exists:
         cur.execute(sql.SQL("CREATE DATABASE {}").format(sql.Identifier(DB_NAME)))
-        print(f"✅ Database '{DB_NAME}' created.")
+        print(f"Database '{DB_NAME}' created.")
     else:
-        print(f"ℹ️ Database '{DB_NAME}' already exists.")
+        print(f"ℹDatabase '{DB_NAME}' already exists.")
 
     cur.close()
     conn.close()
@@ -49,7 +49,7 @@ def execute_query(query, params=None):
         cur.execute(query, params)
         conn.commit()
     except Exception as e:
-        print(f"❌ Error executing query: {e}")
+        print(f"Error executing query: {e}")
     finally:
         cur.close()
         conn.close()
@@ -122,48 +122,105 @@ def ready_request_documents_table():
     """
     execute_query(query)
 
+# dummy student table to simulate external school database
+def ready_students_table():
+    query = """
+    CREATE TABLE IF NOT EXISTS students (
+        student_id VARCHAR(15) PRIMARY KEY,
+        full_name VARCHAR(150) NOT NULL,
+        contact_number VARCHAR(20),
+        email VARCHAR(100),
+        liability_status BOOLEAN DEFAULT FALSE  -- FALSE means clear, TRUE means has liability
+    );
+    """
+    execute_query(query)
 
 # ==========================
 # SAMPLE DATA
 # ==========================
 
 def insert_sample_data():
-    """Insert initial records."""
-    conn = get_connection()
+    conn = g.get("db_conn", None)
     cur = conn.cursor()
 
-    try:
-        req_values = [
-            ('REQ0001', 'Valid ID'),
-            ('REQ0002', 'Proof of Address'),
-            ('REQ0003', 'Recent Photograph')
-        ]
+    # =====================
+    # 1️⃣ Students (Dummy)
+    # =====================
+    student_values = [
+        ('STU0001', 'John Doe', '09171234567', 'john.doe@example.com', False),
+        ('STU0002', 'Jane Smith', '09281234567', 'jane.smith@example.com', True),
+        ('STU0003', 'Mark Reyes', '09991234567', 'mark.reyes@example.com', False)
+    ]
 
-        doc_values = [
-            ('DOC0001', 'Certificate of Residency', 'Issued by Barangay for proof of residence', 'https://example.com/logos/residency.png'),
-            ('DOC0002', 'Barangay Clearance', 'Clearance certificate for local residents', 'https://example.com/logos/clearance.png'),
-            ('DOC0003', 'Business Permit', 'Required for business registration', 'https://example.com/logos/business.png')
-        ]
+    extras.execute_values(
+        cur,
+        """
+        INSERT INTO students (student_id, full_name, contact_number, email, liability_status)
+        VALUES %s
+        ON CONFLICT (student_id) DO NOTHING
+        """,
+        student_values
+    )
 
-        doc_req_values = [
-            ('DOC0001', 'REQ0001'),
-            ('DOC0001', 'REQ0002'),
-            ('DOC0002', 'REQ0001'),
-            ('DOC0003', 'REQ0001'),
-            ('DOC0003', 'REQ0003')
-        ]
+    # =====================
+    # 2️⃣ Requirements
+    # =====================
+    req_values = [
+        ('REQ1', 'Valid ID'),
+        ('REQ2', 'Enrollment Form'),
+        ('REQ3', 'Payment Receipt'),
+    ]
 
-        cur.executemany("INSERT INTO requirements (req_id, requirement_name) VALUES (%s, %s) ON CONFLICT DO NOTHING", req_values)
-        cur.executemany("INSERT INTO documents (doc_id, doc_name, description, logo_link) VALUES (%s, %s, %s, %s) ON CONFLICT DO NOTHING", doc_values)
-        cur.executemany("INSERT INTO document_requirements (doc_id, req_id) VALUES (%s, %s) ON CONFLICT DO NOTHING", doc_req_values)
+    cur.executemany(
+        """
+        INSERT INTO requirements (req_id, requirement_name)
+        VALUES (%s, %s)
+        ON CONFLICT (req_id) DO NOTHING
+        """,
+        req_values
+    )
 
-        conn.commit()
-        print("Sample data inserted successfully.")
-    except Exception as e:
-        print(f"Error inserting sample data: {e}")
-    finally:
-        cur.close()
-        conn.close()
+    # =====================
+    # 3️⃣ Documents
+    # =====================
+    doc_values = [
+        ('DOC1', 'Transcript of Records', 'Official academic transcript.', '/static/img/tor.png'),
+        ('DOC2', 'Certificate of Enrollment', 'Proof of current enrollment.', '/static/img/enrollment.png'),
+        ('DOC3', 'Certificate of Good Moral', 'Issued by the guidance office.', '/static/img/good_moral.png')
+    ]
+
+    cur.executemany(
+        """
+        INSERT INTO documents (doc_id, doc_name, description, logo_link)
+        VALUES (%s, %s, %s, %s)
+        ON CONFLICT (doc_id) DO NOTHING
+        """,
+        doc_values
+    )
+
+    # =====================
+    # 4️⃣ Document Requirements Mapping
+    # =====================
+    doc_req_values = [
+        ('DOC1', 'REQ1'),
+        ('DOC1', 'REQ2'),
+        ('DOC2', 'REQ1'),
+        ('DOC2', 'REQ3'),
+        ('DOC3', 'REQ1')
+    ]
+
+    cur.executemany(
+        """
+        INSERT INTO document_requirements (doc_id, req_id)
+        VALUES (%s, %s)
+        ON CONFLICT DO NOTHING
+        """,
+        doc_req_values
+    )
+
+    # Commit and close
+    conn.commit()
+    cur.close()
 
 
 # ==========================
@@ -177,7 +234,8 @@ def initialize_db():
     ready_document_requirements_table()
     ready_requests_table()
     ready_request_documents_table()
-    #insert_sample_data()
+    ready_students_table()
+    insert_sample_data()
     print("Database and tables initialized successfully.")
 
 
