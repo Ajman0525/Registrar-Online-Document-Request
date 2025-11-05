@@ -48,7 +48,7 @@ function Dashboard() {
   return (
     <div className = "dashboard-content">
 
-      {/*--------------------- START OF HEADER CONTENT ---------------------*/}
+      {/*------------------- START OF HEADER CONTENT -------------------*/}
       <div className="dashboard-header">
         <div className="header-content">
           <h1>Dashboard</h1>
@@ -83,7 +83,7 @@ function Dashboard() {
           </div>
         </div>
       </div>
-      {/*--------------------- END OF HEADER CONTENT ---------------------*/}
+      {/*--------------------- END OF HEADER CONTENT -------------------*/}
 
       {/*--------------------- START OF STAT CARDS ---------------------*/}
       <section className="stat-cards-wrapper">
@@ -98,15 +98,19 @@ function Dashboard() {
         ))}
 
         {/* The red slide arrow for scrolling indication */}
-        <div className="card-slide-arrow">
+        {/* <div className="card-slide-arrow">
           <span style={{ fontSize: '24px' }}>»</span>
-        </div>
+        </div> */}
       </section>
-      {/*--------------------- END OF STAT CARDS ---------------------*/}
+      {/*---------------------- END OF STAT CARDS ---------------------*/}
+
+      {/*------------------ START OF RECENT ACTIVITY ------------------*/}
 
       <section className="content-area">
         <h2>Recent Activity</h2>
       </section>
+
+      {/*------------------ START OF RECENT ACTIVITY ------------------*/}
     </div>
   );
 }
