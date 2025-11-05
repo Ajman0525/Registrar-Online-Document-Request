@@ -41,3 +41,28 @@ class DocumentList:
             return []
         finally:
             cur.close()
+
+#example to return 
+# [
+#   {
+#     "doc_id": "DOC0001",
+#     "doc_name": "Certificate of Residency",
+#     "description": "Issued by Barangay for proof of residence",
+#     "logo_link": "https://example.com/logos/residency.png",
+#     "requirements": ["Valid ID", "Proof of Address"]
+#   },
+#   {
+#     "doc_id": "DOC0002",
+#     "doc_name": "Barangay Clearance",
+#     "description": "Clearance certificate for local residents",
+#     "logo_link": "https://example.com/logos/clearance.png",
+#     "requirements": ["Valid ID"]
+#   },
+#   {
+#     "doc_id": "DOC0003",
+#     "doc_name": "Business Permit",
+#     "description": "Required for business registration",
+#     "logo_link": "https://example.com/logos/business.png",
+#     "requirements": ["Valid ID", "Recent Photograph"]
+#   }
+# ]
