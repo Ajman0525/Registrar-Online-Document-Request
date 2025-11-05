@@ -160,31 +160,33 @@ function Dashboard() {
       {/*--------------------- END OF HEADER CONTENT -------------------*/}
 
       {/*--------------------- START OF STAT CARDS ---------------------*/}
-      <div 
-        className="stat-cards-wrapper scroll-hide"
-        ref={scrollContainerReference}
-      >
-        {cardData.map((card, index) => (
-          <StatCard
-            key={index}
-            title={card.title}
-            icon={card.icon}
-            value={card.value}
-            subText={card.subText}
+      <div className="scroll-shell"> 
+        <div 
+          className="stat-cards-wrapper scroll-hide"
+          ref={scrollContainerReference}
+        >
+          {cardData.map((card, index) => (
+            <StatCard
+              key={index}
+              title={card.title}
+              icon={card.icon}
+              value={card.value}
+              subText={card.subText}
+            />
+          ))}
+          
+          <ScrollButton
+            direction="left"
+            onClick={() => scrollCards('left')}
+            isVisible={canScrollLeft}
           />
-        ))}
-        
-        <ScrollButton
-          direction="left"
-          onClick={() => scrollCards('left')}
-          isVisible={canScrollLeft}
-        />
-        <ScrollButton
-          direction="right"
-          onClick={() => scrollCards('right')}
-          isVisible={canScrollRight}
-        />
-        
+          <ScrollButton
+            direction="right"
+            onClick={() => scrollCards('right')}
+            isVisible={canScrollRight}
+          />
+          
+        </div>
       </div>
       {/*---------------------- END OF STAT CARDS ---------------------*/}
 
