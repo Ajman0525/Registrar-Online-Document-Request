@@ -1,14 +1,14 @@
 import psycopg2
-from psycopg2 import sql, extras
+from psycopg2 import sql
 from config import DB_NAME, DB_USERNAME, DB_PASSWORD, DB_HOST, DB_PORT
 from dotenv import load_dotenv
-
+from psycopg2 import extras
 
 def create_database():
-    """Connects to the default 'postgres' DB and creates DB_NAME if it doesn't exist."""
+    """Connect to default 'postgres' DB and create DB_NAME if it doesn't exist."""
     load_dotenv('.env')
     conn = psycopg2.connect(
-        dbname=DB_NAME,  # connect to default DB first
+        dbname=DB_NAME,
         user=DB_USERNAME,
         password=DB_PASSWORD,
         host=DB_HOST,
@@ -82,7 +82,7 @@ def ready_requirements_table():
     """
     execute_query(query)
 
-
+# use this to store document info
 def ready_documents_table():
     query = """
     CREATE TABLE IF NOT EXISTS documents (
@@ -150,6 +150,21 @@ def ready_request_requirements_links_table():
 
 # ==========================
 # SAMPLE DATA (OPTIONAL)
+# dummy student table to simulate external school database
+def ready_students_table():
+    query = """
+    CREATE TABLE IF NOT EXISTS students (
+        student_id VARCHAR(15) PRIMARY KEY,
+        full_name VARCHAR(150) NOT NULL,
+        contact_number VARCHAR(20),
+        email VARCHAR(100),
+        liability_status BOOLEAN DEFAULT FALSE  -- FALSE means clear, TRUE means has liability
+    );
+    """
+    execute_query(query)
+
+# ==========================
+# SAMPLE DATA
 # ==========================
 
 def insert_sample_data():
@@ -215,6 +230,85 @@ def insert_sample_data():
         cur.close()
         conn.close()
 
+    # =====================
+    # 1️⃣ Students (Dummy)
+    # =====================
+    student_values = [
+        ('STU0001', 'John Doe', '09171234567', 'john.doe@example.com', False),
+        ('STU0002', 'Jane Smith', '09281234567', 'jane.smith@example.com', True),
+        ('STU0003', 'Mark Reyes', '09991234567', 'mark.reyes@example.com', False)
+    ]
+
+    extras.execute_values(
+        cur,
+        """
+        INSERT INTO students (student_id, full_name, contact_number, email, liability_status)
+        VALUES %s
+        ON CONFLICT (student_id) DO NOTHING
+        """,
+        student_values
+    )
+
+    # =====================
+    # 2️⃣ Requirements
+    # =====================
+    req_values = [
+        ('REQ1', 'Valid ID'),
+        ('REQ2', 'Enrollment Form'),
+        ('REQ3', 'Payment Receipt'),
+    ]
+
+    cur.executemany(
+        """
+        INSERT INTO requirements (req_id, requirement_name)
+        VALUES (%s, %s)
+        ON CONFLICT (req_id) DO NOTHING
+        """,
+        req_values
+    )
+
+    # =====================
+    # 3️⃣ Documents
+    # =====================
+    doc_values = [
+        ('DOC1', 'Transcript of Records', 'Official academic transcript.', '/static/img/tor.png'),
+        ('DOC2', 'Certificate of Enrollment', 'Proof of current enrollment.', '/static/img/enrollment.png'),
+        ('DOC3', 'Certificate of Good Moral', 'Issued by the guidance office.', '/static/img/good_moral.png')
+    ]
+
+    cur.executemany(
+        """
+        INSERT INTO documents (doc_id, doc_name, description, logo_link)
+        VALUES (%s, %s, %s, %s)
+        ON CONFLICT (doc_id) DO NOTHING
+        """,
+        doc_values
+    )
+
+    # =====================
+    # 4️⃣ Document Requirements Mapping
+    # =====================
+    doc_req_values = [
+        ('DOC1', 'REQ1'),
+        ('DOC1', 'REQ2'),
+        ('DOC2', 'REQ1'),
+        ('DOC2', 'REQ3'),
+        ('DOC3', 'REQ1')
+    ]
+
+    cur.executemany(
+        """
+        INSERT INTO document_requirements (doc_id, req_id)
+        VALUES (%s, %s)
+        ON CONFLICT DO NOTHING
+        """,
+        doc_req_values
+    )
+
+    # Commit and close
+    conn.commit()
+    cur.close()
+
 
 # ==========================
 # INITIALIZE EVERYTHING
@@ -229,6 +323,7 @@ def initialize_db():
     ready_requests_table()
     ready_request_documents_table()
     ready_request_requirements_links_table()
+    ready_students_table()
     insert_sample_data()
     print("Database and tables initialized successfully.")
 

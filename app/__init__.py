@@ -13,6 +13,8 @@ from datetime import timedelta
 from dotenv import load_dotenv
 from app.db_init import initialize_db
 
+from app.db_init import initialize_db
+
 db_pool = None
 
 def create_app(test_config=None):
@@ -46,9 +48,9 @@ def create_app(test_config=None):
     app.config["JWT_COOKIE_CSRF_PROTECT"] = True
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
     app.config["JWT_COOKIE_SECURE"] = False  # set True in production (HTTPS only)
-    app.config["JWT_COOKIE_SAMESITE"] = "None"  # Changed to "None" for cross-origin
+    app.config["JWT_COOKIE_SAMESITE"] = "Lax"
    
-    # CORS CONFIGURATION - Allow frontend origin with credentials
+    # Allow frontend origin
     CORS(
         app,
         supports_credentials=True,
