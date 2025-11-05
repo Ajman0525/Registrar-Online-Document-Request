@@ -69,7 +69,7 @@ function Dashboard() {
 
       setCanScrollLeft(scrollLeft > scrollTolerance);
 
-      setCanScrollRight(scrollLeft + clientWidth < scrollWidth - scrollTolerance);
+      setCanScrollRight(scrollWidth > clientWidth && scrollLeft + clientWidth < scrollWidth - scrollTolerance);
     }
   };
 
