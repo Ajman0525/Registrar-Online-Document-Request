@@ -1,5 +1,5 @@
 .registrar-master-layout {
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   width: 100%;
   overflow: hidden;
