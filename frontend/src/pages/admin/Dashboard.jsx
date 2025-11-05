@@ -160,21 +160,19 @@ function Dashboard() {
       {/*--------------------- END OF HEADER CONTENT -------------------*/}
 
       {/*--------------------- START OF STAT CARDS ---------------------*/}
-      <div className="stat-cards-wrapper scroll-hide">
-        <section 
-          ref={scrollContainerReference}
-          className="stat-card-inner-scroll overflow-x-auto scroll-hide"
-        >
-          {cardData.map((card, index) => (
-            <StatCard
-              key={index}
-              title={card.title}
-              icon={card.icon}
-              value={card.value}
-              subText={card.subText}
-            />
-          ))}
-        </section>
+      <div 
+        className="stat-cards-wrapper scroll-hide"
+        ref={scrollContainerReference}
+      >
+        {cardData.map((card, index) => (
+          <StatCard
+            key={index}
+            title={card.title}
+            icon={card.icon}
+            value={card.value}
+            subText={card.subText}
+          />
+        ))}
         
         <ScrollButton
           direction="left"
