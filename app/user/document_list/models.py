@@ -37,7 +37,7 @@ class DocumentList:
             result = cur.fetchall()
             return result if result else []
         except Exception as e:
-            print(f"❌ Error fetching documents: {e}")
+            print(f"Error fetching documents: {e}")
             return []
         finally:
             cur.close()
