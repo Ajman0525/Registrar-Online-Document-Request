@@ -55,7 +55,7 @@ def get_request_page_data():
         }), 500
         
 #view requests
-@request_bp.route("/api/view_request", methods=["GET"])
+@request_bp.route("/api/view-request", methods=["GET"])
 @jwt_required_with_role(role)
 def view_request_page():
     """
@@ -91,7 +91,7 @@ def view_request_page():
     
     
 #submit requests
-@request_bp.route("/api/submit_request", methods=["POST"])
+@request_bp.route("/api/save-request", methods=["POST"])
 @jwt_required_with_role(role)
 def submit_request_page():
     """
@@ -117,14 +117,14 @@ def submit_request_page():
         }), 200
 
     except Exception as e:
-        print(f"Error in /api/submit_request: {e}")
+        print(f"Error in /api/save-request: {e}")
         return jsonify({
             "success": False,
             "notification": "An error occurred while submitting your request. Please try again later."
         }), 500
         
 
-@request_bp.route("/api/list_requirements", methods=["GET"])
+@request_bp.route("/api/list-requirements", methods=["GET"])
 @jwt_required_with_role(role)  # replace role variable as needed
 def get_requirements():
     """
@@ -155,7 +155,7 @@ def get_requirements():
     }), 200
 
 #submit requirement links
-@request_bp.route("/api/submit_links", methods=["POST"])
+@request_bp.route("/api/submit-links", methods=["POST"])
 @jwt_required_with_role(role)
 def submit_requirement_links():
     """
@@ -181,7 +181,7 @@ def submit_requirement_links():
 
 #proceed upload req button
 #get preferred contact
-@request_bp.route("/api/get_contact", methods=["GET"])
+@request_bp.route("/api/get-contact", methods=["GET"])
 @jwt_required_with_role(role)
 def get_preferred_contact():
     """
@@ -203,7 +203,7 @@ def get_preferred_contact():
         
 #next button in contact page
 #get the summary of request
-@request_bp.route("/api/request_summary", methods=["GET"])
+@request_bp.route("/api/summary", methods=["GET"])
 @jwt_required_with_role(role)
 def get_request_summary():
     """
@@ -236,7 +236,7 @@ def get_request_summary():
     }), 200
     
 #complete button in summary page
-@request_bp.route("/api/complete_request", methods=["POST"])
+@request_bp.route("/api/submit-request", methods=["POST"])
 @jwt_required_with_role(role)
 def complete_request():
     
@@ -249,7 +249,7 @@ def complete_request():
             "notification": "Your request has been completed successfully."
         }), 200
     except Exception as e:
-        print(f"Error in /api/complete_request: {e}")
+        print(f"Error in /api/submit-request: {e}")
         return jsonify({
             "success": False,
             "notification": "An error occurred while completing your request. Please try again later."
