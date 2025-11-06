@@ -1,22 +1,24 @@
 import requests
+import hashlib
+import random
 
 class AuthenticationUser:
     @staticmethod
     def check_student_in_school_system(student_id):
         """
-        Check if student exists in the school's external system
+        Checks if the student exists in the school's external system
         and whether they have liabilities.
         Returns a dict:
         {
             "exists": bool,
-            "has_liability": bool
+            "has_liability": bool,
+            "phone_number": str | None
         }
         """
 
-        # Placeholder API call (replace with real endpoint)
-        # Example structure only. School API docs will define the real one.
-        # Try/except to avoid app exploding if external site is down.
         try:
+            # Mock call to external school system
+            # Replace URL and logic with the real API when ready
             response = requests.post(
                 "https://school-api.example.com/check-student",
                 json={"student_id": student_id},
@@ -24,29 +26,45 @@ class AuthenticationUser:
             )
 
             if response.status_code != 200:
-                return {"exists": False, "has_liability": False}
+                return {"exists": False, "has_liability": False, "phone_number": None}
 
             data = response.json()
-
             return {
                 "exists": data.get("exists", False),
-                "has_liability": data.get("has_liability", False)
+                "has_liability": data.get("has_liability", False),
+                "phone_number": data.get("phone_number")  # from school record
             }
 
         except Exception:
-            # School site dead, server crying, whatever
-            return {"exists": False, "has_liability": False}
+            # School system offline, broken, or just hates you
+            return {"exists": False, "has_liability": False, "phone_number": None}
 
     @staticmethod
-    def save_otp(student_id, otp):
+    def generate_otp():
         """
-        Placeholder for saving OTP to database later.
+        Generate a random 6-digit OTP and return both plain and hash.
         """
-        pass
+        otp = random.randint(100000, 999999)
+        otp_hash = hashlib.sha256(str(otp).encode()).hexdigest()
+        return otp, otp_hash
 
     @staticmethod
-    def verify_otp(student_id, otp):
+    def save_otp(student_id, otp_hash, session):
         """
-        Placeholder for OTP verification later.
+        Save OTP hash to session (temporary) or database later.
         """
-        return False
+        session["otp"] = otp_hash
+        session["student_id"] = student_id
+
+    @staticmethod
+    def verify_otp(otp_input, session):
+        """
+        Compare entered OTP hash with stored hash.
+        """
+        entered_hash = hashlib.sha256(str(otp_input).encode()).hexdigest()
+        stored_hash = session.get("otp")
+
+        if not stored_hash:
+            return False
+
+        return entered_hash == stored_hash

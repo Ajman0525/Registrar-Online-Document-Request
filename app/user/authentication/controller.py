@@ -1,22 +1,22 @@
 from . import authentication_user_bp
-from flask import jsonify, request, session
+from flask import jsonify, request, session, current_app
 from .models import AuthenticationUser
-import random
+from flask_jwt_extended import create_access_token, set_access_cookies
 
-# Mock SMS sender (in production you replace this with an actual SMS API)
-# For now, it prints OTP in console for debugging/dev testing
+# Mock SMS sender (in production, replace this with an actual SMS API)
 def send_sms(phone, message):
     print("=========== DEV OTP ===========")
     print(f"To: {phone}")
     print(f"Message: {message}")
     print("================================")
 
+
 @authentication_user_bp.route('/check-id', methods=['POST'])
 def check_id():
-    # Get student ID sent from frontend
+    # Get student ID from frontend
     student_id = request.json.get("student_id")
 
-    # Query school database for student
+    # Query school database for student info
     result = AuthenticationUser.check_student_in_school_system(student_id)
 
     # Student not found in records
@@ -24,47 +24,82 @@ def check_id():
         return jsonify({
             "status": "not_found",
             "message": "Student ID not registered"
-        }),404
+        }), 404
 
-    # Student has unpaid liabilities, cannot proceed
+    # Student has unpaid liabilities
     if result["has_liability"]:
         return jsonify({
             "status": "has_liability",
             "message": "Student has outstanding liabilities"
-        }),200
-    
-    # Student found and clear; generate OTP
-    otp = random.randint(100000, 999999)
+        }), 200
 
-    # Save OTP in session (temporary server memory)
-    session["otp"]= str(otp)
+    # Generate OTP + hash it
+    otp, otp_hash = AuthenticationUser.generate_otp()
 
-    # Get phone number from database record
+    # Save OTP hash in session (temporary)
+    AuthenticationUser.save_otp(student_id, otp_hash, session)
+
+    # Send OTP to registered phone (printed in dev)
     phone = result["phone_number"]
-
-    # Send OTP (currently print only)
     send_sms(phone, f"Your verification code is: {otp}")
 
-    # Mask phone number; only show last 2 digits to user
+    # Return masked number to frontend
     return jsonify({
         "status": "valid",
         "message": "Student OK, continue",
         "masked_phone": phone[-2:]
     }), 200
 
+
+@authentication_user_bp.route('/resend-otp', methods=['POST'])
+def resend_otp():
+    """
+    Allows user to request OTP again if they didn’t receive it.
+    """
+    student_id = request.json.get("student_id")
+
+    result = AuthenticationUser.check_student_in_school_system(student_id)
+    if not result["exists"]:
+        return jsonify({"status": "not_found", "message": "Student not found"}), 404
+
+    otp, otp_hash = AuthenticationUser.generate_otp()
+    AuthenticationUser.save_otp(student_id, otp_hash, session)
+
+    phone = result["phone_number"]
+    send_sms(phone, f"Your new verification code is: {otp}")
+
+    return jsonify({
+        "status": "resent",
+        "message": "New OTP sent",
+        "masked_phone": phone[-2:]
+    }), 200
+
+
 @authentication_user_bp.route('/verify-otp', methods=['POST'])
 def verify_otp():
-    # OTP user entered
     otp = request.json.get("otp")
+    student_id = request.json.get("student_id")
 
-    # Compare OTP with session-stored OTP
-    if otp != session.get("otp"):
-        return jsonify({
-            "valid": False,
-            "message": "Invalid OTP"
-        }), 400
+    # Validate entered OTP
+    valid = AuthenticationUser.verify_otp(otp, session)
+    if not valid:
+        return jsonify({"valid": False, "message": "Invalid OTP"}), 400
 
-    # OTP correct, remove it from session so it can't be reused
+    # OTP correct, clear it
     session.pop("otp", None)
 
-    return jsonify({"valid": True}), 200
+    # Create JWT token for the session
+    user = {"student_id": student_id, "role": "user"}
+    access_token = create_access_token(
+        identity=user["student_id"],
+        additional_claims={"role": user["role"]}
+    )
+
+    response = jsonify({
+        "message": "User login successful",
+        "role": user["role"]
+    })
+    set_access_cookies(response, access_token)
+
+    current_app.logger.info(f"User {student_id} logged in successfully.")
+    return response, 200
