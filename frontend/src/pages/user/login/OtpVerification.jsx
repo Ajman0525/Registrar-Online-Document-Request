@@ -4,10 +4,13 @@ import "./Login.css";
 import ButtonLink from "../../../components/common/ButtonLink";
 import ContentBox from "../../../components/user/ContentBox";
 
-function OtpVerification({ onNext, onBack }) {
+function OtpVerification({ onNext, onBack, studentId }) {
   const [otpCode, setOtpCode] = useState("");
   const [error, setError] = useState("");
   const [shake, setShake] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [maskedPhone, setMaskedPhone] = useState("**");
+
   const navigate = useNavigate();
 
   const handleInputChange = (e) => {
@@ -16,33 +19,49 @@ function OtpVerification({ onNext, onBack }) {
   };
 
   const handleSubmit = async () => {
-    if (otpCode.length === 0) {
-      triggerError("Please fill in the OTP code.");
-    } else if (otpCode.length < 6) {
-      triggerError("Please enter a valid 6-digit OTP code.");
-    } 
+    if (otpCode.length < 6) return triggerError("Please enter a valid 6-digit OTP.");
 
     try {
       const response = await fetch("http://127.0.0.1:5000/verify-otp", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ otp: otpCode })
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ otp: otpCode, student_id: studentId })
       });
-      
-      const data = await response.json();
 
-      if (!data.valid){
-        return triggerError(data.message || "Invalid OTP code. Please try again.");
+      const data = await response.json();
+      if (!response.ok || data.valid === false) {
+        return triggerError(data.message || "Invalid OTP code. Try again.");
       }
 
-      setError("");
       navigate("/user/request");
-
-    } catch (error) {
+    } catch (err) {
       triggerError("Server error. Please try again.");
-      console.error(error);
+      console.error(err);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (resending) return; // prevent spam clicks
+    setResending(true);
+
+    try {
+      const response = await fetch("http://127.0.0.1:5000/resend-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ student_id: studentId })
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Failed to resend OTP.");
+
+      setMaskedPhone(data.masked_phone);
+      setError("");
+      console.log("New OTP sent to phone ending with", data.masked_phone);
+    } catch (err) {
+      triggerError("Failed to resend OTP. Please try again later.");
+      console.error(err);
+    } finally {
+      setResending(false);
     }
   };
 
@@ -64,9 +83,8 @@ function OtpVerification({ onNext, onBack }) {
         <div className="text-section">
           <h3 className="title">Enter 6-Digit Code</h3>
           <div className="subtext">
-            <p>We have sent a OTP to your school registered mobile number</p>
-            <p>*********54.</p>
-            <p>Please enter the 6-digit code below to continue.</p>
+            <p>We’ve sent an OTP to your registered mobile number</p>
+            <p>********{maskedPhone}.</p>
           </div>
         </div>
 
@@ -83,32 +101,24 @@ function OtpVerification({ onNext, onBack }) {
             inputMode="numeric"
             maxLength={6}
           />
-          <div className="error-section">
-            {error && <p className={`error-text ${shake ? "shake" : ""}`}>{error}</p>}
-          </div>
+          {error && <p className={`error-text ${shake ? "shake" : ""}`}>{error}</p>}
         </div>
 
         <div className="action-section">
           <div className="button-section">
-            <ButtonLink
-              onClick={onBack}
-              placeholder="Cancel"
-              className="cancel-button"
-              variant="secondary"
-            />
-
-            <ButtonLink
-              onClick={handleSubmit}
-              placeholder="Proceed"
-              className="proceed-button"
-            />
+            <ButtonLink onClick={onBack} placeholder="Cancel" className="cancel-button" variant="secondary" />
+            <ButtonLink onClick={handleSubmit} placeholder="Proceed" className="proceed-button" />
           </div>
 
           <div className="support-section">
-            <p className="subtext">Didn’t receive the code? </p>
-            <a href="mailto:support@example.com" className="forgot-id-link">
-              Resend OTP.
-            </a>
+            <p className="subtext">Didn’t receive the code?</p>
+            <button 
+              className="forgot-id-link" 
+              onClick={handleResendOtp} 
+              disabled={resending}
+            >
+              {resending ? "Resending..." : "Resend OTP"}
+            </button>
           </div>
         </div>
       </ContentBox>
