@@ -1,6 +1,6 @@
-import requests
 import hashlib
 import random
+import requests
 
 class AuthenticationUser:
     @staticmethod
