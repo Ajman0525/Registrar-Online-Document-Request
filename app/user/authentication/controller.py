@@ -2,6 +2,8 @@ from . import authentication_user_bp
 from flask import jsonify, request, session, current_app
 from .models import AuthenticationUser
 from flask_jwt_extended import create_access_token, set_access_cookies
+import random
+import hashlib
 
 # Mock SMS sender (in production, replace this with an actual SMS API)
 def send_sms(phone, message):
@@ -53,27 +55,31 @@ def check_id():
 
 @authentication_user_bp.route('/resend-otp', methods=['POST'])
 def resend_otp():
-    """
-    Allows user to request OTP again if they didn’t receive it.
-    """
     student_id = request.json.get("student_id")
 
+    # Get stored session to confirm an active OTP attempt
+    if "otp" not in session:
+        return jsonify({
+            "status": "expired",
+            "message": "No active OTP session. Please start again."
+        }), 400
+
+    # Generate new OTP
+    otp = random.randint(100000, 999999)
+    otp_hash = hashlib.sha256(str(otp).encode()).hexdigest()
+    session["otp"] = otp_hash  # replace old OTP
+
+    # Normally, phone comes from stored data or user record
     result = AuthenticationUser.check_student_in_school_system(student_id)
-    if not result["exists"]:
-        return jsonify({"status": "not_found", "message": "Student not found"}), 404
+    phone = result["phone_number"]  # or pull from your database
 
-    otp, otp_hash = AuthenticationUser.generate_otp()
-    AuthenticationUser.save_otp(student_id, otp_hash, session)
-
-    phone = result["phone_number"]
     send_sms(phone, f"Your new verification code is: {otp}")
 
     return jsonify({
         "status": "resent",
-        "message": "New OTP sent",
+        "message": "New OTP sent successfully",
         "masked_phone": phone[-2:]
     }), 200
-
 
 @authentication_user_bp.route('/verify-otp', methods=['POST'])
 def verify_otp():
