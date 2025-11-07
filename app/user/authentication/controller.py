@@ -5,13 +5,6 @@ from flask_jwt_extended import create_access_token, set_access_cookies
 import random
 import hashlib
 
-# Mock SMS sender (in production, replace this with an actual SMS API)
-def send_sms(phone, message):
-    print("=========== DEV OTP ===========")
-    print(f"To: {phone}")
-    print(f"Message: {message}")
-    print("================================")
-
 # Mock SMS sender (in production you replace this with an actual SMS API)
 # For now, it prints OTP in console for debugging/dev testing
 def send_sms(phone, message):
@@ -59,7 +52,6 @@ def check_id():
         "masked_phone": phone[-2:]
     }), 200
 
-
 @authentication_user_bp.route('/resend-otp', methods=['POST'])
 def resend_otp():
     student_id = request.json.get("student_id")
@@ -90,9 +82,11 @@ def resend_otp():
 
 @authentication_user_bp.route('/verify-otp', methods=['POST'])
 def verify_otp():
+    print("Received payload:", request.json)
+
     otp = request.json.get("otp")
     student_id = request.json.get("student_id")
-
+    
     # Validate entered OTP
     valid = AuthenticationUser.verify_otp(otp, session)
     if not valid:
