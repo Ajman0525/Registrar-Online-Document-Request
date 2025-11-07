@@ -1,43 +1,46 @@
 import hashlib
 import random
 import requests
+from ...db_init import get_connection
 
 class AuthenticationUser:
     @staticmethod
     def check_student_in_school_system(student_id):
         """
-        Check if student exists in the school's external system
-        and whether they have liabilities.
-        Returns a dict:
-        {
-            "exists": bool,
-            "has_liability": bool,
-            "phone_number": str | None
-        }
+        Checks the local 'students' table to confirm existence and liabilities.
         """
-
         try:
-            # Mock call to external school system
-            # Replace URL and logic with the real API when ready
-            response = requests.post(
-                "https://school-api.example.com/check-student",
-                json={"student_id": student_id},
-                timeout=5
+            conn = get_connection()
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT contact_number, liability_status FROM students WHERE student_id = %s",
+                (student_id,)
             )
+            row = cur.fetchone()
+            cur.close()
+            conn.close()
 
-            if response.status_code != 200:
-                return {"exists": False, "has_liability": False, "phone_number": None}
+            if not row:
+                return {
+                    "exists": False,
+                    "has_liability": False,
+                    "phone_number": None
+                }
 
-            data = response.json()
+            contact_number, liability_status = row
             return {
-                "exists": data.get("exists", False),
-                "has_liability": data.get("has_liability", False),
-                "phone_number": data.get("phone_number")  # from school record
+                "exists": True,
+                "has_liability": liability_status,
+                "phone_number": contact_number
             }
 
-        except Exception:
-            # School system offline, broken, or just hates you
-            return {"exists": False, "has_liability": False, "phone_number": None}
+        except Exception as e:
+            print(f"Database error while checking student: {e}")
+            return {
+                "exists": False,
+                "has_liability": False,
+                "phone_number": None
+            }
 
     @staticmethod
     def generate_otp():
