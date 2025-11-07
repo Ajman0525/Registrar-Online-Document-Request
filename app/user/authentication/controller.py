@@ -12,6 +12,13 @@ def send_sms(phone, message):
     print(f"Message: {message}")
     print("================================")
 
+# Mock SMS sender (in production you replace this with an actual SMS API)
+# For now, it prints OTP in console for debugging/dev testing
+def send_sms(phone, message):
+    print("=========== DEV OTP ===========")
+    print(f"To: {phone}")
+    print(f"Message: {message}")
+    print("================================")
 
 @authentication_user_bp.route('/check-id', methods=['POST'])
 def check_id():
@@ -26,9 +33,9 @@ def check_id():
         return jsonify({
             "status": "not_found",
             "message": "Student ID not registered"
-        }), 404
+        }),404
 
-    # Student has unpaid liabilities
+    # Student has unpaid liabilities, cannot proceed
     if result["has_liability"]:
         return jsonify({
             "status": "has_liability",

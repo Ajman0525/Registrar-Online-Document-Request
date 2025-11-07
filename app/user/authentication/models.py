@@ -6,7 +6,7 @@ class AuthenticationUser:
     @staticmethod
     def check_student_in_school_system(student_id):
         """
-        Checks if the student exists in the school's external system
+        Check if student exists in the school's external system
         and whether they have liabilities.
         Returns a dict:
         {

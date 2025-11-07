@@ -10,9 +10,15 @@ from flask_jwt_extended import (
 )
 from datetime import timedelta
 
+from app.db_init import initialize_db
+
 db_pool = None
 
 def create_app(test_config=None):
+    
+    #initialize the database (create tables if not exist)
+    initialize_db()
+    
     
     #in production
     app = Flask(__name__, instance_relative_config=True, static_folder="static/react", template_folder="templates")
@@ -30,7 +36,7 @@ def create_app(test_config=None):
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
     app.config["JWT_COOKIE_SECURE"] = False  # set True in production (HTTPS only)
     app.config["JWT_COOKIE_SAMESITE"] = "Lax"
-
+   
     # Allow frontend origin
     CORS(
         app,
