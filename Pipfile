@@ -9,6 +9,7 @@ psycopg2-binary = "*"
 python-dotenv = "*"
 flask-cors = "*"
 flask-jwt-extended = "*"
+requests = "*"
 
 [dev-packages]
 
