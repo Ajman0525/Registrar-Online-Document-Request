@@ -9,7 +9,7 @@ from flask_jwt_extended import (
     unset_jwt_cookies, jwt_required, get_jwt_identity
 )
 from datetime import timedelta
-
+from dotenv import load_dotenv
 from app.db_init import initialize_db
 
 db_pool = None
@@ -18,6 +18,7 @@ def create_app(test_config=None):
     
     #initialize the database (create tables if not exist)
     initialize_db()
+    load_dotenv()
     
     
     #in production
@@ -30,6 +31,8 @@ def create_app(test_config=None):
     # =====================
     #  CONFIG
     # =====================
+    app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev-secret-key")
+    
     app.config["JWT_SECRET_KEY"] = JWT_SECRET_KEY
     app.config["JWT_TOKEN_LOCATION"] = ["cookies"]  # store JWT in cookies
     app.config["JWT_COOKIE_CSRF_PROTECT"] = True     # enable CSRF protection
@@ -93,7 +96,7 @@ def create_app(test_config=None):
     
     #USER BLUEPRINTS
     from .user.authentication import authentication_user_bp as auth_user_blueprint
-    app.register_blueprint(auth_user_blueprint)
+    app.register_blueprint(auth_user_blueprint, url_prefix='/user')
     from .user.document_list import document_list_bp as document_list_blueprint
     app.register_blueprint(document_list_blueprint)
     from .user.landing import landing_bp as landing_blueprint
