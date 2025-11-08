@@ -48,21 +48,103 @@
 .view-documents-btn {
     width: 372px;
     height: 94px;
+    background-color: #007BFF;  /* blue */
     color: #ffffff;
     font-size: 28px;
     font-weight: 600;
     border-radius: 12px;
     display: block;
     text-align: center;
+    line-height: 94px;           /* vertical center the text */
+    margin: 30px auto 0 auto;    /* spacing above and centered horizontally */
+    text-decoration: none;       /* remove underline */
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.view-documents-btn:hover {
+    background-color: #0056b3;
+    transform: scale(1.03);
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 
-/* Bottom gray section */
+
+/* Bottom Section */
 .bottom-section {
-    height: 1501px;
-    background-color: #777777;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: #ffffff;
+    padding: 50px;
+}
+
+/* Grid layout for documents */
+.documents-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 30px;
+    justify-items: center;
+}
+
+/* Document Card */
+.document-card {
+    position: relative;
+    width: 250px;
+    height: 300px;
+    background: white;
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.card-image-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100px;
+}
+
+.card-bg {
+    width: 100%;
+    height: auto;
+    opacity: 0.1;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.card-logo {
+    width: 40px;
+    height: 40px;
+    position: relative;
+    top: 10px;
+    left: 10px;
+}
+
+.card-content {
+    margin-top: 20px;
+}
+
+.doc-name {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.doc-description {
+    font-size: 14px;
+    color: #555;
+    margin: 5px 0 10px;
+}
+
+.req-title {
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.req-list {
+    font-size: 13px;
+    color: #333;
+    list-style: none;
+    padding-left: 0;
 }
