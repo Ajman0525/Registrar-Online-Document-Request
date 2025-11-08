@@ -62,10 +62,10 @@ function EnterId({ onNext, onBack, maskedPhone, setMaskedPhone}) {
                 return;
             }
 
-            if (data.status === "has_liability") {
-                triggerError(data.message);
-                return;
-            }
+          if (data.status === "has_liability") {
+              onNext("liability");
+              return;
+          }
 
             setMaskedPhone(data.masked_phone);
             setError("");
