@@ -121,6 +121,63 @@
     display: block; 
 }
 
+/* ---------- NOTIFICATION PANEL ---------- */
+.notification-wrapper {
+    position: relative; 
+}
+
+.notification-panel {
+    position: absolute; 
+    
+    top: 100%; 
+    right: 0; 
+
+
+    width: 320px; 
+    background-color: var(--color-white, white);
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 50; 
+    margin-top: 10px; 
+}
+
+.notification-empty-state {
+    display: flex;
+    flex-direction: column; /* Stacks text/icon vertically if needed */
+    justify-content: center; /* Centers content vertically */
+    align-items: center; /* Centers content horizontally */
+    padding: 30px 20px; 
+    min-height: 100px; 
+    color: #888; 
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
+.notification-panel .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.notification-panel .panel-content {
+    max-height: 300px; 
+    overflow-y: auto;
+}
+
+.notification-panel .notification-item {
+    padding: 15px;
+    border-bottom: 1px solid #f5f5f5;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.notification-panel .notification-item:hover {
+    background-color: #f9f9f9;
+}
+
 /* ---------- DASHBOARD USER PROFILE ---------- */
 .user-profile-wrapper{
     display:flex;
