@@ -8,6 +8,7 @@ from flask_jwt_extended import (
     JWTManager, create_access_token, set_access_cookies, 
     unset_jwt_cookies, jwt_required, get_jwt_identity
 )
+from flask_session import Session
 from datetime import timedelta
 from dotenv import load_dotenv
 from app.db_init import initialize_db
@@ -32,19 +33,29 @@ def create_app(test_config=None):
     #  CONFIG
     # =====================
     app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev-secret-key")
+    app.config["SESSION_COOKIE_HTTPONLY"] = True
+    app.config["SESSION_COOKIE_SAMESITE"] = "None"  # Changed to "None" for cross-origin
+    app.config["SESSION_COOKIE_SECURE"] = False 
+    app.config["SESSION_TYPE"] = "filesystem" 
+
+    Session(app)
     
+    # JWT CONFIGURATION
     app.config["JWT_SECRET_KEY"] = JWT_SECRET_KEY
-    app.config["JWT_TOKEN_LOCATION"] = ["cookies"]  # store JWT in cookies
-    app.config["JWT_COOKIE_CSRF_PROTECT"] = True     # enable CSRF protection
+    app.config["JWT_TOKEN_LOCATION"] = ["cookies"]
+    app.config["JWT_COOKIE_CSRF_PROTECT"] = True
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
     app.config["JWT_COOKIE_SECURE"] = False  # set True in production (HTTPS only)
-    app.config["JWT_COOKIE_SAMESITE"] = "Lax"
+    app.config["JWT_COOKIE_SAMESITE"] = "None"  # Changed to "None" for cross-origin
    
-    # Allow frontend origin
+    # CORS CONFIGURATION - Allow frontend origin with credentials
     CORS(
         app,
         supports_credentials=True,
-        origins=["http://localhost:3000"],  # your React dev server
+        origins=["http://localhost:3000"],
+        allow_headers=["Content-Type", "Authorization"],
+        expose_headers=["Content-Type"],
+        methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
     )
     
     # Initialize JWT Manager
@@ -116,6 +127,3 @@ def create_app(test_config=None):
     
     register_error_handlers(app)
     return app
-
-
-
