@@ -144,9 +144,9 @@
 
 .notification-empty-state {
     display: flex;
-    flex-direction: column; /* Stacks text/icon vertically if needed */
-    justify-content: center; /* Centers content vertically */
-    align-items: center; /* Centers content horizontally */
+    flex-direction: column; 
+    justify-content: center; 
+    align-items: center; 
     padding: 30px 20px; 
     min-height: 100px; 
     color: #888; 
