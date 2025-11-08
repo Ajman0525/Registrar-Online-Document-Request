@@ -15,7 +15,7 @@ def admin_login():
         return jsonify({"error": "Username and password are required"}), 400
 
     # Dummy user for illustration
-    user = {"username": "admin", "role": "user"} if username == "user" and password == "1234" else None
+    user = {"username": "admin", "role": "admin"} if username == "admin" and password == "1234" else None
 
     if user:
         
