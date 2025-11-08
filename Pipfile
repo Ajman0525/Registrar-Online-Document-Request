@@ -10,6 +10,7 @@ python-dotenv = "*"
 flask-cors = "*"
 flask-jwt-extended = "*"
 requests = "*"
+flask-session = "*"
 
 [dev-packages]
 
