@@ -40,6 +40,10 @@ def check_id():
 
     # Save OTP hash in session (temporary)
     AuthenticationUser.save_otp(student_id, otp_hash, session)
+    session["phone_number"] = result["phone_number"]
+    
+    # DEBUG: Print session data
+    print(f"[DEBUG] Session after saving OTP: {dict(session)}")
 
     # Send OTP to registered phone (printed in dev)
     phone = result["phone_number"]
@@ -54,23 +58,21 @@ def check_id():
 
 @authentication_user_bp.route('/resend-otp', methods=['POST'])
 def resend_otp():
-    student_id = request.json.get("student_id")
+    # Debug print
+    print(f"[DEBUG] Session at resend: {dict(session)}")
 
-    # Get stored session to confirm an active OTP attempt
-    if "otp" not in session:
+    student_id = session.get("student_id")
+    phone = session.get("phone_number")
+
+    if not student_id or not phone:
         return jsonify({
             "status": "expired",
             "message": "No active OTP session. Please start again."
         }), 400
 
     # Generate new OTP
-    otp = random.randint(100000, 999999)
-    otp_hash = hashlib.sha256(str(otp).encode()).hexdigest()
+    otp, otp_hash = AuthenticationUser.generate_otp()
     session["otp"] = otp_hash  # replace old OTP
-
-    # Normally, phone comes from stored data or user record
-    result = AuthenticationUser.check_student_in_school_system(student_id)
-    phone = result["phone_number"]  # or pull from your database
 
     send_sms(phone, f"Your new verification code is: {otp}")
 
@@ -80,16 +82,32 @@ def resend_otp():
         "masked_phone": phone[-2:]
     }), 200
 
+
 @authentication_user_bp.route('/verify-otp', methods=['POST'])
 def verify_otp():
-    print("Received payload:", request.json)
+    # DEBUG: Print everything
+    print("=" * 50)
+    print("[DEBUG] Received payload:", request.json)
+    print("[DEBUG] Session contents:", dict(session))
+    print("[DEBUG] Session ID:", request.cookies.get('session'))
+    print("=" * 50)
 
     otp = request.json.get("otp")
-    student_id = request.json.get("student_id")
+    student_id = session.get("student_id")
+    
+    # Check if OTP exists in session
+    if "otp" not in session:
+        print("[ERROR] No OTP found in session!")
+        return jsonify({
+            "valid": False, 
+            "message": "Session expired. Please request a new OTP."
+        }), 400
     
     # Validate entered OTP
     valid = AuthenticationUser.verify_otp(otp, session)
+    
     if not valid:
+        print(f"[ERROR] OTP validation failed. Entered: {otp}")
         return jsonify({"valid": False, "message": "Invalid OTP"}), 400
 
     # OTP correct, clear it
@@ -104,9 +122,11 @@ def verify_otp():
 
     response = jsonify({
         "message": "User login successful",
-        "role": user["role"]
+        "role": user["role"],
+        "valid": True  # ADD THIS!
     })
     set_access_cookies(response, access_token)
 
     current_app.logger.info(f"User {student_id} logged in successfully.")
+    print("[SUCCESS] OTP verified, JWT token created")
     return response, 200
