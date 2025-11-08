@@ -110,6 +110,8 @@
     margin-right: -2px;
 
     border-radius: 20px;
+
+    transition: background-color 0.2s, box-shadow 0.2s, transform 0.1s;
 }
 
 .notification-icon-btn:hover{
