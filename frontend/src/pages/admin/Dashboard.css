@@ -120,8 +120,8 @@
 }
 
 .notification-icon-btn:active{
-    background-color: #e0e0e0; 
-    box-shadow: 0 0 0 10px #e0e0e0; 
+    background-color: var(--color-when-active); 
+    box-shadow: 0 0 0 10px var(--color-when-active); 
 }
 
 .notification-icon {
