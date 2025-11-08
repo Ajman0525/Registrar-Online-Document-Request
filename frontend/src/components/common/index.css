@@ -13,10 +13,10 @@
     --color-button-disabled: #E3E3E1;
 
     /* Shadow Colors when hovered */
-    --shadow-when-hovered: #f8f8f8;
+    --color-when-hovered: #f8f8f8;
 
     /* Shadow Colors when active */
-    --shadow-when-active: #e0e0e0;
+    --color-when-active: #e0e0e0;
 
     /* Text Colors */
     --color-white: #FFFFFF;
