@@ -1,5 +1,6 @@
 from os import getenv
 
+FLASK_SECRET_KEY = getenv("FLASK_SECRET_KEY")
 JWT_SECRET_KEY = getenv("JWT_SECRET_KEY")
 DB_NAME = getenv("DB_NAME")
 DB_USERNAME = getenv("DB_USERNAME")
