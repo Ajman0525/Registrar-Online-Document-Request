@@ -4,10 +4,13 @@ import "./Login.css";
 import ButtonLink from "../../../components/common/ButtonLink";
 import ContentBox from "../../../components/user/ContentBox";
 
-function OtpVerification({ onNext, onBack }) {
+function OtpVerification({ onNext, onBack, studentId, maskedPhone, setMaskedPhone}) {
   const [otpCode, setOtpCode] = useState("");
   const [error, setError] = useState("");
   const [shake, setShake] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [counter, setCounter] = useState(0);
+
   const navigate = useNavigate();
 
   const handleInputChange = (e) => {
@@ -16,35 +19,73 @@ function OtpVerification({ onNext, onBack }) {
   };
 
   const handleSubmit = async () => {
-    if (otpCode.length === 0) {
-      triggerError("Please fill in the OTP code.");
-    } else if (otpCode.length < 6) {
-      triggerError("Please enter a valid 6-digit OTP code.");
-    } 
+    if (otpCode.length < 6) return triggerError("Please enter a valid 6-digit OTP.");
 
     try {
-      const response = await fetch("http://127.0.0.1:5000/verify-otp", {
+      const response = await fetch("/user/verify-otp", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ otp: otpCode })
+        headers: { "Content-Type": "application/json" },
+        credentials: "include", 
+        body: JSON.stringify({ student_id: studentId, otp: otpCode })
       });
-      
-      const data = await response.json();
 
-      if (!data.valid){
-        return triggerError(data.message || "Invalid OTP code. Please try again.");
+      const data = await response.json();
+      
+      console.log("Verify OTP response:", data);
+      
+      if (!response.ok || data.valid === false) {
+        return triggerError(data.message || "Invalid OTP code. Try again.");
       }
 
-      setError("");
+      // Success - navigate to request page
       navigate("/user/request");
-
-    } catch (error) {
+    } catch (err) {
       triggerError("Server error. Please try again.");
-      console.error(error);
+      console.error("Verify OTP error:", err);
     }
   };
+
+  const handleResendOtp = async () => {
+    if (resending || counter > 0) return;
+
+    setResending(true);
+
+    try {
+      const response = await fetch("/user/resend-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ student_id: studentId }),
+      });
+
+      const data = await response.json();
+
+      if (data.status !== "resent") {
+        throw new Error(data.message || "Failed to resend OTP.");
+      }
+
+      setMaskedPhone(data.masked_phone);
+      setError("");
+      console.log("New OTP sent to phone ending with", data.masked_phone);
+
+      // Start countdown (e.g., 30 seconds)
+      setCounter(30);
+    } catch (err) {
+      triggerError(err.message || "Failed to resend OTP. Please try again later.");
+      console.error("Resend OTP error:", err);
+    } finally {
+      setResending(false);
+    }
+  };
+
+  // Countdown effect
+  useEffect(() => {
+    let timer;
+    if (counter > 0) {
+      timer = setTimeout(() => setCounter(counter - 1), 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [counter]);
 
   const triggerError = (message) => {
     setError(message);
@@ -64,14 +105,14 @@ function OtpVerification({ onNext, onBack }) {
         <div className="text-section">
           <h3 className="title">Enter 6-Digit Code</h3>
           <div className="subtext">
-            <p>We have sent a OTP to your school registered mobile number</p>
-            <p>*********54.</p>
-            <p>Please enter the 6-digit code below to continue.</p>
+            <p>We've sent an OTP to your registered mobile number</p>
+            <p>********{maskedPhone}.</p>
           </div>
         </div>
 
         <div className="input-section">
           <p className="subtext">6-Digit Code</p>
+          <div className="input-wrapper">
           <input
             id="Code"
             type="numeric"
@@ -83,6 +124,7 @@ function OtpVerification({ onNext, onBack }) {
             inputMode="numeric"
             maxLength={6}
           />
+          </div>
           <div className="error-section">
             {error && <p className={`error-text ${shake ? "shake" : ""}`}>{error}</p>}
           </div>
@@ -90,25 +132,23 @@ function OtpVerification({ onNext, onBack }) {
 
         <div className="action-section">
           <div className="button-section">
-            <ButtonLink
-              onClick={onBack}
-              placeholder="Cancel"
-              className="cancel-button"
-              variant="secondary"
-            />
-
-            <ButtonLink
-              onClick={handleSubmit}
-              placeholder="Proceed"
-              className="proceed-button"
-            />
+            <ButtonLink onClick={onBack} placeholder="Cancel" className="cancel-button" variant="secondary" />
+            <ButtonLink onClick={handleSubmit} placeholder="Proceed" className="proceed-button" />
           </div>
 
           <div className="support-section">
-            <p className="subtext">Didn’t receive the code? </p>
-            <a href="mailto:support@example.com" className="forgot-id-link">
-              Resend OTP.
-            </a>
+            <p className="subtext">Didn't receive the code?</p>
+            <button 
+              className="forgot-id-link" 
+              onClick={handleResendOtp} 
+              disabled={resending || counter > 0}
+            >
+              {resending 
+                ? "Resending..." 
+                : counter > 0 
+                  ? `Resend in ${counter}s` 
+                  : "Resend OTP"}
+            </button>
           </div>
         </div>
       </ContentBox>
