@@ -111,7 +111,7 @@ def ready_requests_table():
     CREATE TABLE IF NOT EXISTS requests (
         request_id VARCHAR(15) PRIMARY KEY,
         student_id VARCHAR(20) REFERENCES students(student_id) ON DELETE CASCADE,
-        full_name VARCHAR(100) NOT NULL,
+        full_name VARCHAR(100),
         contact_number VARCHAR(20),
         email VARCHAR(100),
         status VARCHAR(50) DEFAULT 'Pending',
