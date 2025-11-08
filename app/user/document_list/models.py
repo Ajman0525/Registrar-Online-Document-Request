@@ -35,7 +35,9 @@ class DocumentList:
             """
             cur.execute(query)
             result = cur.fetchall()
-            return result if result else []
+            
+            documents = [dict(row) for row in result]
+            return documents if documents else []
         except Exception as e:
             print(f"Error fetching documents: {e}")
             return []
