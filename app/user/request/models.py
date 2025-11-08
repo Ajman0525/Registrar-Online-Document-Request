@@ -4,9 +4,9 @@ import random
 
 class Request:
    
-   #Dummy function to simulate fetching student data from a Dummy DB called odr: 'students' table
-   @staticmethod
-   def get_student_data(student_id):
+    #Dummy function to simulate fetching student data from a Dummy DB called odr: 'students' table
+    @staticmethod
+    def get_student_data(student_id):
         """
         Fetch student details from the local dummy 'students' table.
         Returns a dictionary with student info or None if not found.
@@ -45,9 +45,9 @@ class Request:
             cur.close()
             db_pool.putconn(conn)
 
-   #Generate unique request ID
-   @staticmethod
-   def generate_unique_request_id():
+    #Generate unique request ID
+    @staticmethod
+    def generate_unique_request_id():
         """
         Generates a unique request ID in the format R0000000.
         Randomly generates numbers and ensures they do not exist in the DB.
@@ -74,9 +74,9 @@ class Request:
             cur.close()
             db_pool.putconn(conn)
             
-   #store request_id and student_id to db
-   @staticmethod
-   def store_request(request_id, student_id):
+    #store request_id and student_id to db
+    @staticmethod
+    def store_request(request_id, student_id):
         """
         Stores the request_id and student_id into the requests table.
         """
@@ -101,38 +101,41 @@ class Request:
             db_pool.putconn(conn)
             
    #store student full name, contact number, email to db
-   @staticmethod
-   def store_student_info(student_id, full_name, contact_number, email): 
-         """
-         Stores or updates the student's full name, contact number, and email in the students table.
-         """
-         conn = db_pool.getconn()
-         cur = conn.cursor()
-   
-         try:
-               cur.execute("""
-                  INSERT INTO students (student_id, full_name, contact_number, email)
-                  VALUES (%s, %s, %s, %s)
-                  ON CONFLICT (student_id) DO UPDATE
-                  SET full_name = EXCLUDED.full_name,
-                     contact_number = EXCLUDED.contact_number,
-                     email = EXCLUDED.email
-               """, (student_id, full_name, contact_number, email))
-               conn.commit()
-               return True
-   
-         except Exception as e:
-               print(f"Error storing student info: {e}")
-               conn.rollback()
-               return False
-   
-         finally:
-               cur.close()
-               db_pool.putconn(conn)      
+    @staticmethod
+    def store_student_info(request_id, student_id, full_name, contact_number, email):
+        """
+        Stores or updates the student's full name, contact number, and email
+        in the requests table based on request_id.
+        """
+        conn = db_pool.getconn()
+        cur = conn.cursor()
+
+        try:
+            cur.execute("""
+                INSERT INTO requests (request_id, student_id, full_name, contact_number, email)
+                VALUES (%s, %s, %s, %s, %s)
+                ON CONFLICT (request_id) DO UPDATE
+                SET full_name = EXCLUDED.full_name,
+                    contact_number = EXCLUDED.contact_number,
+                    email = EXCLUDED.email,
+                    student_id = EXCLUDED.student_id
+            """, (request_id, student_id, full_name, contact_number, email))
+            conn.commit()
+            return True
+
+        except Exception as e:
+            print(f"Error storing student info: {e}")
+            conn.rollback()
+            return False
+
+        finally:
+            cur.close()
+            db_pool.putconn(conn)
+    
    
    #store requested documents to db
-   @staticmethod
-   def store_requested_documents(request_id, document_ids, quantity_list):
+    @staticmethod
+    def store_requested_documents(request_id, document_ids, quantity_list):
         """
         Stores the requested documents along with their quantities into the request_documents table.
         """
@@ -158,8 +161,8 @@ class Request:
             db_pool.putconn(conn)
    
    #fetch requirements needed by request id      
-   @staticmethod
-   def get_requirements_by_request_id(request_id):
+    @staticmethod
+    def get_requirements_by_request_id(request_id):
         """
         Fetch all unique requirements for the documents in a given request.
         
@@ -199,8 +202,8 @@ class Request:
             cur.close()
             db_pool.putconn(conn)
             
-   @staticmethod
-   def submit_requirement_links(request_id, requirements):
+    @staticmethod
+    def submit_requirement_links(request_id, requirements):
         """
         Stores requirement links for a request.
         Args:
@@ -248,8 +251,8 @@ class Request:
             db_pool.putconn(conn)
             
     # get contact number and email by student id from requests table
-   @staticmethod
-   def get_contact_info_by_student_id(student_id):
+    @staticmethod
+    def get_contact_info_by_student_id(student_id):
         """
         Fetch contact number and email for a given student ID from the requests table.
 
@@ -283,8 +286,8 @@ class Request:
             cur.close()
             db_pool.putconn(conn)
 
-   @staticmethod
-   def get_request_documents_with_cost(request_id):
+    @staticmethod
+    def get_request_documents_with_cost(request_id):
         """
         Fetches all documents requested for a specific request,
         computes individual costs and total cost.
@@ -333,8 +336,8 @@ class Request:
             db_pool.putconn(conn)
 
     #mark request as complete
-   @staticmethod
-   def mark_request_complete(request_id):
+    @staticmethod
+    def mark_request_complete(request_id):
         """
         Marks a request as complete in the requests table.
         """
