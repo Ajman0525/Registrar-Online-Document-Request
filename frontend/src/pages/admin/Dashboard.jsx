@@ -11,6 +11,33 @@ import ProcessedIcon from "../../components/icons/ProcessedIcon";
 import ScrollLeft from "../../components/icons/ScrollLeft";
 import ScrollRight from "../../components/icons/ScrollRight";
 
+const NotificationPanel = ({ notifications, onClose }) => (
+  <div className="notification-panel">
+    <div className="panel-header">
+      <h3>Notifications</h3>
+      <button className="mark-read-btn">Mark all as read</button>
+    </div>
+    <div className="panel-content">
+      {notifications.length === 0 ? (
+        <div class = "notification-empty-state">
+          <p>No new notifications.</p>
+        </div>
+      ) : (
+        notifications.map(n => (
+          <div key={n.id} className="notification-item">
+            <div className="item-icon-type">
+              <span className={`item-icon ${n.type.replace(/\s/g, '-')}`}>{n.type === 'New Request' ? 'R' : 'D'}</span>
+              <p className="item-type">{n.type}</p>
+            </div>
+            <p className="item-message">{n.message}</p>
+            <span className="item-time">{n.time}</span>
+          </div>
+        ))
+      )}
+    </div>
+  </div>
+);
+
 const StatCard = ({ title, icon: Icon, value, subText }) => (
   <div className="stat-card">
     <div className="card-header">
@@ -43,8 +70,14 @@ const ScrollButton = ({ direction, onClick, isVisible }) => {
 
 function Dashboard() {
   const scrollContainerReference = useRef(null);
+  const notificationRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+
+  const toggleNotifications = () => {
+    setIsNotificationsOpen(prev => !prev);
+  };
 
   const scrollCards = (direction) => {
     if (scrollContainerReference.current) {
@@ -74,19 +107,28 @@ function Dashboard() {
 
   useEffect(() => {
     const container = scrollContainerReference.current;
+    
+    const handleClickOutside = (event) => {
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setIsNotificationsOpen(false);
+      }
+    };
+
     if (container) {
 
       updateScrollState();
 
       container.addEventListener('scroll', updateScrollState);
       window.addEventListener('resize', updateScrollState);
+      document.addEventListener('mousedown', handleClickOutside);
 
       return () => {
         container.removeEventListener('scroll', updateScrollState);
         window.removeEventListener('resize', updateScrollState);
+        document.removeEventListener('mousedown', handleClickOutside); 
       };
     }
-  }, []);
+  }, [isNotificationsOpen]);
   
   const cardData = [
     {
@@ -118,6 +160,9 @@ function Dashboard() {
     },
   ];
 
+  const notificationsData = [
+  ];
+
   return (
     <div className = "dashboard-content">
 
@@ -136,9 +181,20 @@ function Dashboard() {
               />
             </div>
 
-            <button className="notification-icon-btn">
-              <NotificationIcon className="notification-icon" />
-            </button>
+            <div className="notification-wrapper" ref={notificationRef}>
+              <button className="notification-icon-btn" onClick={toggleNotifications}>
+                <NotificationIcon className="notification-icon" />
+                {notificationsData.length > 0 && (
+                  <span className="notification-badge">{notificationsData.length}</span>
+                )}
+              </button>
+              {isNotificationsOpen && (
+                <NotificationPanel
+                  notifications={notificationsData}
+                  onClose={() => setIsNotificationsOpen(false)}
+                />
+              )}
+            </div>
 
             <div className = "user-profile-wrapper">
               <div className="user-profile">
