@@ -260,7 +260,6 @@
 
 .card-content-body {
     flex-grow: 1;
-    /* Indent content slightly */
     padding-left: 30px; 
 }
 
@@ -277,7 +276,6 @@
     margin-top: 5px;
 }
 
-/* Red slide arrow for mobile/scroll functionality */
 .card-slide-arrow {
     width: 24px;
     height: 24px;
