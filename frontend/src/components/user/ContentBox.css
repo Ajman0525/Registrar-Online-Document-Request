@@ -17,6 +17,7 @@
 }
 
 .content-box h3 {
+  color: var(--color-black);
   font-size: var(--font-size-title);
   font-weight: bold;
   margin: 0px;
@@ -32,14 +33,19 @@
     color: var(--color-text-subtext);
     font-size: var(--font-size-subtext);
 }
-
+.input-wrapper{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 44px;
+}
 input{
     background-color: var(--color-white);
     border-radius: 10px;
     padding: 0px 16px;
     flex-grow: 1;
     height: 40px;
-    border: 2px solid var(--color-primary);
+    border: 1px solid var(--color-input-border);
     outline: none;
 
     /* Placeholder */
@@ -47,9 +53,6 @@ input{
     font-family: var(--font-family-base);
 }
 
-input:hover{
-   border: 2px solid var(--color-button-primary-default);
-}
 
 input:focus{
    border: 2px solid var(--color-button-primary-default);
