@@ -23,7 +23,7 @@ function LiabilityDetected({ onNext, onBack }) {
                     variant="primary"
                     />
                     <div className="support-section">
-                        <p className="forgot-id-text">For more details, contact the</p>
+                        <p className="subtext">For more details, contact the</p>
                         <a href="mailto:support@example.com" className="forgot-id-link">support.</a>
                     </div>
                 </div>

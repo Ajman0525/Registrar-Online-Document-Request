@@ -98,6 +98,7 @@ function EnterId({ onNext, onBack, maskedPhone, setMaskedPhone}) {
 
                 <div className="input-section">
                     <p className="subtext">ID Number</p>
+                    <div className="input-wrapper">
                     <input 
                         id="student-id" 
                         type="text"
@@ -107,6 +108,7 @@ function EnterId({ onNext, onBack, maskedPhone, setMaskedPhone}) {
                         onChange={handleInputChange}
                         maxLength={9}
                     />
+                    </div>
                     <div className="error-section">
                     {error && <p className={`error-text ${shake ? "shake" : ""}`}>{error}</p>}
                     </div>
