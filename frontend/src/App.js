@@ -9,7 +9,7 @@ import DocumentList from "./pages/user/DocumentList";
 import Request from "./pages/user/Request";
 import RegistrarMasterLayout from "./pages/layouts/RegistrarMasterLayout";
 import Dashboard from "./pages/admin/Dashboard";
-import Documents from "./pages/admin/Documents";
+import Documents from "./pages/admin/Documents/Documents";
 import Requests from "./pages/admin/Requests";
 import Logs from "./pages/admin/Logs";
 
