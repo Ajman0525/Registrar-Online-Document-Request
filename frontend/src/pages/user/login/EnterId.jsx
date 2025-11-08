@@ -4,7 +4,7 @@ import ButtonLink from "../../../components/common/ButtonLink";
 import ContentBox from "../../../components/user/ContentBox";
 
 
-function EnterId({ onNext, onBack }) {
+function EnterId({ onNext, onBack, maskedPhone, setMaskedPhone}) {
     const [studentId, setStudentId] = useState("");
     const [error, setError] = useState("");
     const [shake, setShake] = useState(false);
@@ -24,7 +24,7 @@ function EnterId({ onNext, onBack }) {
         }
 
         try {
-            const response = await fetch("http://127.0.0.1:8000/user/check-id", {
+            const response = await fetch("/user/check-id", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
@@ -44,6 +44,7 @@ function EnterId({ onNext, onBack }) {
                 return;
             }
 
+            setMaskedPhone(data.masked_phone);
             setError("");
             onNext();
         } catch (error) {
