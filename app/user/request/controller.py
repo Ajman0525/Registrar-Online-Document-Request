@@ -17,8 +17,14 @@ def get_request_page_data():
     Step 3: Return JSON data to React
     """
     try:
+        
         # step 1: initialize the db
-        request_id = Request.generate_unique_request_id()
+        request_id = session.get("request_id")
+        
+        if not request_id:
+            request_id = Request.generate_unique_request_id()
+            session["request_id"] = request_id
+            
         #student_id = session.get("student_id")
 
         
@@ -37,7 +43,7 @@ def get_request_page_data():
         student_email = student_data.get("email")
         
         #Store student info in the database
-        Request.store_student_info(student_id, student_name, student_contact, student_email)
+        Request.store_student_info(request_id, student_id, student_name, student_contact, student_email)
 
         # Step 2: Fetch documents available for request
         documents = DocumentList.get_all_documents()
@@ -61,7 +67,7 @@ def get_request_page_data():
         }), 500
         
 #view requests
-@request_bp.route("/api/view-request", methods=["GET"])
+@request_bp.route("/api/view-request", methods=["POST"])
 @jwt_required_with_role(role)
 def view_request_page():
     """
