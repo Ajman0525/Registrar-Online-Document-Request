@@ -111,7 +111,7 @@ def ready_requests_table():
     CREATE TABLE IF NOT EXISTS requests (
         request_id VARCHAR(15) PRIMARY KEY,
         student_id VARCHAR(20) REFERENCES students(student_id) ON DELETE CASCADE,
-        full_name VARCHAR(100) NOT NULL,
+        full_name VARCHAR(100),
         contact_number VARCHAR(20),
         email VARCHAR(100),
         status VARCHAR(50) DEFAULT 'Pending',
@@ -158,8 +158,8 @@ def insert_sample_data():
     try:
         # Students
         student_values = [
-            ("2025-101", "Juan Dela Cruz", "09171234567", "juan@example.com", False),
-            ("2025-102", "Maria Clara", "09179876543", "maria@example.com", True)
+            ("2025-1011", "Juan Dela Cruz", "09171234567", "juan@example.com", False),
+            ("2025-1021", "Maria Clara", "09179876543", "maria@example.com", True)
         ]
         extras.execute_values(
             cur,
