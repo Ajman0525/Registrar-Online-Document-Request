@@ -60,4 +60,25 @@
     gap: 4px;
 }
 
+.forgot-id-link {
+  background: none;
+  border: none;
+  color: #007bff; /* or whatever accent color you want */
+  font-size: 0.95rem;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: none;
+}
+
+.forgot-id-link:hover {
+  color: #0056b3; /* darker shade for hover effect */
+}
+
+.forgot-id-link:disabled {
+  color: #aaa;
+  cursor: not-allowed;
+  text-decoration: none;
+}
+
+
 
