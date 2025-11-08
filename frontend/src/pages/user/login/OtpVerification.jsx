@@ -9,6 +9,7 @@ function OtpVerification({ onNext, onBack, studentId, maskedPhone, setMaskedPhon
   const [error, setError] = useState("");
   const [shake, setShake] = useState(false);
   const [resending, setResending] = useState(false);
+  const [counter, setCounter] = useState(0);
 
   const navigate = useNavigate();
 
@@ -45,36 +46,46 @@ function OtpVerification({ onNext, onBack, studentId, maskedPhone, setMaskedPhon
   };
 
   const handleResendOtp = async () => {
-  if (resending) return; 
-  setResending(true);
+    if (resending || counter > 0) return;
 
-  try {
-    const response = await fetch("/user/resend-otp", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ student_id: studentId })
-    });
+    setResending(true);
 
-    const data = await response.json();
+    try {
+      const response = await fetch("/user/resend-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ student_id: studentId }),
+      });
 
-    // Check backend status instead of just response.ok
-    if (data.status !== "resent") {
-      throw new Error(data.message || "Failed to resend OTP.");
+      const data = await response.json();
+
+      if (data.status !== "resent") {
+        throw new Error(data.message || "Failed to resend OTP.");
+      }
+
+      setMaskedPhone(data.masked_phone);
+      setError("");
+      console.log("New OTP sent to phone ending with", data.masked_phone);
+
+      // Start countdown (e.g., 30 seconds)
+      setCounter(30);
+    } catch (err) {
+      triggerError(err.message || "Failed to resend OTP. Please try again later.");
+      console.error("Resend OTP error:", err);
+    } finally {
+      setResending(false);
     }
+  };
 
-    setMaskedPhone(data.masked_phone);
-    setError("");
-    console.log("New OTP sent to phone ending with", data.masked_phone);
-
-  } catch (err) {
-    triggerError(err.message || "Failed to resend OTP. Please try again later.");
-    console.error("Resend OTP error:", err);
-  } finally {
-    setResending(false);
-  }
-};
-
+  // Countdown effect
+  useEffect(() => {
+    let timer;
+    if (counter > 0) {
+      timer = setTimeout(() => setCounter(counter - 1), 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [counter]);
 
   const triggerError = (message) => {
     setError(message);
@@ -101,6 +112,7 @@ function OtpVerification({ onNext, onBack, studentId, maskedPhone, setMaskedPhon
 
         <div className="input-section">
           <p className="subtext">6-Digit Code</p>
+          <div className="input-wrapper">
           <input
             id="Code"
             type="numeric"
@@ -112,7 +124,10 @@ function OtpVerification({ onNext, onBack, studentId, maskedPhone, setMaskedPhon
             inputMode="numeric"
             maxLength={6}
           />
-          {error && <p className={`error-text ${shake ? "shake" : ""}`}>{error}</p>}
+          </div>
+          <div className="error-section">
+            {error && <p className={`error-text ${shake ? "shake" : ""}`}>{error}</p>}
+          </div>
         </div>
 
         <div className="action-section">
@@ -126,9 +141,13 @@ function OtpVerification({ onNext, onBack, studentId, maskedPhone, setMaskedPhon
             <button 
               className="forgot-id-link" 
               onClick={handleResendOtp} 
-              disabled={resending}
+              disabled={resending || counter > 0}
             >
-              {resending ? "Resending..." : "Resend OTP"}
+              {resending 
+                ? "Resending..." 
+                : counter > 0 
+                  ? `Resend in ${counter}s` 
+                  : "Resend OTP"}
             </button>
           </div>
         </div>
