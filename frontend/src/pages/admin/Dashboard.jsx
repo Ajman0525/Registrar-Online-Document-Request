@@ -27,7 +27,7 @@ const StatCard = ({ title, icon: Icon, value, subText }) => (
 );
 
 const ScrollButton = ({ direction, onClick, isVisible }) => {
-  const iconClass = "w-6 h-6";
+  const iconClass = "arrow-icon";
   const baseClass = "card-slide-arrow";
 
   return (
