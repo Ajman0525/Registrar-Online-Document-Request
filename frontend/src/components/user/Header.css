@@ -36,7 +36,7 @@
 }
 .header-text{
     font-family: var(--font-family-base);
-    font-weight: bold;
+    font-weight: regular;
     font-size: var(--font-size-regular);
     color: var(--color-black);
 }
