@@ -25,7 +25,7 @@ const NotificationPanel = ({ notifications, onClose }) => (
         notifications.map(n => (
           <div key={n.id} className="notification-item">
             <div className="item-icon-type">
-              <span className={`item-icon ${n.type.replace(/\s/g, '-')}`}>{n.type === 'New Request' ? 'R' : 'D'}</span>
+              <span className={`item-icon ${n.type.replace(/\s/g, '-')}`}>{n.type === 'New Request' ? 'R' : 'D'}</span>  {/* To be replaced by icons based on the type of notification */}
               <p className="item-type">{n.type}</p>
             </div>
             <p className="item-message">{n.message}</p>
@@ -160,6 +160,9 @@ function Dashboard() {
   ];
 
   const notificationsData = [
+    // { id: 1, type: 'New Request', message: 'Request #4521 has been submitted.', time: '2 min ago' },
+    // { id: 2, type: 'Payment Due', message: 'Invoice #890 is due today.', time: '1 hour ago' },
+    // { id: 3, type: 'Document Ready', message: 'Document for Request #4490 is ready.', time: '5 hours ago' },
   ];
 
   return (
