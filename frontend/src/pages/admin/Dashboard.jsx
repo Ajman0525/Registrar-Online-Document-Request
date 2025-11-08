@@ -15,7 +15,6 @@ const NotificationPanel = ({ notifications, onClose }) => (
   <div className="notification-panel">
     <div className="panel-header">
       <h3>Notifications</h3>
-      {/* <button className="mark-read-btn">Mark all as read</button> */}
     </div>
     <div className="panel-content">
       {notifications.length === 0 ? (
