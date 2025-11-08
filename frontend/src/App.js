@@ -6,7 +6,7 @@ import UserMasterLayout from "./pages/layouts/UserMasterLayout";
 import LoginFlow from "./pages/user/login/LoginFlow";
 import Tracking from "./pages/user/Tracking";
 import DocumentList from "./pages/user/DocumentList";
-import Request from "./pages/user/Request";
+import Request from "./pages/user/request/Request";
 import RegistrarMasterLayout from "./pages/layouts/RegistrarMasterLayout";
 import Dashboard from "./pages/admin/Dashboard";
 import Documents from "./pages/admin/Documents";
