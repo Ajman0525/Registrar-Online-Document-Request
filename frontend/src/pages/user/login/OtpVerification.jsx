@@ -4,12 +4,11 @@ import "./Login.css";
 import ButtonLink from "../../../components/common/ButtonLink";
 import ContentBox from "../../../components/user/ContentBox";
 
-function OtpVerification({ onNext, onBack, studentId }) {
+function OtpVerification({ onNext, onBack, studentId, maskedPhone, setMaskedPhone}) {
   const [otpCode, setOtpCode] = useState("");
   const [error, setError] = useState("");
   const [shake, setShake] = useState(false);
   const [resending, setResending] = useState(false);
-  const [maskedPhone, setMaskedPhone] = useState("**");
 
   const navigate = useNavigate();
 
@@ -22,7 +21,7 @@ function OtpVerification({ onNext, onBack, studentId }) {
     if (otpCode.length < 6) return triggerError("Please enter a valid 6-digit OTP.");
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/user/verify-otp", {
+      const response = await fetch("/user/verify-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include", 
@@ -30,41 +29,52 @@ function OtpVerification({ onNext, onBack, studentId }) {
       });
 
       const data = await response.json();
+      
+      console.log("Verify OTP response:", data);
+      
       if (!response.ok || data.valid === false) {
         return triggerError(data.message || "Invalid OTP code. Try again.");
       }
 
+      // Success - navigate to request page
       navigate("/user/request");
     } catch (err) {
       triggerError("Server error. Please try again.");
-      console.error(err);
+      console.error("Verify OTP error:", err);
     }
   };
 
   const handleResendOtp = async () => {
-    if (resending) return; // prevent spam clicks
-    setResending(true);
+  if (resending) return; 
+  setResending(true);
 
-    try {
-      const response = await fetch("http://127.0.0.1:8000/user/resend-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ student_id: studentId })
-      });
+  try {
+    const response = await fetch("/user/resend-otp", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ student_id: studentId })
+    });
 
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || "Failed to resend OTP.");
+    const data = await response.json();
 
-      setMaskedPhone(data.masked_phone);
-      setError("");
-      console.log("New OTP sent to phone ending with", data.masked_phone);
-    } catch (err) {
-      triggerError("Failed to resend OTP. Please try again later.");
-      console.error(err);
-    } finally {
-      setResending(false);
+    // Check backend status instead of just response.ok
+    if (data.status !== "resent") {
+      throw new Error(data.message || "Failed to resend OTP.");
     }
-  };
+
+    setMaskedPhone(data.masked_phone);
+    setError("");
+    console.log("New OTP sent to phone ending with", data.masked_phone);
+
+  } catch (err) {
+    triggerError(err.message || "Failed to resend OTP. Please try again later.");
+    console.error("Resend OTP error:", err);
+  } finally {
+    setResending(false);
+  }
+};
+
 
   const triggerError = (message) => {
     setError(message);
@@ -84,7 +94,7 @@ function OtpVerification({ onNext, onBack, studentId }) {
         <div className="text-section">
           <h3 className="title">Enter 6-Digit Code</h3>
           <div className="subtext">
-            <p>We’ve sent an OTP to your registered mobile number</p>
+            <p>We've sent an OTP to your registered mobile number</p>
             <p>********{maskedPhone}.</p>
           </div>
         </div>
@@ -112,7 +122,7 @@ function OtpVerification({ onNext, onBack, studentId }) {
           </div>
 
           <div className="support-section">
-            <p className="subtext">Didn’t receive the code?</p>
+            <p className="subtext">Didn't receive the code?</p>
             <button 
               className="forgot-id-link" 
               onClick={handleResendOtp} 
