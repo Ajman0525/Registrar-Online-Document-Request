@@ -8,7 +8,7 @@ from app.user.document_list.models import DocumentList
 role = 'user'
 
 @request_bp.route("/api/request", methods=["GET"])
-@jwt_required_with_role(role)
+#@jwt_required_with_role(role)
 def get_request_page_data():
     """
     Step 1: Initialize the db with the student_id and request_id 
@@ -19,8 +19,12 @@ def get_request_page_data():
     try:
         # step 1: initialize the db
         request_id = Request.generate_unique_request_id()
-        student_id = get_jwt_identity()
-    
+        #student_id = session.get("student_id")
+
+        
+        #delete this later(dev testing only and uncomment the line above)
+        student_id = "2025-1011"
+        
         ##store req_id and student_id to db
         Request.store_request(request_id, student_id)
         
@@ -38,8 +42,10 @@ def get_request_page_data():
         # Step 2: Fetch documents available for request
         documents = DocumentList.get_all_documents()
 
-        session[request_id] = request_id  # Store request_id in session for later use
+        session["request_id"] = request_id  # Store request_id in session for later use
         # Step 3: send the needed data to React
+        print(f"Request Page Data: request_id={request_id}, student_name={student_name}, documents={documents}")
+        
         return jsonify({
             "status": "success",
             "request_id": request_id,

@@ -34,6 +34,7 @@ class Request:
                 "liability_status": bool(row[4])
             }
 
+            print(f"Fetched student data: {student_data}")  
             return student_data
 
         except Exception as e:
