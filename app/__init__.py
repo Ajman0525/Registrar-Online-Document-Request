@@ -36,7 +36,7 @@ def create_app(test_config=None):
     # =====================
     app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev-secret-key")
     app.config["SESSION_COOKIE_HTTPONLY"] = True
-    app.config["SESSION_COOKIE_SAMESITE"] = "None"  # Changed to "None" for cross-origin
+    app.config["SESSION_COOKIE_SAMESITE"] = "lax"  
     app.config["SESSION_COOKIE_SECURE"] = False 
     app.config["SESSION_TYPE"] = "filesystem" 
 
@@ -48,9 +48,8 @@ def create_app(test_config=None):
     app.config["JWT_COOKIE_CSRF_PROTECT"] = True
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
     app.config["JWT_COOKIE_SECURE"] = False  # set True in production (HTTPS only)
-    app.config["JWT_COOKIE_SAMESITE"] = "Lax"
-   
-    # Allow frontend origin
+    app.config["JWT_COOKIE_SAMESITE"] = "lax"  
+    # CORS CONFIGURATION - Allow frontend origin with credentials
     CORS(
         app,
         supports_credentials=True,
