@@ -49,9 +49,8 @@ def get_request_page_data():
         documents = DocumentList.get_all_documents()
 
         session["request_id"] = request_id  # Store request_id in session for later use
-        # Step 3: send the needed data to React
-        print(f"Request Page Data: request_id={request_id}, student_name={student_name}, documents={documents}")
         
+        # Step 3: send the needed data to React
         return jsonify({
             "status": "success",
             "request_id": request_id,
@@ -65,42 +64,7 @@ def get_request_page_data():
             "status": "error",
             "message": "An unexpected error occurred while fetching request data."
         }), 500
-        
-#view requests
-@request_bp.route("/api/view-request", methods=["POST"])
-@jwt_required_with_role(role)
-def view_request_page():
-    """
-    Accepts selected documents from React and returns them as JSON.
-    If no documents are selected, return a user-friendly notification.
-    """
-    data = request.get_json()
 
-    # Check if the 'documents' key exists
-    if not data or "documents" not in data:
-        return jsonify({
-            "success": False,
-            "notification": "No documents were selected.",
-            "documents": []
-        }), 200  # 200 so frontend can handle it gracefully
-
-    selected_docs = data.get("documents", [])
-
-    # If the list is empty, return a notification
-    if not selected_docs:
-        return jsonify({
-            "success": False,
-            "notification": "Please select at least one document before proceeding.",
-            "documents": []
-        }), 200
-
-    # If documents exist, return them
-    return jsonify({
-        "success": True,
-        "message": "Documents sent successfully.",
-        "documents": selected_docs
-    }), 200
-    
     
 #submit requests
 @request_bp.route("/api/save-request", methods=["POST"])
