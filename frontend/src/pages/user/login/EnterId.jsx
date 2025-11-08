@@ -10,10 +10,33 @@ function EnterId({ onNext, onBack, maskedPhone, setMaskedPhone}) {
     const [shake, setShake] = useState(false);
 
     const handleInputChange = (e) => {
-        let value = e.target.value.replace(/[^0-9]/g, ""); // keep only numbers
-        if (value.length > 4) value = value.slice(0, 4) + "-" + value.slice(4, 8);
-        setStudentId(value);
+    let value = e.target.value;
+
+    // Remove any character that's not a digit or dash
+    value = value.replace(/[^0-9-]/g, "");
+
+    // Remove any dashes not at 5th position
+    if (value.includes("-")) {
+        const dashIndex = value.indexOf("-");
+        if (dashIndex !== 4) {
+        value = value.replace("-", "");
+        }
+        // Remove additional dashes after the first valid one
+        value = value.slice(0, 5) + value.slice(5).replace(/-/g, "");
     }
+
+    // Auto-insert dash after 4 digits if not present
+    if (value.length > 4 && value[4] !== "-") {
+        value = value.slice(0, 4) + "-" + value.slice(4);
+    }
+
+    // Limit total length to 9 (8 digits + 1 dash)
+    if (value.length > 9) value = value.slice(0, 9);
+
+    setStudentId(value);
+    };
+
+
 
     const handleSubmit = async () => {
         if (studentId.length === 0) {
