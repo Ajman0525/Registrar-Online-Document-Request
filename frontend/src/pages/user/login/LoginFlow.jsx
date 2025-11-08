@@ -7,10 +7,14 @@ function LoginFlow() {
   const [step, setStep] = useState("enter-id");
   const [maskedPhone, setMaskedPhone] = useState("**");
 
-  const goNext = () => {
-    if (step === "enter-id") setStep("otp");
-    else if (step === 'otp') setStep("liability");
-  }
+  const goNext = (nextStep) => {
+    if (nextStep) {
+      setStep(nextStep);
+    } else {
+      if (step === "enter-id") setStep("otp");
+      else if (step === "otp") setStep("liability");
+    }
+  };
 
   const goBack = () => {
     if (step === "otp") setStep("enter-id");
