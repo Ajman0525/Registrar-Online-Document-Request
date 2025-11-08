@@ -84,3 +84,14 @@
     color: white;
     font-weight: 550;
 }
+
+.admin-sidebar .nav-item:not(.active):active {
+    background-color: #7B1317; 
+    transform: scale(0.99); 
+}
+
+
+.admin-sidebar .nav-item.active:active {
+    background-color: #7B1317; 
+    transform: scale(0.99);
+}
