@@ -272,7 +272,7 @@ function Dashboard() {
       {/*--------------------- END OF HEADER CONTENT -------------------*/}
 
       {/*--------------------- START OF STAT CARDS ---------------------*/}
-      <div className="scroll-shell"> 
+      <div className="stat-cards-content"> 
         <div 
           className="stat-cards-wrapper scroll-hide"
           ref={scrollContainerReference}
