@@ -118,7 +118,7 @@ def ready_requests_table():
         status VARCHAR(50) DEFAULT 'Unconfirmed',
         payment_status BOOLEAN DEFAULT FALSE,
         total_cost NUMERIC(10,2) DEFAULT 0.00,
-        requested_at TIMESTAMP DEFAULT NOW()
+        requested_at TIMESTAMP DEFAULT NOW(),
         completed_at TIMESTAMP NULL
     )
     """
