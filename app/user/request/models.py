@@ -1,6 +1,7 @@
 from flask import g
 from app import db_pool
 import random
+from psycopg2 import extras
 
 class Request:
    
@@ -138,11 +139,18 @@ class Request:
     def store_requested_documents(request_id, document_ids, quantity_list):
         """
         Stores the requested documents along with their quantities into the request_documents table.
+        Deletes all existing documents for the request_id before inserting new ones.
         """
         conn = db_pool.getconn()
         cur = conn.cursor()
 
         try:
+            # Delete all existing documents for this request_id
+            cur.execute("""
+                DELETE FROM request_documents
+                WHERE request_id = %s
+            """, (request_id,))
+
             for doc_id, quantity in zip(document_ids, quantity_list):
                 cur.execute("""
                     INSERT INTO request_documents (request_id, doc_id, quantity)
@@ -203,7 +211,7 @@ class Request:
             db_pool.putconn(conn)
             
     @staticmethod
-    def submit_requirement_links(request_id, requirements):
+    def store_requirement_links(request_id, requirements):
         """
         Stores requirement links for a request.
         Args:
