@@ -82,7 +82,8 @@ function EnterTrackId({ onNext }) {
         <div className="Track-page">
             <ContentBox>
                 <div className="text-section">
-                    <h3 className="title">Track Request</h3>
+                    <h3 className="title">Track your request</h3>
+                    <p className="subtext">Only verified students can access request status. Make sure you have your registered number ready.</p>
                 </div>
 
                 <div className="input-section">

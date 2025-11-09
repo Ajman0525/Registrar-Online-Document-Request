@@ -9,8 +9,15 @@
    color: var(--color-black);
 }
 
+.text-section .subtext{
+    color: var(--color-text-subtext);
+    font-size: 14px;
+    margin: 0px;
+}
+
 .text-section p{
     text-align: center;
+    width: 450px;
 }
 
 .input-section{
