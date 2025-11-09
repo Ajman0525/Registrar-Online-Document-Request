@@ -32,6 +32,8 @@ def get_request_page_data():
         
         #delete this later(dev testing only and uncomment the line above)
         student_id = "2025-1011"
+        session["student_id"] = student_id
+        
         
         ##store req_id and student_id to db
         Request.store_request(request_id, student_id)
@@ -188,7 +190,7 @@ def get_preferred_contact():
     """
     Fetches the preferred contact method for the logged-in student.
     """
-    student_id = get_jwt_identity()
+    student_id = session.get("student_id")  
     contact_info = Request.get_contact_info_by_student_id(student_id)
 
     if contact_info:
@@ -267,15 +269,19 @@ def get_request_summary():
     }), 200
     
 #complete button in summary page
-@request_bp.route("/api/complete-request", methods=["GET"])
+@request_bp.route("/api/complete-request", methods=["POST"])
 #@jwt_required_with_role(role)
 def complete_request():
 
     request_id = session.get("request_id")
     print(f"Completing request_id: {request_id}")
-    
+
     try:
-        Request.mark_request_complete(request_id)
+        # Fetch the total cost before marking complete
+        summary = Request.get_request_documents_with_cost(request_id)
+        total_cost = summary.get("total_cost", 0.0)
+
+        Request.mark_request_complete(request_id, total_cost)
         return jsonify({
             "success": True,
             "request_id": request_id,
