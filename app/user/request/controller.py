@@ -103,7 +103,7 @@ def save_documents():
         
 
 @request_bp.route("/api/list-requirements", methods=["GET"])
-@jwt_required_with_role(role)  # replace role variable as needed
+#@jwt_required_with_role(role)  
 def get_requirements():
     """
     Returns all unique requirements for a specific request.
@@ -134,7 +134,7 @@ def get_requirements():
 
 #submit requirement files
 @request_bp.route("/api/save-file", methods=["POST"])
-@jwt_required_with_role(role)
+#@jwt_required_with_role(role)
 def submit_requirement_files():
     """
     Accepts requirement files from React, saves them to disk, and stores file paths to the database.
@@ -183,7 +183,7 @@ def submit_requirement_files():
 #proceed upload req button
 #get preferred contact
 @request_bp.route("/api/get-contact", methods=["GET"])
-@jwt_required_with_role(role)
+#@jwt_required_with_role(role)
 def get_preferred_contact():
     """
     Fetches the preferred contact method for the logged-in student.
@@ -205,7 +205,7 @@ def get_preferred_contact():
 #next button in contact page
 #get the summary of request
 @request_bp.route("/api/summary", methods=["GET"])
-@jwt_required_with_role(role)
+#@jwt_required_with_role(role)
 def get_request_summary():
     """
     Fetches a summary of the request including documents.
@@ -238,7 +238,7 @@ def get_request_summary():
     
 #complete button in summary page
 @request_bp.route("/api/submit-request", methods=["POST"])
-@jwt_required_with_role(role)
+#@jwt_required_with_role(role)
 def complete_request():
     
     request_id = session.get("request_id")
@@ -246,7 +246,6 @@ def complete_request():
         Request.mark_request_complete(request_id)
         return jsonify({
             "success": True,
-            "request_id": request_id, # for tracking purposes: TRACKING ID
             "notification": "Your request has been completed successfully."
         }), 200
     except Exception as e:
