@@ -1,7 +1,7 @@
 /* ----------------------------------- */
 /*       DASHBOARD HEADER CONTENT      */
 /* ----------------------------------- */
-.dashboard-header {
+.dashboard-header-wrapper {
     background-color: var(--color-white);
     padding: 15px 15px; 
     margin-bottom: 30px;
@@ -13,7 +13,7 @@
     font-family: var(--font-family-base);
 }
 
-.dashboard-header h1 {
+.dashboard-header-wrapper h1 {
     font-family: var(--font-family-base);
     font-size: var(--font-size-title);
     font-weight: 600;
