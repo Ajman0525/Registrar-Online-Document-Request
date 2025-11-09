@@ -10,7 +10,7 @@ from werkzeug.utils import secure_filename
 role = 'user'
 
 @request_bp.route("/api/request", methods=["GET"])
-#@jwt_required_with_role(role)
+@jwt_required_with_role(role)
 def get_request_page_data():
     """
     Step 1: Initialize the db with the student_id and request_id 
@@ -66,7 +66,7 @@ def get_request_page_data():
     
 #submit requests
 @request_bp.route("/api/save-documents", methods=["POST"])
-#@jwt_required_with_role(role)
+@jwt_required_with_role(role)
 def save_documents():
     """
     Accepts final submission data from React and processes the request.
@@ -99,7 +99,7 @@ def save_documents():
         
 
 @request_bp.route("/api/list-requirements", methods=["GET"])
-#@jwt_required_with_role(role)  
+@jwt_required_with_role(role)  
 def get_requirements():
     """
     Returns all unique requirements for a specific request.
@@ -130,7 +130,7 @@ def get_requirements():
 
 #submit requirement files
 @request_bp.route("/api/save-file", methods=["POST"])
-#@jwt_required_with_role(role)
+@jwt_required_with_role(role)
 def submit_requirement_files():
     """
     Accepts requirement files from React, saves them to disk, and stores file paths to the database.
@@ -176,10 +176,10 @@ def submit_requirement_files():
     status_code = 200 if success else 400
     return jsonify({"success": success, "notification": message}), status_code
 
-#proceed upload req button
+
 #get preferred contact
 @request_bp.route("/api/get-contact", methods=["GET"])
-#@jwt_required_with_role(role)
+@jwt_required_with_role(role)
 def get_preferred_contact():
     """
     Fetches the preferred contact method for the logged-in student.
@@ -200,7 +200,7 @@ def get_preferred_contact():
 
 #set preferred contact
 @request_bp.route("/api/set-preferred-contact", methods=["POST"])
-#@jwt_required_with_role(role)
+@jwt_required_with_role(role)
 def set_preferred_contact():
     """
     Sets the preferred contact method for the request.
@@ -230,7 +230,7 @@ def set_preferred_contact():
         
 #complete button in summary page
 @request_bp.route("/api/complete-request", methods=["POST"])
-#@jwt_required_with_role(role)
+@jwt_required_with_role(role)
 def complete_request():
 
     request_id = session.get("request_id")
