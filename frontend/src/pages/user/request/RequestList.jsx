@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import "./RequestList.css";
 
-function RequestList({ selectedDocs = [], onBack, onProceed, requestId }) {
+function RequestList({ selectedDocs = [], onBack, onProceed}) {
   const initialQuantities = selectedDocs.reduce((acc, doc) => {
     acc[doc.doc_id] = 1;
     return acc;
@@ -27,7 +27,6 @@ function RequestList({ selectedDocs = [], onBack, onProceed, requestId }) {
   // Function to save documents to backend
   const saveDocuments = async (updatedDocs) => {
     const payload = {
-      request_id: requestId,
       document_ids: updatedDocs.map((doc) => doc.doc_id),
       quantity_list: updatedDocs.map((doc) => doc.quantity),
     };
