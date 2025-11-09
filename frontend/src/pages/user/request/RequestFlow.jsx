@@ -123,7 +123,7 @@ function RequestFlow() {
           onNext={() => {
             // Fetch complete request here
             fetch("/api/complete-request", {
-              method: "GET",
+              method: "POST",
             })
               .then((response) => response.json())
               .then((data) => {
