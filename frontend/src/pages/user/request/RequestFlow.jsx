@@ -120,10 +120,14 @@ function RequestFlow() {
           uploadedFiles={uploadedFiles}
           preferredContactInfo={preferredContactInfo}
           contactInfo={contactInfo}
-          onNext={() => {
+          onNext={(totalPrice) => {
             // Fetch complete request here
             fetch("/api/complete-request", {
               method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ total_price: totalPrice }),
             })
               .then((response) => response.json())
               .then((data) => {
