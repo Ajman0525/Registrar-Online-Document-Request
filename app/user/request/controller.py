@@ -234,40 +234,6 @@ def set_preferred_contact():
             "notification": "Failed to update preferred contact method."
         }), 500
         
-#next button in contact page
-#get the summary of request
-@request_bp.route("/api/summary", methods=["GET"])
-#@jwt_required_with_role(role)
-def get_request_summary():
-    """
-    Fetches a summary of the request including documents.
-    """
-    request_id = session.get("request_id")
-
-    if not request_id:
-        return jsonify({
-            "success": False,
-            "notification": "Missing request_id parameter.",
-            "summary": {}
-        }), 400
-
-    summary = Request.get_request_documents_with_cost(request_id)
-
-    # Sample Output:
-    # {
-    #     "documents": [
-    #         {"doc_id": "DOC0001", "doc_name": "Certificate of Residency", "quantity": 2, "unit_cost": 50.0, "total_cost": 100.0},
-    #         {"doc_id": "DOC0002", "doc_name": "Barangay Clearance", "quantity": 1, "unit_cost": 75.0, "total_cost": 75.0}
-    #     ],
-    #     "total_cost": 175.0
-    # }
-    
-    
-    return jsonify({
-        "success": True,
-        "summary": summary
-    }), 200
-    
 #complete button in summary page
 @request_bp.route("/api/complete-request", methods=["POST"])
 #@jwt_required_with_role(role)

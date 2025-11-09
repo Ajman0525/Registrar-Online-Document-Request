@@ -321,55 +321,6 @@ class Request:
             cur.close()
             db_pool.putconn(conn)
 
-    @staticmethod
-    def get_request_documents_with_cost(request_id):
-        """
-        Fetches all documents requested for a specific request,
-        computes individual costs and total cost.
-        
-        Returns:
-            dict: {
-                "documents": [
-                    {"doc_id": ..., "doc_name": ..., "quantity": ..., "unit_cost": ..., "total_cost": ...},
-                    ...
-                ],
-                "total_cost": ...
-            }
-        """
-        conn = db_pool.getconn()
-        cur = conn.cursor(cursor_factory=extras.RealDictCursor)
-
-        try:
-            # Join request_documents with documents to get cost
-            query = """
-                SELECT 
-                    rd.doc_id,
-                    d.doc_name,
-                    rd.quantity,
-                    d.cost AS unit_cost,
-                    (rd.quantity * d.cost) AS total_cost
-                FROM request_documents rd
-                JOIN documents d ON rd.doc_id = d.doc_id
-                WHERE rd.request_id = %s
-            """
-            cur.execute(query, (request_id,))
-            docs = cur.fetchall()
-
-            total_cost = sum(doc["total_cost"] for doc in docs) if docs else 0.0
-
-            return {
-                "documents": docs,
-                "total_cost": total_cost
-            }
-
-        except Exception as e:
-            print(f"Error fetching request documents with cost: {e}")
-            return {"documents": [], "total_cost": 0.0}
-
-        finally:
-            cur.close()
-            db_pool.putconn(conn)
-
     #mark request as complete
     @staticmethod
     def mark_request_complete(request_id, total_cost):
