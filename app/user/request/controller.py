@@ -4,6 +4,8 @@ from app.utils.decorator import jwt_required_with_role
 from flask_jwt_extended import get_jwt_identity
 from .models import Request
 from app.user.document_list.models import DocumentList
+import os
+from werkzeug.utils import secure_filename
 
 role = 'user'
 
@@ -130,28 +132,51 @@ def get_requirements():
         "requirements": result["requirements"]
     }), 200
 
-#submit requirement links
-@request_bp.route("/api/submit-links", methods=["POST"])
+#submit requirement files
+@request_bp.route("/api/save-file", methods=["POST"])
 @jwt_required_with_role(role)
-def submit_requirement_links():
+def submit_requirement_files():
     """
-    Accepts requirement links from React and stores them to the database.
-    Expected JSON format:
-    {
-        "request_id": "R0000123",
-        "requirements": [
-            {"requirement_id": "REQ0001", "file_link": "https://example.com/id.png"},
-            {"requirement_id": "REQ0002", "file_link": "https://example.com/address.pdf"}
-        ]
-    }
+    Accepts requirement files from React, saves them to disk, and stores file paths to the database.
+    Expected multipart/form-data format:
+    - request_id: "R0000123"
+    - requirements: JSON string like [{"requirement_id": "REQ0001"}, {"requirement_id": "REQ0002"}]
+    - files: file uploads with keys like "file_REQ0001", "file_REQ0002"
     """
-    
-    data = request.get_json()
     request_id = session.get("request_id")
-    requirements = data.get("requirements")
+    requirements_json = request.form.get("requirements")
+    if not requirements_json:
+        return jsonify({"success": False, "notification": "No requirements provided."}), 400
 
-    #store requirement links to db
-    success, message = Request.submit_requirement_links(request_id, requirements)
+    try:
+        import json
+        requirements = json.loads(requirements_json)
+    except json.JSONDecodeError:
+        return jsonify({"success": False, "notification": "Invalid requirements format."}), 400
+
+    # Directory to save files
+    upload_dir = os.path.join(os.getcwd(), 'uploads', request_id)
+    os.makedirs(upload_dir, exist_ok=True)
+
+    saved_files = []
+    for req in requirements:
+        requirement_id = req.get("requirement_id")
+        if not requirement_id:
+            continue
+        file_key = f"file_{requirement_id}"
+        if file_key in request.files:
+            file = request.files[file_key]
+            if file.filename:
+                filename = secure_filename(file.filename)
+                file_path = os.path.join(upload_dir, f"{requirement_id}_{filename}")
+                file.save(file_path)
+                saved_files.append({"requirement_id": requirement_id, "file_path": file_path})
+
+    if not saved_files:
+        return jsonify({"success": False, "notification": "No files uploaded."}), 400
+
+    #store requirement files to db
+    success, message = Request.store_requirement_files(request_id, saved_files)
     status_code = 200 if success else 400
     return jsonify({"success": success, "notification": message}), status_code
 

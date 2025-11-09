@@ -211,12 +211,12 @@ class Request:
             db_pool.putconn(conn)
             
     @staticmethod
-    def store_requirement_links(request_id, requirements):
+    def store_requirement_files(request_id, requirements):
         """
-        Stores requirement links for a request.
+        Stores requirement files for a request.
         Args:
             request_id (str): The request ID.
-            requirements (list of dict): Each dict contains 'requirement_id' and 'file_link'.
+            requirements (list of dict): Each dict contains 'requirement_id' and 'file_path'.
         Returns:
             tuple: (success: bool, message: str)
         """
@@ -230,29 +230,29 @@ class Request:
             insert_values = []
             for req in requirements:
                 requirement_id = req.get("requirement_id")
-                file_link = req.get("file_link")
-                if not requirement_id or not file_link:
+                file_path = req.get("file_path")
+                if not requirement_id or not file_path:
                     continue
-                insert_values.append((request_id, requirement_id, file_link))
+                insert_values.append((request_id, requirement_id, file_path))
 
             if not insert_values:
-                return False, "No valid requirement links provided."
+                return False, "No valid requirement files provided."
 
             # Bulk insert with ON CONFLICT
             cur.executemany("""
-                INSERT INTO request_requirements_links (request_id, requirement_id, file_link)
+                INSERT INTO request_requirements_links (request_id, requirement_id, file_path)
                 VALUES (%s, %s, %s)
                 ON CONFLICT (request_id, requirement_id)
-                DO UPDATE SET file_link = EXCLUDED.file_link, uploaded_at = NOW()
+                DO UPDATE SET file_path = EXCLUDED.file_path, uploaded_at = NOW()
             """, insert_values)
 
             conn.commit()
-            return True, "Requirement links submitted successfully."
+            return True, "Requirement files submitted successfully."
 
         except Exception as e:
             conn.rollback()
-            print(f"Error submitting requirement links: {e}")
-            return False, "Failed to submit requirement links."
+            print(f"Error submitting requirement files: {e}")
+            return False, "Failed to submit requirement files."
 
         finally:
             cur.close()

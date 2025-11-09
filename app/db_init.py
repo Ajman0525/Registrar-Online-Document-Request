@@ -134,13 +134,13 @@ def ready_request_documents_table():
     """
     execute_query(query)
 
-#mapping table between requests and requirements with uploaded file links
+#mapping table between requests and requirements with uploaded file paths
 def ready_request_requirements_links_table():
     query = """
     CREATE TABLE IF NOT EXISTS request_requirements_links (
         request_id VARCHAR(15) REFERENCES requests(request_id) ON DELETE CASCADE,
         requirement_id VARCHAR(10) REFERENCES requirements(req_id) ON DELETE CASCADE,
-        file_link VARCHAR(255) NOT NULL,
+        file_path VARCHAR(255) NOT NULL,
         uploaded_at TIMESTAMP DEFAULT NOW(),
         PRIMARY KEY (request_id, requirement_id)
     )
