@@ -304,9 +304,13 @@ function Dashboard() {
 
       {/*------------------ START OF RECENT ACTIVITY ------------------*/}
 
-      <section className="content-area">
-        <h2>Recent Activity</h2>
-      </section>
+      <div className="recent-activity-content">
+        <div className="recent-activity-wrapper">
+          <section className="recent-activity-content">
+            <h2>Recent Activity</h2>
+          </section>
+        </div>
+      </div>
 
       {/*------------------ START OF RECENT ACTIVITY ------------------*/}
     </div>

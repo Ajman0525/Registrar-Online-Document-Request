@@ -493,8 +493,8 @@
 }
 
 /* --- Placeholder for the section below --- */
-.content-area {
-    padding: 25px; 
+.recent-activity-content {
+    padding: 2px 0 0 2px; 
     margin: 0 15px 30px 15px;
     background-color: white;
     border-radius: 8px;
