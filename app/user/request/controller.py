@@ -245,6 +245,9 @@ def complete_request():
 
     try:
         Request.mark_request_complete(request_id, total_price)
+        
+        #Todo send details include: request id to preferred contact
+        
         return jsonify({
             "success": True,
             "request_id": request_id,
