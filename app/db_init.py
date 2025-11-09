@@ -114,9 +114,10 @@ def ready_requests_table():
         full_name VARCHAR(100),
         contact_number VARCHAR(20),
         email VARCHAR(100),
+        preferred_contact VARCHAR(50),
         status VARCHAR(50) DEFAULT 'Unconfirmed',
         payment_status BOOLEAN DEFAULT FALSE,
-        total_cost NUMERIC(10,2) DEFAULT 0.00, 
+        total_cost NUMERIC(10,2) DEFAULT 0.00,
         requested_at TIMESTAMP DEFAULT NOW()
     )
     """
