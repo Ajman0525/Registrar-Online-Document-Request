@@ -406,14 +406,14 @@
     background-color: var(--color-white, white); 
     padding: 25px;
     border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.05); 
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.05); 
     min-height: 150px; 
     transition: transform 0.2s;
 }
 
 .stat-card:hover {
     transform: scale(1.01);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .card-header {
