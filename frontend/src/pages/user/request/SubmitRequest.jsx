@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import "./SubmitRequest.css";
 
 function SubmitRequest({ selectedDocs, uploadedFiles, preferredContactInfo, contactInfo, trackingId, onBack }) {
@@ -11,8 +11,6 @@ function SubmitRequest({ selectedDocs, uploadedFiles, preferredContactInfo, cont
    * - trackingId: string, the tracking ID from the complete request
    * - onBack: function handler for Back button
    */
-
-  const [loading, setLoading] = useState(false);
 
     return (
       <div className="submit-request-container" aria-live="polite">
