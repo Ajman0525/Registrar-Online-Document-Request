@@ -372,9 +372,9 @@ class Request:
 
     #mark request as complete
     @staticmethod
-    def mark_request_complete(request_id):
+    def mark_request_complete(request_id, total_cost):
         """
-        Marks a request as complete in the requests table.
+        Marks a request as complete in the requests table and stores the total cost.
         """
         conn = db_pool.getconn()
         cur = conn.cursor()
@@ -382,9 +382,9 @@ class Request:
         try:
             cur.execute("""
                 UPDATE requests
-                SET status = 'submitted', completed_at = NOW()
+                SET status = 'submitted', completed_at = NOW(), total_cost = %s
                 WHERE request_id = %s
-            """, (request_id,))
+            """, (total_cost, request_id))
             conn.commit()
 
         except Exception as e:
