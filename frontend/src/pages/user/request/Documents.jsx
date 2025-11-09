@@ -86,6 +86,7 @@ function Request({ selectedDocs, setSelectedDocs, onNext }) {
                                         <li key={index}>{req}</li>
                                     ))}
                                 </ul>
+                                <p className="doc-Cost">Price: {doc.cost} </p>
                             </div>
                         </div>
                     ))}
