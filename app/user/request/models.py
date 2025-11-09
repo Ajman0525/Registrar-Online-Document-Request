@@ -168,17 +168,17 @@ class Request:
             cur.close()
             db_pool.putconn(conn)
    
-   #fetch requirements needed by request id      
+   #fetch requirements needed by request id
     @staticmethod
     def get_requirements_by_request_id(request_id):
         """
         Fetch all unique requirements for the documents in a given request.
-        
+
         Args:
             request_id (str): The request ID (e.g., "R0000123")
-        
+
         Returns:
-            dict: {"requirements": [<requirement names>]}
+            dict: {"requirements": [{"req_id": "REQ0001", "requirement_name": "Birth Certificate"}, ...]}
         """
         if not request_id:
             return {"requirements": []}
@@ -188,7 +188,7 @@ class Request:
 
         try:
             query = """
-                SELECT DISTINCT r.requirement_name
+                SELECT DISTINCT r.req_id, r.requirement_name
                 FROM request_documents rd
                 JOIN document_requirements dr ON rd.doc_id = dr.doc_id
                 JOIN requirements r ON dr.req_id = r.req_id
@@ -198,8 +198,8 @@ class Request:
             cur.execute(query, (request_id,))
             rows = cur.fetchall()
 
-            # Extract just the requirement names
-            requirement_list = [row[0] for row in rows] if rows else []
+            # Extract req_id and requirement_name
+            requirement_list = [{"req_id": row[0], "requirement_name": row[1]} for row in rows] if rows else []
             return {"requirements": requirement_list}
 
         except Exception as e:
