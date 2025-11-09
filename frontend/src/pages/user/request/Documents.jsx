@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./Documents.css";
 import files from "./assets/files.png";
+import { getCSRFToken } from "../../../utils/csrf";
 
 function Documents({ selectedDocs, setSelectedDocs, onNext }) {
     const [documents, setDocuments] = useState([]);
@@ -12,7 +13,13 @@ function Documents({ selectedDocs, setSelectedDocs, onNext }) {
 
     // Fetch JSON data
     useEffect(() => {
-        fetch("/api/request")
+        fetch("/api/request", {
+            method: "GET",
+            headers: {
+                "X-CSRF-TOKEN": getCSRFToken(),
+            },
+            credentials: "include",
+        })
             .then((res) => res.json())
             .then((data) => {
                 setDocuments(data.documents || []);

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import "./RequestList.css";
+import { getCSRFToken } from "../../../utils/csrf";
 
 function RequestList({ selectedDocs = [], onBack, onProceed}) {
   const initialQuantities = selectedDocs.reduce((acc, doc) => {
@@ -36,7 +37,9 @@ function RequestList({ selectedDocs = [], onBack, onProceed}) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "X-CSRF-TOKEN": getCSRFToken(),
         },
+        credentials: "include",
         body: JSON.stringify(payload),
       });
 

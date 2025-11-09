@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "./PreferredContact.css";
+import { getCSRFToken } from "../../../utils/csrf";
 
 function PreferredContact({ preferredContactInfo = {}, setPreferredContactInfo, contactInfo, setContactInfo, onNext, onBack }) {
   /*
@@ -16,7 +17,13 @@ function PreferredContact({ preferredContactInfo = {}, setPreferredContactInfo, 
 
   // Fetch contact info on component mount
   useEffect(() => {
-    fetch("/api/get-contact")
+    fetch("/api/get-contact", {
+      method: "GET",
+      headers: {
+        "X-CSRF-TOKEN": getCSRFToken(),
+      },
+      credentials: "include",
+    })
       .then((response) => response.json())
       .then((data) => {
         if (data.success) {
@@ -44,13 +51,14 @@ function PreferredContact({ preferredContactInfo = {}, setPreferredContactInfo, 
       alert("Please select a preferred contact method.");
       return;
     }
-    // Send the selected method to the backend
+  // Send the selected method to the backend
     fetch("/api/set-preferred-contact", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        credentials: "include", 
+        "X-CSRF-TOKEN": getCSRFToken(),
       },
+      credentials: "include",
       body: JSON.stringify({ preferred_contact: selectedMethod }),
     })
       .then((response) => response.json())
