@@ -27,14 +27,8 @@ def get_request_page_data():
             request_id = Request.generate_unique_request_id()
             session["request_id"] = request_id
             
-        #student_id = session.get("student_id")
-
-        
-        #delete this later(dev testing only and uncomment the line above)
-        student_id = "2025-1011"
-        session["student_id"] = student_id
-        
-        
+        student_id = session.get("student_id")
+              
         ##store req_id and student_id to db
         Request.store_request(request_id, student_id)
         
