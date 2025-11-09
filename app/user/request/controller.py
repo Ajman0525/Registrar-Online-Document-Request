@@ -67,7 +67,7 @@ def get_request_page_data():
 
     
 #submit requests
-@request_bp.route("/api/save-request", methods=["POST"])
+@request_bp.route("/api/save-documents", methods=["POST"])
 @jwt_required_with_role(role)
 def submit_request_page():
     """
@@ -78,6 +78,7 @@ def submit_request_page():
     """accepts data from react: request id, document id, quantity"""
     data = request.get_json()
 
+    
     try:
         #store requested documents to db
         Request.store_requested_documents(
@@ -88,7 +89,6 @@ def submit_request_page():
 
         return jsonify({
             "success": True,
-            "request_id": data["request_id"],
             "notification": "Your request has been submitted successfully."
         }), 200
 
