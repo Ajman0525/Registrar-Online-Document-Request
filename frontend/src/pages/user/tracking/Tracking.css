@@ -71,3 +71,59 @@
     gap: 4px;
 }
 
+/* Documents Ready Button Style */
+
+.choice-section {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.choice-buttons {
+    display: flex;
+    gap: 1rem;
+    width: 100%;
+    justify-content: center;
+}
+
+.choice-button {
+    width: 150px;
+    height: 150px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: flex-start;
+    text-align: left;
+    padding: 1rem;
+    font-weight: bold;
+    line-height: 1.2;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+/* "pick up at Registrar" button style */
+.choice-button.pickup-button {
+    background-color: var(--color-button-gray);
+    color: var(--color-black);
+}
+
+.choice-button.pickup-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    background-color: var(--color-button-gray);
+    color: var(--color-black);
+}
+
+/* "delivery" button style */
+.choice-button.delivery-button {
+    background-color: var(--color-button-red);
+    color: var(--color-white);
+}
+
+.choice-button.delivery-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    background-color: var(--color-button-red);
+    color: var(--color-white);
+}
