@@ -14,6 +14,17 @@ import SettingsIcon from "../../components/icons/SettingsIcon";
 import ProfileIcon from "../../components/icons/ProfileIcon";
 import LogoutIcon from "../../components/icons/LogoutIcon";
 
+
+const ActivityItem = ({ activity }) => (
+  <div className="activity-item">
+    <div className="activity-details">
+      <p className="activity-message">Request #{activity.request_id} by {activity.full_name} - {activity.status}</p>
+      <span className="activity-time">{activity.requested_at}</span>
+    </div>
+  </div>
+);
+
+
 const NotificationPanel = ({ notifications, onClose }) => (
   <div className="notification-panel">
     <div className="panel-header">
@@ -21,7 +32,7 @@ const NotificationPanel = ({ notifications, onClose }) => (
     </div>
     <div className="panel-content">
       {notifications.length === 0 ? (
-        <div class = "notification-empty-state">
+        <div class="notification-empty-state">
           <p>No new notifications.</p>
         </div>
       ) : (
@@ -39,6 +50,7 @@ const NotificationPanel = ({ notifications, onClose }) => (
     </div>
   </div>
 );
+
 
 const UserProfilePanel = ({ onClose, onLogout }) => (
   <div className="user-profile-panel">
@@ -69,6 +81,7 @@ const UserProfilePanel = ({ onClose, onLogout }) => (
   </div>
 );
 
+
 const StatCard = ({ title, icon: Icon, value, subText }) => (
   <div className="stat-card">
     <div className="card-header">
@@ -84,9 +97,11 @@ const StatCard = ({ title, icon: Icon, value, subText }) => (
   </div>
 );
 
+
 const ScrollButton = ({ direction, onClick, isVisible }) => {
   const iconClass = "arrow-icon";
   const baseClass = "card-slide-arrow";
+
 
   return (
     <div
@@ -96,8 +111,10 @@ const ScrollButton = ({ direction, onClick, isVisible }) => {
       {direction === 'left' ? <ScrollLeft className={iconClass} /> : <ScrollRight className={iconClass} />}
     </div>
 
+
   );
 }
+
 
 function Dashboard() {
   const scrollContainerReference = useRef(null);
@@ -107,28 +124,55 @@ function Dashboard() {
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
+
+
 
 
   const toggleProfile = () => {
     setIsProfileOpen(prev => !prev);
   };
 
-  const handleLogout = () => {
-    console.log('Logging out...');
+
+  const handleLogout = async () => {
+    try {
+      const csrfToken = getCSRFToken();
+      const response = await fetch('/api/admin/logout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken,
+        },
+        credentials: 'include',
+      });
+      if (response.ok) {
+        navigate('/admin/login');
+      } else {
+        console.error('Logout failed');
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
     setIsProfileOpen(false);
   };
+
 
   const toggleNotifications = () => {
     setIsNotificationsOpen(prev => !prev);
   };
 
+
   const scrollCards = (direction) => {
     if (scrollContainerReference.current) {
-      const scrollAmount = 360; 
+      const scrollAmount = 360;
       const currentScroll = scrollContainerReference.current.scrollLeft;
       const newScroll = direction === 'left'
         ? currentScroll - scrollAmount
         : currentScroll + scrollAmount;
+
 
       scrollContainerReference.current.scrollTo({
         left: newScroll,
@@ -137,20 +181,57 @@ function Dashboard() {
     }
   };
 
+
   const updateScrollState = () => {
     if (scrollContainerReference.current) {
       const { scrollLeft, scrollWidth, clientWidth } = scrollContainerReference.current;
       const scrollTolerance = 1;
 
+
       setCanScrollLeft(scrollLeft > scrollTolerance);
+
 
       setCanScrollRight(scrollWidth > clientWidth && scrollLeft + clientWidth < scrollWidth - scrollTolerance);
     }
   };
 
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const csrfToken = getCSRFToken();
+        const response = await fetch('/api/admin/dashboard', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': csrfToken,
+          },
+          credentials: 'include',
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setDashboardData(data);
+        } else if (response.status === 401) {
+          navigate('/admin/login');
+        } else {
+          setError('Failed to load dashboard data');
+        }
+      } catch (err) {
+        setError('Error fetching dashboard data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+
+    fetchDashboardData();
+  }, [navigate]);
+
+
   useEffect(() => {
     const container = scrollContainerReference.current;
-    
+
+
     const handleClickOutside = (event) => {
       if (notificationReference.current && !notificationReference.current.contains(event.target)) {
         setIsNotificationsOpen(false);
@@ -160,75 +241,86 @@ function Dashboard() {
       }
     };
 
+
     if (container) {
 
+
       updateScrollState();
+
 
       container.addEventListener('scroll', updateScrollState);
       window.addEventListener('resize', updateScrollState);
       document.addEventListener('mousedown', handleClickOutside);
 
+
       return () => {
         container.removeEventListener('scroll', updateScrollState);
         window.removeEventListener('resize', updateScrollState);
-        document.removeEventListener('mousedown', handleClickOutside); 
+        document.removeEventListener('mousedown', handleClickOutside);
       };
     }
-  }, [isNotificationsOpen, isProfileOpen]);
-  
-  const cardData = [
+  }, [isNotificationsOpen, isProfileOpen, dashboardData]);
+  const cardData = dashboardData ? [
     {
       title: "Total Requests",
       icon: TotalRequestsIcon,
-      value: "2,345",
-      subText: "↑ 5% from last month"
+      value: dashboardData.stats.total_requests.toLocaleString(),
+      subText: "Total requests in system"
     },
-
     {
       title: "Pending Requests",
       icon: PendingIcon,
-      value: "78",
-      subText: "7 are overdue"
+      value: dashboardData.stats.pending_requests.toString(),
+      subText: "Requests in progress"
     },
-    
     {
       title: "Unpaid Requests",
       icon: UnpaidIcon,
-      value: "₱1,250.00",
+      value: `₱${parseFloat(dashboardData.stats.unpaid_requests || 0).toFixed(2)}`,
       subText: "Total outstanding value"
     },
-
     {
       title: "Documents Ready",
       icon: ProcessedIcon,
-      value: "50+",
-      subText: "Recently processed"
+      value: dashboardData.stats.documents_ready.toString(),
+      subText: "Ready for release"
     },
-  ];
+  ] : [];
 
-  const notificationsData = [
-    // { id: 1, type: 'New Request', message: 'Request #4521 has been submitted.', time: '2 min ago' },
-    // { id: 2, type: 'Payment Due', message: 'Invoice #890 is due today.', time: '1 hour ago' },
-    // { id: 3, type: 'Document Ready', message: 'Document for Request #4490 is ready.', time: '5 hours ago' },
-  ];
+
+  const notificationsData = dashboardData ? dashboardData.notifications : [];
+
+
+  if (loading) {
+    return <div className="dashboard-content"><p>Loading dashboard...</p></div>;
+  }
+
+
+  if (error) {
+    return <div className="dashboard-content"><p>Error: {error}</p></div>;
+  }
+
 
   return (
-    <div className = "dashboard-content">
+    <div className="dashboard-content">
+
 
       {/*------------------- START OF HEADER CONTENT -------------------*/}
       <div className="dashboard-header-wrapper">
         <div className="header-content">
           <h1>Dashboard</h1>
 
+
           <div className="header-controls">
             <div className="search-input-wrapper">
-              <SearchIcon className="search-icon"/>
+              <SearchIcon className="search-icon" />
               <input
                 type="text"
                 placeholder="Search requests, documents..."
                 className="header-search"
               />
             </div>
+
 
             <div className="notification-wrapper" ref={notificationReference}>
               <button className="notification-icon-btn" onClick={toggleNotifications}>
@@ -245,8 +337,9 @@ function Dashboard() {
               )}
             </div>
 
+
             <div className="user-profile-container" ref={profileReference}>
-              <div className= {`user-profile-wrapper ${isProfileOpen ? 'dropdown-menu-inverted' : ''}`} onClick={toggleProfile}>
+              <div className={`user-profile-wrapper ${isProfileOpen ? 'dropdown-menu-inverted' : ''}`} onClick={toggleProfile}>
                 <div className="user-profile">
                   <span className="user-initials">A</span>
                 </div>
@@ -259,21 +352,22 @@ function Dashboard() {
                   </svg>
                 </span>
               </div>
-            {isProfileOpen && (
-              <UserProfilePanel
-                onClose={() => setIsProfileOpen(false)}
-                onLogout={handleLogout}
-              />
-            )}
-           </div> 
+              {isProfileOpen && (
+                <UserProfilePanel
+                  onClose={() => setIsProfileOpen(false)}
+                  onLogout={handleLogout}
+                />
+              )}
+            </div>
           </div>
         </div>
       </div>
       {/*--------------------- END OF HEADER CONTENT -------------------*/}
 
+
       {/*--------------------- START OF STAT CARDS ---------------------*/}
-      <div className="stat-cards-content"> 
-        <div 
+      <div className="stat-cards-content">
+        <div
           className="stat-cards-wrapper scroll-hide"
           ref={scrollContainerReference}
         >
@@ -289,32 +383,49 @@ function Dashboard() {
             ))}
           </div>
         </div>
-          <ScrollButton
-            direction="left"
-            onClick={() => scrollCards('left')}
-            isVisible={canScrollLeft}
-          />
-          <ScrollButton
-            direction="right"
-            onClick={() => scrollCards('right')}
-            isVisible={canScrollRight}
-          />
+        <ScrollButton
+          direction="left"
+          onClick={() => scrollCards('left')}
+          isVisible={canScrollLeft}
+        />
+        <ScrollButton
+          direction="right"
+          onClick={() => scrollCards('right')}
+          isVisible={canScrollRight}
+        />
       </div>
       {/*---------------------- END OF STAT CARDS ---------------------*/}
 
+
       {/*------------------ START OF RECENT ACTIVITY ------------------*/}
+
 
       <div className="recent-activity-content">
         <div className="recent-activity-wrapper">
           <section className="recent-activity-content">
             <h2>Recent Activity</h2>
+            {loading ? (
+              <p>Loading...</p>
+            ) : error ? (
+              <p>{error}</p>
+            ) : dashboardData && dashboardData.recent_activity.length > 0 ? (
+              <div className="activity-list">
+                {dashboardData.recent_activity.map((activity, index) => (
+                  <ActivityItem key={index} activity={activity} />
+                ))}
+              </div>
+            ) : (
+              <p>No recent activity.</p>
+            )}
           </section>
         </div>
       </div>
+
 
       {/*------------------ START OF RECENT ACTIVITY ------------------*/}
     </div>
   );
 }
+
 
 export default Dashboard;
