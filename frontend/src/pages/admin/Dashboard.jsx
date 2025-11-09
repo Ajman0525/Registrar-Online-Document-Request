@@ -11,6 +11,7 @@ import ProcessedIcon from "../../components/icons/ProcessedIcon";
 import ScrollLeft from "../../components/icons/ScrollLeft";
 import ScrollRight from "../../components/icons/ScrollRight";
 import SettingsIcon from "../../components/icons/SettingsIcon";
+import ProfileIcon from "../../components/icons/ProfileIcon";
 
 const NotificationPanel = ({ notifications, onClose }) => (
   <div className="notification-panel">
@@ -51,10 +52,7 @@ const UserProfilePanel = ({ onClose, onLogout }) => (
     </div>
     <div className="profile-panel-content">
       <button className="profile-menu-item">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-          <circle cx="12" cy="7" r="4"></circle>
-        </svg>
+        <ProfileIcon />
         <span>My Profile</span>
       </button>
       <button className="profile-menu-item">
