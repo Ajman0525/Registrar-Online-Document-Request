@@ -192,6 +192,63 @@
     position: relative;
 }
 
+.user-profile-wrapper{
+    display:flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    padding: 10px 10px 10px 10px;
+
+    transition: background-color 0.2s;
+    border-radius: 20px;
+}
+
+.user-profile-wrapper:hover {
+    background-color: var(--color-when-hovered); 
+}
+
+.user-profile-wrapper:active {
+    background-color: var(--color-when-active); 
+}
+
+.user-profile {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    background-color: #a41c2c;
+    color: var(--color-white);
+
+
+    /* Placeholder text */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    line-height: 1.2;
+}
+
+.user-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--color-black);
+    white-space: nowrap; 
+}
+
+.dropdown-menu {
+    display: flex; 
+    align-items: center;
+    margin-left: 15px;
+}
+
+/* ---------- USER PROFILE PANEL ---------- */
 .user-profile-panel {
     position: absolute;
     top: 100%;
@@ -292,62 +349,6 @@
     height: 1px;
     background-color: #eee;
     margin: 8px 0;
-}
-
-.user-profile-wrapper{
-    display:flex;
-    align-items: center;
-    gap: 10px;
-    cursor: pointer;
-    padding: 10px 10px 10px 10px;
-
-    transition: background-color 0.2s;
-    border-radius: 20px;
-}
-
-.user-profile-wrapper:hover {
-    background-color: var(--color-when-hovered); 
-}
-
-.user-profile-wrapper:active {
-    background-color: var(--color-when-active); 
-}
-
-.user-profile {
-    width: 35px;
-    height: 35px;
-    border-radius: 50%;
-    background-color: #a41c2c;
-    color: var(--color-white);
-
-
-    /* Placeholder text */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-weight: bold;
-    font-size: 0.9rem;
-    cursor: pointer;
-}
-
-.user-info {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    line-height: 1.2;
-}
-
-.user-name {
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: var(--color-black);
-    white-space: nowrap; 
-}
-
-.dropdown-menu {
-    display: flex; 
-    align-items: center;
-    margin-left: 15px;
 }
 
 /* ----------------------------------- */
