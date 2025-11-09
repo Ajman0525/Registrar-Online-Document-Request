@@ -10,6 +10,7 @@ import UnpaidIcon from "../../components/icons/UnpaidIcon";
 import ProcessedIcon from "../../components/icons/ProcessedIcon";
 import ScrollLeft from "../../components/icons/ScrollLeft";
 import ScrollRight from "../../components/icons/ScrollRight";
+import SettingsIcon from "../../components/icons/SettingsIcon";
 
 const NotificationPanel = ({ notifications, onClose }) => (
   <div className="notification-panel">
@@ -57,10 +58,7 @@ const UserProfilePanel = ({ onClose, onLogout }) => (
         <span>My Profile</span>
       </button>
       <button className="profile-menu-item">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <circle cx="12" cy="12" r="3"></circle>
-          <path d="M12 1v6m0 6v6m5.2-13.2l-4.2 4.2m-4.2 4.2l-4.2 4.2m13.2-4.2l-4.2-4.2m-4.2-4.2l-4.2-4.2"></path>
-        </svg>
+        <SettingsIcon />
         <span>Settings</span>
       </button>
       <div className="profile-divider"></div>
