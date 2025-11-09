@@ -8,6 +8,7 @@
 test/
 notes.txt
 flask_session/
+uploads/
 
 # User-specific files
 *.rsuser
