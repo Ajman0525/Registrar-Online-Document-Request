@@ -114,6 +114,11 @@ function EnterTrackId({ onNext }) {
                         <ButtonLink to={"/user/landing"} placeholder="Return" className="cancel-button" variant="secondary" />
                         <ButtonLink onClick={handleSubmit} placeholder="Track" className="proceed-button" variant="primary" />
                     </div>
+
+                    <div className="support-section">
+                        <p className="subtext">Forgot ID Number or Tracking Number? Contact the </p>
+                        <a href="mailto:support@example.com" className="forgot-id-link">support.</a>
+                    </div>
                 </div>
             </ContentBox>
         </div>
