@@ -109,7 +109,7 @@ const ScrollButton = ({ direction, onClick, isVisible }) => {
 function Dashboard() {
   const scrollContainerReference = useRef(null);
   const notificationReference = useRef(null);
-  const profileRef = useRef(null);
+  const profileReference = useRef(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
@@ -162,7 +162,7 @@ function Dashboard() {
       if (notificationReference.current && !notificationReference.current.contains(event.target)) {
         setIsNotificationsOpen(false);
       }
-      if (profileRef.current && !profileRef.current.contains(event.target)) {
+      if (profileReference.current && !profileReference.current.contains(event.target)) {
         setIsProfileOpen(false);
       }
     };
@@ -252,7 +252,7 @@ function Dashboard() {
               )}
             </div>
 
-            <div className="user-profile-container" ref={profileRef}>
+            <div className="user-profile-container" ref={profileReference}>
               <div className="user-profile-wrapper" onClick={toggleProfile}>
                 <div className="user-profile">
                   <span className="user-initials">A</span>
