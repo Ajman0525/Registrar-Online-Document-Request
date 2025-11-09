@@ -36,9 +36,9 @@
 }
 .header-text{
     font-family: var(--font-family-base);
-    font-weight: bold;
+    font-weight: regular;
     font-size: var(--font-size-regular);
-    color: #FFFFFF;
+    color: var(--color-black);
 }
 .brand-logo {
     width: 40px;
@@ -46,5 +46,5 @@
 }
 
 #online{
-    color: #F3D358;
+    color: var(--color-black);
 }

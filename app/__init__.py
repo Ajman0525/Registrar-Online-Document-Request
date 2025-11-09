@@ -8,11 +8,21 @@ from flask_jwt_extended import (
     JWTManager, create_access_token, set_access_cookies, 
     unset_jwt_cookies, jwt_required, get_jwt_identity
 )
+from flask_session import Session
 from datetime import timedelta
+from dotenv import load_dotenv
+from app.db_init import initialize_db
+
+from app.db_init import initialize_db
 
 db_pool = None
 
 def create_app(test_config=None):
+    
+    #initialize the database (create tables if not exist)
+    initialize_db()
+    load_dotenv()
+    
     
     #in production
     app = Flask(__name__, instance_relative_config=True, static_folder="static/react", template_folder="templates")
@@ -24,18 +34,29 @@ def create_app(test_config=None):
     # =====================
     #  CONFIG
     # =====================
+    app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev-secret-key")
+    app.config["SESSION_COOKIE_HTTPONLY"] = True
+    app.config["SESSION_COOKIE_SAMESITE"] = "lax"  
+    app.config["SESSION_COOKIE_SECURE"] = False 
+    app.config["SESSION_TYPE"] = "filesystem" 
+
+    Session(app)
+    
+    # JWT CONFIGURATION
     app.config["JWT_SECRET_KEY"] = JWT_SECRET_KEY
-    app.config["JWT_TOKEN_LOCATION"] = ["cookies"]  # store JWT in cookies
-    app.config["JWT_COOKIE_CSRF_PROTECT"] = True     # enable CSRF protection
+    app.config["JWT_TOKEN_LOCATION"] = ["cookies"]
+    app.config["JWT_COOKIE_CSRF_PROTECT"] = True
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
     app.config["JWT_COOKIE_SECURE"] = False  # set True in production (HTTPS only)
-    app.config["JWT_COOKIE_SAMESITE"] = "Lax"
-
-    # Allow frontend origin
+    app.config["JWT_COOKIE_SAMESITE"] = "lax"  
+    # CORS CONFIGURATION - Allow frontend origin with credentials
     CORS(
         app,
         supports_credentials=True,
-        origins=["http://localhost:3000"],  # your React dev server
+        origins=["http://localhost:3000"],
+        allow_headers=["Content-Type", "Authorization"],
+        expose_headers=["Content-Type"],
+        methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
     )
     
     # Initialize JWT Manager
@@ -87,7 +108,7 @@ def create_app(test_config=None):
     
     #USER BLUEPRINTS
     from .user.authentication import authentication_user_bp as auth_user_blueprint
-    app.register_blueprint(auth_user_blueprint)
+    app.register_blueprint(auth_user_blueprint, url_prefix='/user')
     from .user.document_list import document_list_bp as document_list_blueprint
     app.register_blueprint(document_list_blueprint)
     from .user.landing import landing_bp as landing_blueprint
@@ -107,6 +128,3 @@ def create_app(test_config=None):
     
     register_error_handlers(app)
     return app
-
-
-

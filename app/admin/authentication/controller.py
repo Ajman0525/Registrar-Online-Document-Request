@@ -6,7 +6,6 @@ from datetime import timedelta
 @authentication_admin_bp.route("/api/admin/login", methods=["POST"])
 def admin_login():
     """Secure admin login endpoint using JWT + CSRF-protected cookies."""
-    current_app.config["JWT_COOKIE_CSRF_PROTECT"] = False
     
     data = request.get_json(silent=True) or {}
     username = data.get("username")
@@ -16,13 +15,13 @@ def admin_login():
         return jsonify({"error": "Username and password are required"}), 400
 
     # Dummy user for illustration
-    user = {"id": 1, "username": "admin", "role": "user"} if username == "user" and password == "1234" else None
+    user = {"username": "admin", "role": "admin"} if username == "admin" and password == "1234" else None
 
     if user:
         
         access_token = create_access_token(
             identity=user["username"],                 # string identity
-            additional_claims={"id": user["id"], "role": user["role"]}
+            additional_claims={"role": user["role"]}
         )
         
         response = jsonify({"message": "Admin login successful", "role": user["role"]})

@@ -6,12 +6,12 @@ import UserMasterLayout from "./pages/layouts/UserMasterLayout";
 import LoginFlow from "./pages/user/login/LoginFlow";
 import Tracking from "./pages/user/Tracking";
 import DocumentList from "./pages/user/DocumentList";
-import Request from "./pages/user/Request";
 import RegistrarMasterLayout from "./pages/layouts/RegistrarMasterLayout";
 import Dashboard from "./pages/admin/Dashboard";
 import Documents from "./pages/admin/Documents";
 import Requests from "./pages/admin/Requests";
 import Logs from "./pages/admin/Logs";
+import RequestFlow from "./pages/user/request/RequestFlow";
 
 
 function App() {
@@ -23,7 +23,7 @@ function App() {
         <Route path="/user" element={<UserMasterLayout />}>
           <Route path="Landing" element={< Landing />} />
           <Route path="login" element={< LoginFlow />}/>
-          <Route path="Request" element={< Request />} />
+          <Route path="Request" element={< RequestFlow />} />
           <Route path="View" element={< DocumentList />} />
           <Route path="Track" element={< Tracking />} />
         </Route>
@@ -41,4 +41,5 @@ function App() {
   );
 }
 
+// Todo: protect the routes through role in jwt token except for the login and landing pages
 export default App;
