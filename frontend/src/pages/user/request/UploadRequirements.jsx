@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import "./UploadRequirements.css";
+import { getCSRFToken } from "../../../utils/csrf";
 
 function UploadRequirements({ selectedDocs = [], uploadedFiles = {}, setUploadedFiles, onNext, onBack }) {
   /*
@@ -20,7 +21,13 @@ function UploadRequirements({ selectedDocs = [], uploadedFiles = {}, setUploaded
   useEffect(() => {
     const fetchRequirements = async () => {
       try {
-        const response = await fetch("/api/list-requirements");
+        const response = await fetch("/api/list-requirements", {
+          method: "GET",
+          headers: {
+            "X-CSRF-TOKEN": getCSRFToken(),
+          },
+          credentials: "include",
+        });
         const data = await response.json();
         if (data.success) {
           setRequirements(data.requirements); // array of {req_id, requirement_name}
@@ -102,6 +109,10 @@ function UploadRequirements({ selectedDocs = [], uploadedFiles = {}, setUploaded
     try {
       const response = await fetch("/api/save-file", {
         method: "POST",
+        headers: {
+          "X-CSRF-TOKEN": getCSRFToken(),
+        },
+        credentials: "include",
         body: formData,
       });
       const data = await response.json();

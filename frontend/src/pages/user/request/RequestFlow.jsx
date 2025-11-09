@@ -5,6 +5,7 @@ import UploadRequirements from "./UploadRequirements";
 import PreferredContact from "./PreferredContact";
 import Summary from "./Summary.jsx";
 import SubmitRequest from "./SubmitRequest.jsx";
+import { getCSRFToken } from "../../../utils/csrf";
 
 function RequestFlow() {
   const [step, setStep] = useState("documents");
@@ -126,7 +127,9 @@ function RequestFlow() {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
+                "X-CSRF-TOKEN": getCSRFToken(),
               },
+              credentials: "include",
               body: JSON.stringify({ total_price: totalPrice }),
             })
               .then((response) => response.json())
