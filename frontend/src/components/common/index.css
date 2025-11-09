@@ -7,6 +7,8 @@
 
     /* Button Colors */
     --color-button-primary-default: #0070E2;
+    --color-button-red: #B81D23;
+    --color-button-gray: #EAEAEA;
     --color-button-primary-hover: #80A2FF;
     --color-button-destructive-default: #EA3D2F;
     --color-button-destructive-hover: #FEE4E3;
