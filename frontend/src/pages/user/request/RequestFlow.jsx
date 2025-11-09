@@ -9,7 +9,8 @@ import SubmitRequest from "./SubmitRequest.jsx";
 function RequestFlow() {
   const [step, setStep] = useState("documents");
   const [selectedDocs, setSelectedDocs] = useState([]);
-  const [requestId, setRequestId] = useState("");
+
+  // the request id is obtained through session
   
   // State to hold data from each step for final submission
   const [uploadedFiles, setUploadedFiles] = useState({}); // e.g. { docId: fileList }
@@ -61,9 +62,8 @@ function RequestFlow() {
   };
 
   // Handle Next from Documents with requestId
-  const handleDocumentsNext = (docs, reqId) => {
+  const handleDocumentsNext = (docs) => {
     setSelectedDocs(docs);
-    setRequestId(reqId);
     goNextStep();
   };
 
@@ -88,7 +88,6 @@ function RequestFlow() {
           selectedDocs={selectedDocs}
           onBack={goBackStep}
           onProceed={handleRequestListProceed}
-          requestId={requestId}
         />
       )}
 
@@ -123,7 +122,6 @@ function RequestFlow() {
 
       {step === "submitRequest" && (
         <SubmitRequest
-          requestId={requestId}
           selectedDocs={selectedDocs}
           uploadedFiles={uploadedFiles}
           preferredContactInfo={preferredContactInfo}
