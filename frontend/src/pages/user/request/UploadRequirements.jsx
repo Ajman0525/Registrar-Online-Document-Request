@@ -43,19 +43,19 @@ function UploadRequirements({ selectedDocs = [], uploadedFiles = {}, setUploaded
     fetchRequirements();
   }, []);
 
-  // Prepare a flat array of requirements with doc and requirement info for rendering
-  // Each item: { doc_id, doc_name, req_id, reqText }
+  // Prepare a unique array of requirements for rendering
+  // Each item: { req_id, reqText }
   const requirementsList = useMemo(() => {
-    const list = [];
-    selectedDocs.forEach(({ doc_id, doc_name, requirements: docReqs }) => {
+    const uniqueReqs = new Map();
+    selectedDocs.forEach(({ requirements: docReqs }) => {
       docReqs.forEach((reqText) => {
         const req = requirements.find(r => r.requirement_name === reqText);
-        if (req) {
-          list.push({ doc_id, doc_name, req_id: req.req_id, reqText });
+        if (req && !uniqueReqs.has(req.req_id)) {
+          uniqueReqs.set(req.req_id, { req_id: req.req_id, reqText });
         }
       });
     });
-    return list;
+    return Array.from(uniqueReqs.values());
   }, [selectedDocs, requirements]);
 
   // Initialize uploaded files entries to object mapping req_id to File | null
@@ -145,10 +145,10 @@ function UploadRequirements({ selectedDocs = [], uploadedFiles = {}, setUploaded
         {requirementsList.length === 0 ? (
           <p>No requirements to upload.</p>
         ) : (
-          requirementsList.map(({ doc_id, doc_name, req_id, reqText }) => (
-            <div key={`${doc_id}-${req_id}`} className="requirement-upload-row">
+          requirementsList.map(({ req_id, reqText }) => (
+            <div key={req_id} className="requirement-upload-row">
               <label htmlFor={`upload-${req_id}`}>
-                <strong>{doc_name}</strong>: {reqText}
+                {reqText}
               </label>
               <input
                 type="file"
