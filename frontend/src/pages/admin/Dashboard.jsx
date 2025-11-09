@@ -246,7 +246,7 @@ function Dashboard() {
             </div>
 
             <div className="user-profile-container" ref={profileReference}>
-              <div className="user-profile-wrapper" onClick={toggleProfile}>
+              <div className= {`user-profile-wrapper ${isProfileOpen ? 'dropdown-menu-inverted' : ''}`} onClick={toggleProfile}>
                 <div className="user-profile">
                   <span className="user-initials">A</span>
                 </div>
