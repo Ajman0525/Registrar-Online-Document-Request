@@ -9,6 +9,8 @@
 
     margin-left: 15px; 
     margin-right: 15px;
+
+    font-family: var(--font-family-base);
 }
 
 .dashboard-header h1 {
