@@ -16,6 +16,7 @@ function RequestFlow() {
   // State to hold data from each step for final submission
   const [uploadedFiles, setUploadedFiles] = useState({}); // e.g. { req_id: File }
   const [preferredContactInfo, setPreferredContactInfo] = useState({});
+  const [contactInfo, setContactInfo] = useState({ email: "", contact_number: "" });
 
   // Step navigation handlers
   const goNextStep = () => {
@@ -106,6 +107,8 @@ function RequestFlow() {
         <PreferredContact
           preferredContactInfo={preferredContactInfo}
           setPreferredContactInfo={setPreferredContactInfo}
+          contactInfo={contactInfo}
+          setContactInfo={setContactInfo}
           onNext={goNextStep}
           onBack={goBackStep}
         />
@@ -116,6 +119,7 @@ function RequestFlow() {
           selectedDocs={selectedDocs}
           uploadedFiles={uploadedFiles}
           preferredContactInfo={preferredContactInfo}
+          contactInfo={contactInfo}
           onNext={() => {
             // Fetch complete request here
             fetch("/api/complete-request", {
@@ -144,6 +148,7 @@ function RequestFlow() {
           selectedDocs={selectedDocs}
           uploadedFiles={uploadedFiles}
           preferredContactInfo={preferredContactInfo}
+          contactInfo={contactInfo}
           trackingId={trackingId}
           onBack={goBackStep}
           // e.g. onSubmitSuccess={...} can be added here

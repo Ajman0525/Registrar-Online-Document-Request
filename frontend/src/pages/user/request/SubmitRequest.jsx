@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import "./SubmitRequest.css";
 
-function SubmitRequest({ selectedDocs, uploadedFiles, preferredContactInfo, trackingId, onBack }) {
+function SubmitRequest({ selectedDocs, uploadedFiles, preferredContactInfo, contactInfo, trackingId, onBack }) {
   /**
    * Props:
    * - selectedDocs: array of selected documents
    * - uploadedFiles: object { req_id: File }
    * - preferredContactInfo: object with contact info
+   * - contactInfo: object with email and contact_number
    * - trackingId: string, the tracking ID from the complete request
    * - onBack: function handler for Back button
    */
