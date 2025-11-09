@@ -165,6 +165,12 @@ def submit_requirement_files():
             if file.filename:
                 filename = secure_filename(file.filename)
                 file_path = os.path.join(upload_dir, f"{requirement_id}_{filename}")
+                
+                # Delete existing files for this requirement_id
+                for existing_file in os.listdir(upload_dir):
+                    if existing_file.startswith(f"{requirement_id}_"):
+                        os.remove(os.path.join(upload_dir, existing_file))
+                        
                 file.save(file_path)
                 saved_files.append({"requirement_id": requirement_id, "file_path": file_path})
 
