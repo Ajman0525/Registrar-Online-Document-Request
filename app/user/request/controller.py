@@ -201,6 +201,36 @@ def get_preferred_contact():
             "success": False,
             "notification": "Could not retrieve contact information."
         }), 500
+
+#set preferred contact
+@request_bp.route("/api/set-preferred-contact", methods=["POST"])
+#@jwt_required_with_role(role)
+def set_preferred_contact():
+    """
+    Sets the preferred contact method for the request.
+    """
+    data = request.get_json()
+    request_id = session.get("request_id")
+    preferred_contact = data.get("preferred_contact")
+
+    if not request_id or not preferred_contact:
+        return jsonify({
+            "success": False,
+            "notification": "Missing request_id or preferred_contact."
+        }), 400
+
+    success = Request.store_preferred_contact(request_id, preferred_contact)
+
+    if success:
+        return jsonify({
+            "success": True,
+            "notification": "Preferred contact method updated successfully."
+        }), 200
+    else:
+        return jsonify({
+            "success": False,
+            "notification": "Failed to update preferred contact method."
+        }), 500
         
 #next button in contact page
 #get the summary of request
@@ -237,15 +267,18 @@ def get_request_summary():
     }), 200
     
 #complete button in summary page
-@request_bp.route("/api/submit-request", methods=["POST"])
+@request_bp.route("/api/complete-request", methods=["GET"])
 #@jwt_required_with_role(role)
 def complete_request():
-    
+
     request_id = session.get("request_id")
+    print(f"Completing request_id: {request_id}")
+    
     try:
         Request.mark_request_complete(request_id)
         return jsonify({
             "success": True,
+            "request_id": request_id,
             "notification": "Your request has been completed successfully."
         }), 200
     except Exception as e:

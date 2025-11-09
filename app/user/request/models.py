@@ -132,6 +132,33 @@ class Request:
         finally:
             cur.close()
             db_pool.putconn(conn)
+
+    #store preferred contact to db
+    @staticmethod
+    def store_preferred_contact(request_id, preferred_contact):
+        """
+        Stores or updates the preferred contact method in the requests table.
+        """
+        conn = db_pool.getconn()
+        cur = conn.cursor()
+
+        try:
+            cur.execute("""
+                UPDATE requests
+                SET preferred_contact = %s
+                WHERE request_id = %s
+            """, (preferred_contact, request_id))
+            conn.commit()
+            return True
+
+        except Exception as e:
+            print(f"Error storing preferred contact: {e}")
+            conn.rollback()
+            return False
+
+        finally:
+            cur.close()
+            db_pool.putconn(conn)
     
    
    #store requested documents to db
