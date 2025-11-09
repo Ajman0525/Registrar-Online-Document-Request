@@ -30,7 +30,7 @@ function SubmitRequest({ selectedDocs, uploadedFiles, preferredContactInfo, cont
           <button className="return-btn" onClick={() => window.location.href = "/user/Landing"}>
             Return to Home
           </button>
-          <button className="track-btn" onClick={() => window.location.href = "/user/Trac"}>
+          <button className="track-btn" onClick={() => window.location.href = "/user/Track"}>
             Track
           </button>
         </div>
