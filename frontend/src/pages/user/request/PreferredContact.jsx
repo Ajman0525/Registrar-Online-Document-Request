@@ -1,16 +1,34 @@
 import React, { useState, useEffect } from "react";
 import "./PreferredContact.css";
 
-function PreferredContact({ preferredContactInfo = {}, setPreferredContactInfo, onNext, onBack }) {
+function PreferredContact({ preferredContactInfo = {}, setPreferredContactInfo, contactInfo, setContactInfo, onNext, onBack }) {
   /*
     props:
     - preferredContactInfo: object like { method: "Email" | "SMS" | "WhatsApp" | "Telegram" }
     - setPreferredContactInfo: function to update preferredContactInfo in parent
+    - contactInfo: object with email and contact_number
+    - setContactInfo: function to update contactInfo in parent
     - onNext: function to call to go next step
     - onBack: function to call to go previous step
   */
 
   const [selectedMethod, setSelectedMethod] = useState(preferredContactInfo.method || "");
+
+  // Fetch contact info on component mount
+  useEffect(() => {
+    fetch("/api/get-contact")
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          setContactInfo(data.contact_info);
+        } else {
+          console.error("Failed to fetch contact info:", data.notification);
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching contact info:", error);
+      });
+  }, [setContactInfo]);
 
   // Update parent state on selection change
   useEffect(() => {
@@ -31,6 +49,7 @@ function PreferredContact({ preferredContactInfo = {}, setPreferredContactInfo, 
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        credentials: "include", 
       },
       body: JSON.stringify({ preferred_contact: selectedMethod }),
     })
@@ -62,7 +81,7 @@ function PreferredContact({ preferredContactInfo = {}, setPreferredContactInfo, 
               checked={selectedMethod === "Email"}
               onChange={() => setSelectedMethod("Email")}
             />
-            Email <em className="contact-detail">test@gmail.com</em>
+            Email <em className="contact-detail">{contactInfo.email || "test@gmail.com"}</em>
           </label>
         </div>
 
@@ -75,7 +94,7 @@ function PreferredContact({ preferredContactInfo = {}, setPreferredContactInfo, 
               checked={selectedMethod === "SMS"}
               onChange={() => setSelectedMethod("SMS")}
             />
-            SMS <em className="contact-detail">09123456789</em>
+            SMS <em className="contact-detail">{contactInfo.contact_number || "09123456789"}</em>
           </label>
         </div>
 

@@ -1,13 +1,14 @@
 import React from "react";
 import "./Summary.css";
 
-function Summary({ selectedDocs = [], uploadedFiles = {}, preferredContactInfo = {}, onBack, onNext }) {
+function Summary({ selectedDocs = [], uploadedFiles = {}, preferredContactInfo = {}, contactInfo = {}, onBack, onNext }) {
   /**
    * Props:
    * - selectedDocs: array of documents with quantity, e.g.
    *     [{ doc_name: "Transcript of Records", quantity: 5 }, ...]
    * - uploadedFiles: object { req_id: File }
    * - preferredContactInfo: object with contact info
+   * - contactInfo: object with email and contact_number
    * - onBack: function handler for Back button
    * - onNext: function handler for Complete button
    */
@@ -52,7 +53,22 @@ function Summary({ selectedDocs = [], uploadedFiles = {}, preferredContactInfo =
       <div className="summary-row">
         <label className="summary-label">Preferred Contact</label>
         <div className="summary-value documents-box">
-          {preferredContactInfo.contact_number || preferredContactInfo.email || "Not set"}
+          {preferredContactInfo.method ? (
+            <div>
+              <strong>{preferredContactInfo.method}</strong>
+              {preferredContactInfo.method === "Email" && contactInfo.email && (
+                <div>{contactInfo.email}</div>
+              )}
+              {preferredContactInfo.method === "SMS" && contactInfo.contact_number && (
+                <div>{contactInfo.contact_number}</div>
+              )}
+              {(preferredContactInfo.method === "WhatsApp" || preferredContactInfo.method === "Telegram") && (
+                <div>Contact via {preferredContactInfo.method}</div>
+              )}
+            </div>
+          ) : (
+            "Not set"
+          )}
         </div>
       </div>
 
