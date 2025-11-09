@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import "./Documents.css";
 import files from "./assets/files.png";
 
-function Request({ selectedDocs, setSelectedDocs, onNext }) {
+function Documents({ selectedDocs, setSelectedDocs, onNext }) {
     const [documents, setDocuments] = useState([]);
     const [requestInfo, setRequestInfo] = useState({
         status: "",
@@ -42,7 +42,7 @@ function Request({ selectedDocs, setSelectedDocs, onNext }) {
             alert("Please select at least one document to continue.");
             return;
         }
-        onNext(); // move to next step in flow
+        onNext(selectedDocs);
     };
 
     return (
@@ -101,4 +101,4 @@ function Request({ selectedDocs, setSelectedDocs, onNext }) {
     );
 }
 
-export default Request;
+export default Documents;
