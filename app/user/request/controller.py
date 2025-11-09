@@ -235,12 +235,12 @@ def complete_request():
 
     request_id = session.get("request_id")
     total_price = request.get_json().get("total_price", 0.0)
-    print(f"Completing request_id: {request_id}")
 
     try:
         Request.mark_request_complete(request_id, total_price)
         
         #Todo send details include: request id to preferred contact
+        #Todo delete the jwt session and other session variables
         
         return jsonify({
             "success": True,
