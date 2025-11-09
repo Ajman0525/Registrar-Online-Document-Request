@@ -367,7 +367,7 @@
 .scroll-hide {
     -ms-overflow-style: none;  /* IE and Edge */
     scrollbar-width: none;  /* Firefox */
-    overflow-x: auto;
+    overflow-x: scroll;
     overflow-y: visible;
 }
 
@@ -383,6 +383,11 @@
     position: relative; 
 
     font-family: var(--font-family-base);
+
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-left: 10px;
+    padding-right: 10px;
 }
 
 .stat-card-inner-scroll {
