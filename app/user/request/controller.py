@@ -68,21 +68,21 @@ def get_request_page_data():
     
 #submit requests
 @request_bp.route("/api/save-documents", methods=["POST"])
-@jwt_required_with_role(role)
-def submit_request_page():
+#@jwt_required_with_role(role)
+def save_documents():
     """
     Accepts final submission data from React and processes the request.
     Returns a success or error notification based on processing outcome.
     """
     
-    """accepts data from react: request id, document id, quantity"""
+    """accepts data from react: document id, quantity"""
     data = request.get_json()
-
+    request_id = session.get("request_id")
     
     try:
         #store requested documents to db
         Request.store_requested_documents(
-            data["request_id"],
+            request_id,
             data["document_ids"],
             data["quantity_list"]
         )
