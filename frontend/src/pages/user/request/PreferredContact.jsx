@@ -26,7 +26,26 @@ function PreferredContact({ preferredContactInfo = {}, setPreferredContactInfo, 
       alert("Please select a preferred contact method.");
       return;
     }
-    onNext();
+    // Send the selected method to the backend
+    fetch("/api/set-preferred-contact", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ preferred_contact: selectedMethod }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          onNext();
+        } else {
+          alert(`Error: ${data.notification}`);
+        }
+      })
+      .catch((error) => {
+        console.error("Error setting preferred contact:", error);
+        alert("An error occurred while setting the preferred contact method.");
+      });
   };
 
   return (
