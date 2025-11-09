@@ -27,27 +27,22 @@ function EnterTrackId({ onNext }) {
                 "DOC-2021-0001": {
                     studentId: "2021-0001",
                     status: "Ready for Pickup",
-                    details: "Your document is ready for pickup at the registrar's office."
                 },
                 "DOC-2022-0001": {
                     studentId: "2022-0001",
                     status: "Processing",
-                    details: "Your document request is currently being processed."
                 },
                 "DOC-2023-0001": {
                     studentId: "2023-0001",
                     status: "Under Review",
-                    details: "Your request is under review by the registrar."
                 },
                 "DOC-2024-0001": {
                     studentId: "2024-0001",
                     status: "For Signature",
-                    details: "Your document is pending final signature."
                 },
                 "DOC-2025-0001": {
                     studentId: "2025-0001",
                     status: "Payment Pending",
-                    details: "Please settle your payment to proceed with the request."
                 }
             };
 
