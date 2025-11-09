@@ -37,6 +37,45 @@ const NotificationPanel = ({ notifications, onClose }) => (
   </div>
 );
 
+const UserProfilePanel = ({ onClose, onLogout }) => (
+  <div className="user-profile-panel">
+    <div className="profile-panel-header">
+      <div className="profile-avatar-large">
+        <span>A</span>
+      </div>
+      <div className="profile-info">
+        <h4>Administrator</h4>
+        <p>admin@example.com</p>
+      </div>
+    </div>
+    <div className="profile-panel-content">
+      <button className="profile-menu-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+        <span>My Profile</span>
+      </button>
+      <button className="profile-menu-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M12 1v6m0 6v6m5.2-13.2l-4.2 4.2m-4.2 4.2l-4.2 4.2m13.2-4.2l-4.2-4.2m-4.2-4.2l-4.2-4.2"></path>
+        </svg>
+        <span>Settings</span>
+      </button>
+      <div className="profile-divider"></div>
+      <button className="profile-menu-item logout" onClick={onLogout}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+          <polyline points="16 17 21 12 16 7"></polyline>
+          <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>
+        <span>Logout</span>
+      </button>
+    </div>
+  </div>
+);
+
 const StatCard = ({ title, icon: Icon, value, subText }) => (
   <div className="stat-card">
     <div className="card-header">
@@ -70,9 +109,21 @@ const ScrollButton = ({ direction, onClick, isVisible }) => {
 function Dashboard() {
   const scrollContainerReference = useRef(null);
   const notificationRef = useRef(null);
+  const profileRef = useRef(null);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+
+
+  const toggleProfile = () => {
+    setIsProfileOpen(prev => !prev);
+  };
+
+  const handleLogout = () => {
+    console.log('Logging out...');
+    setIsProfileOpen(false);
+  };
 
   const toggleNotifications = () => {
     setIsNotificationsOpen(prev => !prev);
@@ -111,6 +162,9 @@ function Dashboard() {
       if (notificationRef.current && !notificationRef.current.contains(event.target)) {
         setIsNotificationsOpen(false);
       }
+      if (profileRef.current && !profileRef.current.contains(event.target)) {
+        setIsProfileOpen(false);
+      }
     };
 
     if (container) {
@@ -127,7 +181,7 @@ function Dashboard() {
         document.removeEventListener('mousedown', handleClickOutside); 
       };
     }
-  }, [isNotificationsOpen]);
+  }, [isNotificationsOpen, isProfileOpen]);
   
   const cardData = [
     {
@@ -198,19 +252,27 @@ function Dashboard() {
               )}
             </div>
 
-            <div className = "user-profile-wrapper">
-              <div className="user-profile">
-                <span className="user-initials">A</span>
+            <div className="user-profile-container" ref={profileRef}>
+              <div className="user-profile-wrapper" onClick={toggleProfile}>
+                <div className="user-profile">
+                  <span className="user-initials">A</span>
+                </div>
+                <div className="user-info">
+                  <div className="user-name">Administrator</div>
+                </div>
+                <span className="dropdown-menu">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </span>
               </div>
-
-              <div className = "user-info">
-                <div className = "user-name">Administrator</div>
-              </div>
-
-              <span className="dropdown-menu">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-              </span>
-            </div>
+            {isProfileOpen && (
+              <UserProfilePanel
+                onClose={() => setIsProfileOpen(false)}
+                onLogout={handleLogout}
+              />
+            )}
+           </div> 
           </div>
         </div>
       </div>
