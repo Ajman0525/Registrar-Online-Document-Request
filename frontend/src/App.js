@@ -41,4 +41,5 @@ function App() {
   );
 }
 
+// Todo: protect the routes through role in jwt token except for the login and landing pages
 export default App;
