@@ -81,7 +81,7 @@ function Summary({ selectedDocs = [], uploadedFiles = {}, preferredContactInfo =
         <button className="back-btn" onClick={onBack}>
           Back
         </button>
-        <button className="complete-btn" onClick={onNext}>
+        <button className="complete-btn" onClick={() => onNext(totalPrice)}>
           Complete
         </button>
       </div>

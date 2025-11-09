@@ -240,14 +240,11 @@ def set_preferred_contact():
 def complete_request():
 
     request_id = session.get("request_id")
+    total_price = request.get_json().get("total_price", 0.0)
     print(f"Completing request_id: {request_id}")
 
     try:
-        # Fetch the total cost before marking complete
-        summary = Request.get_request_documents_with_cost(request_id)
-        total_cost = summary.get("total_cost", 0.0)
-
-        Request.mark_request_complete(request_id, total_cost)
+        Request.mark_request_complete(request_id, total_price)
         return jsonify({
             "success": True,
             "request_id": request_id,
