@@ -108,7 +108,7 @@ const ScrollButton = ({ direction, onClick, isVisible }) => {
 
 function Dashboard() {
   const scrollContainerReference = useRef(null);
-  const notificationRef = useRef(null);
+  const notificationReference = useRef(null);
   const profileRef = useRef(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -159,7 +159,7 @@ function Dashboard() {
     const container = scrollContainerReference.current;
     
     const handleClickOutside = (event) => {
-      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+      if (notificationReference.current && !notificationReference.current.contains(event.target)) {
         setIsNotificationsOpen(false);
       }
       if (profileRef.current && !profileRef.current.contains(event.target)) {
@@ -237,7 +237,7 @@ function Dashboard() {
               />
             </div>
 
-            <div className="notification-wrapper" ref={notificationRef}>
+            <div className="notification-wrapper" ref={notificationReference}>
               <button className="notification-icon-btn" onClick={toggleNotifications}>
                 <NotificationIcon className="notification-icon" />
                 {notificationsData.length > 0 && (
