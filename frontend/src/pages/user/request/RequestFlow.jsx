@@ -9,9 +9,10 @@ import SubmitRequest from "./SubmitRequest.jsx";
 function RequestFlow() {
   const [step, setStep] = useState("documents");
   const [selectedDocs, setSelectedDocs] = useState([]);
+  const [trackingId, setTrackingId] = useState("");
 
   // the request id is obtained through session
-  
+
   // State to hold data from each step for final submission
   const [uploadedFiles, setUploadedFiles] = useState({}); // e.g. { req_id: File }
   const [preferredContactInfo, setPreferredContactInfo] = useState({});
@@ -115,7 +116,25 @@ function RequestFlow() {
           selectedDocs={selectedDocs}
           uploadedFiles={uploadedFiles}
           preferredContactInfo={preferredContactInfo}
-          onNext={goNextStep}
+          onNext={() => {
+            // Fetch complete request here
+            fetch("/api/complete-request", {
+              method: "GET",
+            })
+              .then((response) => response.json())
+              .then((data) => {
+                if (data.success) {
+                  setTrackingId(data.request_id);
+                  goNextStep();
+                } else {
+                  alert(`Error: ${data.notification}`);
+                }
+              })
+              .catch((error) => {
+                console.error("Error completing request:", error);
+                alert("An error occurred while completing the request.");
+              });
+          }}
           onBack={goBackStep}
         />
       )}
@@ -125,6 +144,7 @@ function RequestFlow() {
           selectedDocs={selectedDocs}
           uploadedFiles={uploadedFiles}
           preferredContactInfo={preferredContactInfo}
+          trackingId={trackingId}
           onBack={goBackStep}
           // e.g. onSubmitSuccess={...} can be added here
         />
