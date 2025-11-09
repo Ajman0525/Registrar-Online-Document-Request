@@ -13,7 +13,7 @@ function RequestFlow() {
   // the request id is obtained through session
   
   // State to hold data from each step for final submission
-  const [uploadedFiles, setUploadedFiles] = useState({}); // e.g. { docId: fileList }
+  const [uploadedFiles, setUploadedFiles] = useState({}); // e.g. { req_id: File }
   const [preferredContactInfo, setPreferredContactInfo] = useState({});
 
   // Step navigation handlers
