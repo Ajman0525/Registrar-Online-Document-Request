@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import "./UploadRequirements.css";
 
 function UploadRequirements({ selectedDocs = [], uploadedFiles = {}, setUploadedFiles, onNext, onBack }) {
@@ -38,26 +38,32 @@ function UploadRequirements({ selectedDocs = [], uploadedFiles = {}, setUploaded
 
   // Prepare a flat array of requirements with doc and requirement info for rendering
   // Each item: { doc_id, doc_name, req_id, reqText }
-  const requirementsList = [];
-  selectedDocs.forEach(({ doc_id, doc_name, requirements: docReqs }) => {
-    docReqs.forEach((reqText) => {
-      const req = requirements.find(r => r.requirement_name === reqText);
-      if (req) {
-        requirementsList.push({ doc_id, doc_name, req_id: req.req_id, reqText });
-      }
+  const requirementsList = useMemo(() => {
+    const list = [];
+    selectedDocs.forEach(({ doc_id, doc_name, requirements: docReqs }) => {
+      docReqs.forEach((reqText) => {
+        const req = requirements.find(r => r.requirement_name === reqText);
+        if (req) {
+          list.push({ doc_id, doc_name, req_id: req.req_id, reqText });
+        }
+      });
     });
-  });
+    return list;
+  }, [selectedDocs, requirements]);
 
   // Initialize uploaded files entries to object mapping req_id to File | null
   useEffect(() => {
     const newUploadedFiles = { ...uploadedFiles };
+    let hasChanges = false;
     requirementsList.forEach(({ req_id }) => {
       if (!(req_id in newUploadedFiles)) {
         newUploadedFiles[req_id] = null;
+        hasChanges = true;
       }
     });
-    setUploadedFiles(newUploadedFiles);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (hasChanges) {
+      setUploadedFiles(newUploadedFiles);
+    }
   }, [requirementsList]);
 
   // Handle file selection for a given req_id
