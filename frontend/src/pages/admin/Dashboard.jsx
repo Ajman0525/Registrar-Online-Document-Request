@@ -216,7 +216,7 @@ function Dashboard() {
     <div className = "dashboard-content">
 
       {/*------------------- START OF HEADER CONTENT -------------------*/}
-      <div className="dashboard-header">
+      <div className="dashboard-header-wrapper">
         <div className="header-content">
           <h1>Dashboard</h1>
 
