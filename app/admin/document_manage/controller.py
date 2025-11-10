@@ -1,5 +1,6 @@
 from . import document_management_bp
-from flask import jsonify, g
+from flask import jsonify, g, request
+import psycopg2
 
 @document_management_bp.route('/get-documents', methods=['GET'])
 def get_documents():
@@ -65,3 +66,60 @@ def get_document_requirements_by_id(doc_id):
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@document_management_bp.route('/add-documents', methods=['POST'])
+def add_document():
+    try:
+        conn = g.db_conn
+        cursor = conn.cursor()
+        data = request.get_json()
+
+        doc_name = data.get("doc_name")
+        description = data.get("description")
+        cost = data.get("cost")
+        requirements = data.get("requirements", [])
+
+        if not all([doc_name, description, cost]):
+            return jsonify({"error": "Missing required fields"}), 400
+
+        cursor.execute("SELECT doc_id FROM documents ORDER BY doc_id DESC LIMIT 1;")
+        last_doc = cursor.fetchone()
+        new_doc_id = f"DOC{int(last_doc[0].replace('DOC', '')) + 1:04d}" if last_doc else "DOC0001"
+
+        cursor.execute("""
+            INSERT INTO documents (doc_id, doc_name, description, cost)
+            VALUES (%s, %s, %s, %s);
+        """, (new_doc_id, doc_name, description, cost))
+
+        for req_name in requirements:
+            cursor.execute("SELECT req_id FROM requirements WHERE requirement_name = %s;", (req_name,))
+            existing = cursor.fetchone()
+
+            if existing:
+                req_id = existing[0]
+            else:
+                cursor.execute("SELECT req_id FROM requirements ORDER BY req_id DESC LIMIT 1;")
+                last_req = cursor.fetchone()
+                req_id = f"REQ{int(last_req[0].replace('REQ', '')) + 1:04d}" if last_req else "REQ0001"
+
+                cursor.execute("""
+                    INSERT INTO requirements (req_id, requirement_name)
+                    VALUES (%s, %s);
+                """, (req_id, req_name))
+
+            cursor.execute("""
+                INSERT INTO document_requirements (doc_id, req_id)
+                VALUES (%s, %s);
+            """, (new_doc_id, req_id))
+
+        conn.commit()
+        return jsonify({"message": "Document added successfully", "doc_id": new_doc_id}), 201
+
+    except psycopg2.IntegrityError:
+        conn.rollback()
+        return jsonify({"error": "Duplicate document or invalid data."}), 400
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
