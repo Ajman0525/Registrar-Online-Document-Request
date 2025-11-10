@@ -1,9 +1,49 @@
-import React from "react";
+import React, { useState } from "react";
 import "./Tracking.css";
 import ButtonLink from "../../../components/common/ButtonLink";
 import ContentBox from "../../../components/user/ContentBox";
 
+// request details
+function MyRequestDetails({ trackData }) {
+    return (
+        <div className="text-section">
+            <h3 className="status-title">My Request Details</h3>
+            <div className="status-body">
+
+                <table className="request-table">
+                    <thead>
+                        <tr>
+                            <th>Document</th>
+                            <th>Quantity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {trackData.documents && trackData.documents.map((doc, index) => (
+                            <tr key={index}>
+                                <td><strong>{doc.name}</strong></td>
+                                <td><strong>{doc.quantity}</strong></td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+
+                <div className="tracking-number-section">
+                    <p>Tracking Number:</p>
+                    <div className="number">
+                        <p>
+                            <strong>{trackData.trackingNumber}</strong>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+/* track status component */
 function TrackStatus({ onBack, trackData }) {
+    const [view, setView] = useState("status");
+
     // config for each status
     const statusConfig = {
         "Ready for Pickup": {
@@ -89,27 +129,32 @@ function TrackStatus({ onBack, trackData }) {
     }
 
     return (
-        <div className="Track-page">
+        <div className="Track-page" >
             <ContentBox>
-                {/* The className from the config is applied here */}
-                <div className={`text-section ${config.className}`}>
-                    <h3 className="status-title">{config.title}</h3>
-                    {config.description}
-                    <div className="tracking-number-section">
-                        <p>Tracking Number:</p>
-                        <div className="number">
-                            <p><strong>{trackData.trackingNumber}</strong></p>
+                {view === 'status' ? (
+                    <>
+                        {/* The className from the config is applied here */}
+                        <div className={`text-section ${config.className}`}>
+                            <h3 className="status-title">{config.title}</h3>
+                            {config.description}
+                            <div className="tracking-number-section">
+                                <p>Tracking Number:</p>
+                                <div className="number">
+                                    <p><strong>{trackData.trackingNumber}</strong></p>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
+                        {config.options}
+                    </>
+                ) : (
+                    <MyRequestDetails trackData={trackData} />
+                )}
 
-                {config.options }
-
-                <div className="action-section">
+                <div className="action-section" >
                     <div className="button-section">
-                        <ButtonLink onClick={onBack} placeholder="Return" variant="secondary" />
-                        {/* render primary action if defined, otherwise default to "Track Another" */}
-                        {config.primaryAction || <ButtonLink onClick={onBack} placeholder="View Request" variant="primary" />}
+                        <ButtonLink onClick={onBack} placeholder="Track Another" variant="secondary" />
+                        {/* render primary action if defined, otherwise toggle view */}
+                        {config.primaryAction || <ButtonLink onClick={() => setView(view === 'status' ? 'details' : 'status')} placeholder={view === 'status' ? "View Request" : "View Status"} variant="primary" />}
                     </div>
                 </div>
 
