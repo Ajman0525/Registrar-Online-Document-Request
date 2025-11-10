@@ -1,7 +1,7 @@
 import "./FileCard.css";
 import ButtonLink from "./ButtonLink";
 
-function FileCard({ document, onClick, onEdit}) {
+function FileCard({ document, onClick, onEdit, onDelete }) {
     const { doc_name, description, requirements = [], cost } = document;
 
     return (
@@ -37,7 +37,10 @@ function FileCard({ document, onClick, onEdit}) {
                             placeholder={"Edit"} 
                             onClick={() => onEdit(document)} 
                         />
-                        <button className="delete-button">
+                        <button 
+                            className="delete-button"
+                            onClick={() => onDelete(document)}
+                        >
                             <img src="/assets/TrashWhite.svg" alt="Delete" />
                         </button>
                     </div>

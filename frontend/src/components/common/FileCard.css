@@ -1,6 +1,7 @@
 .card-container{
     margin: 20px;
 }
+
 .file-card, .add-card{
     width: 262px;
     height: 321px;
@@ -16,11 +17,20 @@
     mask-size: cover;
     mask-position: center;
 
-    transition: transform 0.3s ease;
+    transition: all 0.3s ease;
 }
 
 .file-card:hover, .add-card:hover{
     transform: scale(1.05);
+}
+
+.file-card .action-section {
+  opacity: 0;
+  transition: opacity 0.3s ease; 
+}
+
+.file-card:hover .action-section {
+  opacity: 1;
 }
 .add-card {
     display: flex;
@@ -113,4 +123,8 @@
     height: 40px;
     border-radius: 50%;
     flex: none; 
+}
+
+.delete-button:hover{
+    background-color: var(--color-button-destructive-hover);
 }
