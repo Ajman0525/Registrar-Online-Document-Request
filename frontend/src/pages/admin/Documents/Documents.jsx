@@ -7,6 +7,7 @@ import Popup from "../../../components/admin/Popup";
 function Documents() {
   const [documents, setDocuments] = useState([]);
   const [requirements, setRequirements] = useState([]);
+  const [documentsWithRequirements, setDocumentsWithRequirements] = useState([]);
   const [showPopup, setShowPopup] = useState(false);
   
   const handleOpen = () => setShowPopup(true);
@@ -14,7 +15,7 @@ function Documents() {
 
   // Fetch documents
   useEffect(() => {
-    fetch("/get-documents")
+    fetch("/admin/get-documents")
       .then((res) => res.json())
       .then((data) => setDocuments(data))
       .catch((err) => console.error("Error fetching documents:", err));
@@ -22,15 +23,36 @@ function Documents() {
 
   // Fetch document requirements
   useEffect(() => {
-    fetch("/get-document-requirements")
+    fetch("/admin/get-document-requirements")
       .then((res) => res.json())
       .then((data) => setRequirements(data))
       .catch((err) => console.error("Error fetching requirements:", err));
   }, []);
 
+  useEffect(() => {
+  fetch("http://127.0.0.1:8000/get-documents-with-requirements")
+    .then((res) => res.json())
+    .then((data) => setDocumentsWithRequirements(data))
+    .catch((err) => console.error(err));
+}, []);
+
+    useEffect(() => {
+    if (documents.length > 0 && requirements.length > 0) {
+      const docsWithReqs = documents.map((doc) => {
+        const reqsForDoc = requirements
+          .filter((r) => r.doc_id === doc.doc_id)
+          .map((r) => r.requirement_name); // now this will actually be the name
+        return { ...doc, requirements: reqsForDoc };
+      });
+      setDocumentsWithRequirements(docsWithReqs);
+    }
+  }, [documents, requirements]);
+
+
+
   return (
     <div>
-      {/* <h1>Documents</h1>
+      <h1>Documents</h1>
       <table border="1">
         <thead>
           <tr>
@@ -54,18 +76,43 @@ function Documents() {
             </tr>
           ))}
         </tbody>
-      </table> */}
+      </table>
 
-      {/* <h2>Document Requirements</h2>
+      <h2>Document Requirements</h2>
       <ul>
         {requirements.map((req, index) => (
           <li key={index}>
             Document ID: {req.doc_id}, Requirement ID: {req.req_id}
           </li>
         ))}
-      </ul> */}
+      </ul>
 
       <AddCard onClick={handleOpen} />
+
+      <div className="file-cards-container">
+        {documentsWithRequirements.length > 0
+          ? documentsWithRequirements.map((doc) => (
+              <FileCard
+                key={doc.doc_id}
+                documentName={doc.doc_name}
+                docDescription={doc.description}
+                requirements={doc.requirements} // array of strings
+                cost={doc.cost}
+                onClick={() => console.log("Clicked", doc.doc_id)}
+              />
+            ))
+          : documents.map((doc) => (
+              <FileCard
+                key={doc.doc_id}
+                documentName={doc.doc_name}
+                docDescription={doc.description}
+                requirements={doc.requirements} // fallback if you don’t have joined data
+                cost={doc.cost}
+                onClick={() => console.log("Clicked", doc.doc_id)}
+              />
+            ))}
+      </div>
+
 
       {showPopup && <Popup onClose={handleClose} />}
 
