@@ -2,7 +2,7 @@ import { useState } from "react";
 import "./Popup.css";
 import ButtonLink from "../common/ButtonLink";
 
-function Popup({ onClose }) {
+function Popup({ onClose, onSuccess }) {
   const [docName, setDocName] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
@@ -42,6 +42,12 @@ function Popup({ onClose }) {
 
       const result = await res.json();
       console.log("Document added successfully:", result);
+
+      // Refresh the document list right after adding
+      if (typeof onSuccess === "function") {
+        onSuccess();
+      }
+
       onClose();
     } catch (error) {
       console.error("Error adding document:", error);

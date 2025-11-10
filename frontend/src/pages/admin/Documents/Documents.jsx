@@ -13,35 +13,33 @@ function Documents() {
   const handleOpen = () => setShowPopup(true);
   const handleClose = () => setShowPopup(false);
 
-  // Fetch documents
-  useEffect(() => {
-    fetch("/admin/get-documents")
-      .then((res) => res.json())
-      .then((data) => setDocuments(data))
-      .catch((err) => console.error("Error fetching documents:", err));
-  }, []);
+  const fetchDocuments = () => {
+  fetch("/admin/get-documents")
+    .then((res) => res.json())
+    .then((data) => setDocuments(data))
+    .catch((err) => console.error("Error fetching documents:", err));
 
-  // Fetch document requirements
-  useEffect(() => {
-    fetch("/admin/get-document-requirements")
-      .then((res) => res.json())
-      .then((data) => setRequirements(data))
-      .catch((err) => console.error("Error fetching requirements:", err));
-  }, []);
-
-  useEffect(() => {
   fetch("http://127.0.0.1:8000/get-documents-with-requirements")
     .then((res) => res.json())
     .then((data) => setDocumentsWithRequirements(data))
     .catch((err) => console.error(err));
-}, []);
 
-    useEffect(() => {
+  fetch("/admin/get-document-requirements")
+    .then((res) => res.json())
+    .then((data) => setRequirements(data))
+    .catch((err) => console.error("Error fetching requirements:", err));
+};
+
+  useEffect(() => {
+    fetchDocuments();
+  }, []);
+
+  useEffect(() => {
     if (documents.length > 0 && requirements.length > 0) {
       const docsWithReqs = documents.map((doc) => {
         const reqsForDoc = requirements
           .filter((r) => r.doc_id === doc.doc_id)
-          .map((r) => r.requirement_name); // now this will actually be the name
+          .map((r) => r.requirement_name); 
         return { ...doc, requirements: reqsForDoc };
       });
       setDocumentsWithRequirements(docsWithReqs);
@@ -52,51 +50,18 @@ function Documents() {
 
   return (
     <div>
-      <h1>Documents</h1>
-      <table border="1">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Description</th>
-            <th>Logo</th>
-            <th>Cost</th>
-          </tr>
-        </thead>
-        <tbody>
-          {documents.map((doc) => (
-            <tr key={doc.doc_id}>
-              <td>{doc.doc_id}</td>
-              <td>{doc.doc_name}</td>
-              <td>{doc.description}</td>
-              <td>
-                <img src={doc.logo_link} width="50" alt={doc.doc_name} />
-              </td>
-              <td>{doc.cost}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
 
-      <h2>Document Requirements</h2>
-      <ul>
-        {requirements.map((req, index) => (
-          <li key={index}>
-            Document ID: {req.doc_id}, Requirement ID: {req.req_id}
-          </li>
-        ))}
-      </ul>
-
-      <AddCard onClick={handleOpen} />
-
+      <h1 className="title">Manage Documents</h1>
+      
       <div className="file-cards-container">
+        <AddCard onClick={handleOpen} />
         {documentsWithRequirements.length > 0
           ? documentsWithRequirements.map((doc) => (
               <FileCard
                 key={doc.doc_id}
                 documentName={doc.doc_name}
                 docDescription={doc.description}
-                requirements={doc.requirements} // array of strings
+                requirements={doc.requirements}
                 cost={doc.cost}
                 onClick={() => console.log("Clicked", doc.doc_id)}
               />
@@ -113,8 +78,7 @@ function Documents() {
             ))}
       </div>
 
-
-      {showPopup && <Popup onClose={handleClose} />}
+      {showPopup && <Popup onClose={handleClose} onSuccess={fetchDocuments} />}
 
     </div>
   );
