@@ -4,6 +4,7 @@ import FileCard from "../../../components/common/FileCard";
 import AddCard from "../../../components/common/AddCard";
 import Popup from "../../../components/admin/Popup";
 import DeletePopup from "../../../components/admin/DeletePopup";
+import SearchBar from "../../../components/common/SearchBar";
 
 function Documents() {
   const [documents, setDocuments] = useState([]);
@@ -12,6 +13,7 @@ function Documents() {
   const [selectedDoc, setSelectedDoc] = useState(null);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const handleOpenDelete = (doc) => {
     setSelectedDoc(doc);
@@ -65,10 +67,17 @@ function Documents() {
   };
 
   useEffect(() => {
+  const delay = setTimeout(() => {
+    setSearchTerm(searchTerm.trim());
+  }, 200);
+  return () => clearTimeout(delay);
+}, [searchTerm]);
+
+
+  useEffect(() => {
     fetchDocuments();
   }, []);
 
-  // Merge requirements into documents
   useEffect(() => {
     if (documents.length > 0 && requirements.length > 0) {
       const docsWithReqs = documents.map((doc) => {
@@ -81,18 +90,25 @@ function Documents() {
     }
   }, [documents, requirements]);
 
-  // Sort documents by last edited first (doc_id descending for now)
   const sortedDocuments = [...documentsWithRequirements].sort((a, b) =>
     b.doc_id.localeCompare(a.doc_id)
   );
 
+  const filteredDocuments = sortedDocuments.filter(doc =>
+    doc.doc_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    doc.description.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div>
-      <h1 className="title">Manage Documents</h1>
-
+      <div className="toolbar">
+        <h1 className="title">Manage Documents</h1>
+        <SearchBar onChange={setSearchTerm} />
+      </div>
+      
       <div className="file-cards-container">
-        <AddCard onClick={handleOpen} />
-        {sortedDocuments.map((doc) => (
+        {searchTerm.trim() === "" && <AddCard onClick={handleOpen} />}
+        {filteredDocuments.map((doc) => (
           <FileCard
             key={doc.doc_id}
             document={doc}
@@ -103,12 +119,13 @@ function Documents() {
         ))}
       </div>
 
+
       {showPopup && (
         <Popup
           onClose={handleClosePopup}
           onDelete={handleOpenDelete}
           document={selectedDoc}
-          onSuccess={fetchDocuments} // Refresh list after add/edit
+          onSuccess={fetchDocuments} 
         />
       )}
 
