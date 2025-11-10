@@ -48,6 +48,26 @@
     text-align: center;
 }
 
+/* table section */
+.request-table{
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+/* track status body */
+
+.status-body {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    max-width: 450px;
+    text-align: center;
+}
+
 /* error section */
 .error-section{
     display: flex;
@@ -61,6 +81,15 @@
     font-size: 10px;
     text-align: center;
     margin: 0px;
+}
+
+/* support section */
+.support-section{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
 }
 
 /* btn sections */
@@ -80,24 +109,8 @@
     width: 100%;
 }
 
-/* support section */
-.support-section{
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-}
-
-/* Track status body */
-
-.status-body {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
-    max-width: 450px;
+.button-section > * {
+    min-width: 140px;
     text-align: center;
 }
 
