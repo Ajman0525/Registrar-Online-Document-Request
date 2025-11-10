@@ -106,12 +106,11 @@ function TrackStatus({ onBack, trackData }) {
                 {config.options }
 
                 <div className="action-section">
-                    {config.action || (
-                        <div className="button-section">
-                            <ButtonLink to="/user/landing" placeholder="Return" variant="secondary" />
-                            <ButtonLink onClick={onBack} placeholder="Track Another" variant="primary" />
-                        </div>
-                    )}
+                    <div className="button-section">
+                        <ButtonLink onClick={onBack} placeholder="Return" variant="secondary" />
+                        {/* render primary action if defined, otherwise default to "Track Another" */}
+                        {config.primaryAction || <ButtonLink onClick={onBack} placeholder="Track Another" variant="primary" />}
+                    </div>
                 </div>
 
                 <div className="support-section">
