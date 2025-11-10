@@ -115,7 +115,7 @@ function TrackStatus({ onBack, trackData }) {
 
                 <div className="support-section">
                     <p className="subtext">Need help? Contact the </p>
-                    <a href="mailto:support@example.com" className="forgot-id-link">support.</a>
+                    <a href="mailto:support@example.com" className="support-email">support.</a>
                 </div>
             </ContentBox>
         </div>
