@@ -1,12 +1,23 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./Popup.css";
 import ButtonLink from "../common/ButtonLink";
 
-function Popup({ onClose, onSuccess }) {
+function Popup({ onClose, onSuccess, document }) {
+  const isEditMode = !!document; // if a document prop exists, we’re editing
+
   const [docName, setDocName] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [requirements, setRequirements] = useState([]);
+
+  useEffect(() => {
+    if (isEditMode) {
+      setDocName(document.doc_name || "");
+      setDescription(document.description || "");
+      setPrice(document.cost?.toString() || "");
+      setRequirements(document.requirements || []);
+    }
+  }, [document, isEditMode]);
 
   const handleAddRequirement = () => {
     setRequirements([...requirements, ""]);
@@ -31,33 +42,36 @@ function Popup({ onClose, onSuccess }) {
       requirements,
     };
 
+    const url = isEditMode
+      ? `http://127.0.0.1:8000/admin/edit-document/${document.doc_id}`
+      : "http://127.0.0.1:8000/admin/add-documents";
+
+    const method = isEditMode ? "PUT" : "POST";
+
     try {
-      const res = await fetch("http://127.0.0.1:8000/admin/add-documents", {
-        method: "POST",
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
 
-      if (!res.ok) throw new Error("Failed to add document");
+      if (!res.ok)
+        throw new Error(isEditMode ? "Failed to edit document" : "Failed to add document");
 
       const result = await res.json();
-      console.log("Document added successfully:", result);
+      console.log(isEditMode ? "Document updated:" : "Document added:", result);
 
-      // Refresh the document list right after adding
-      if (typeof onSuccess === "function") {
-        onSuccess();
-      }
-
+      if (typeof onSuccess === "function") onSuccess();
       onClose();
     } catch (error) {
-      console.error("Error adding document:", error);
+      console.error("Error submitting document:", error);
     }
   };
 
   return (
     <div className="overlay">
       <div className="Popup">
-        <h3 className="title">Add Document</h3>
+        <h3 className="title">{isEditMode ? "Edit Document" : "Add Document"}</h3>
 
         <div className="name-and-description-wrapper">
           <div className="name-section">
@@ -103,9 +117,7 @@ function Popup({ onClose, onSuccess }) {
                     type="text"
                     placeholder="Untitled Requirement"
                     value={req}
-                    onChange={(e) =>
-                      handleRequirementChange(index, e.target.value)
-                    }
+                    onChange={(e) => handleRequirementChange(index, e.target.value)}
                   />
                   <img
                     src="/assets/Trash.svg"
@@ -145,7 +157,7 @@ function Popup({ onClose, onSuccess }) {
             />
             <ButtonLink
               onClick={handleSubmit}
-              placeholder="Add"
+              placeholder={isEditMode ? "Save" : "Add"}
               className="proceed-button"
               variant="primary"
             />
