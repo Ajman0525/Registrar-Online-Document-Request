@@ -125,7 +125,7 @@ function TrackStatus({ onBack, trackData }) {
 
     return (
         <div className="Track-page" >
-            <ContentBox>
+            <ContentBox key={view}>
                 {view === 'status' ? (
                     <>
                         {/* The className from the config is applied here */}
