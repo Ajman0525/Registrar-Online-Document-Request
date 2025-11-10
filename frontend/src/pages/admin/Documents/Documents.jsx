@@ -8,78 +8,85 @@ function Documents() {
   const [documents, setDocuments] = useState([]);
   const [requirements, setRequirements] = useState([]);
   const [documentsWithRequirements, setDocumentsWithRequirements] = useState([]);
+  const [selectedDoc, setSelectedDoc] = useState(null);
   const [showPopup, setShowPopup] = useState(false);
-  
+
+  // Open the add/edit popup
+  const handleEdit = (doc) => {
+    setSelectedDoc(doc);
+    setShowPopup(true);
+  };
+
+  const handleClosePopup = () => {
+    setShowPopup(false);
+    setSelectedDoc(null);
+  };
+
   const handleOpen = () => setShowPopup(true);
-  const handleClose = () => setShowPopup(false);
 
+  // Fetch documents, requirements, and joined data
   const fetchDocuments = () => {
-  fetch("/admin/get-documents")
-    .then((res) => res.json())
-    .then((data) => setDocuments(data))
-    .catch((err) => console.error("Error fetching documents:", err));
+    fetch("/admin/get-documents")
+      .then((res) => res.json())
+      .then((data) => setDocuments(data))
+      .catch((err) => console.error("Error fetching documents:", err));
 
-  fetch("http://127.0.0.1:8000/get-documents-with-requirements")
-    .then((res) => res.json())
-    .then((data) => setDocumentsWithRequirements(data))
-    .catch((err) => console.error(err));
+    fetch("/admin/get-document-requirements")
+      .then((res) => res.json())
+      .then((data) => setRequirements(data))
+      .catch((err) => console.error("Error fetching requirements:", err));
 
-  fetch("/admin/get-document-requirements")
-    .then((res) => res.json())
-    .then((data) => setRequirements(data))
-    .catch((err) => console.error("Error fetching requirements:", err));
-};
+    fetch("/admin/get-documents-with-requirements")
+      .then((res) => res.json())
+      .then((data) => setDocumentsWithRequirements(data))
+      .catch((err) => console.error("Error fetching joined documents:", err));
+  };
 
   useEffect(() => {
     fetchDocuments();
   }, []);
 
+  // Merge requirements into documents
   useEffect(() => {
     if (documents.length > 0 && requirements.length > 0) {
       const docsWithReqs = documents.map((doc) => {
         const reqsForDoc = requirements
           .filter((r) => r.doc_id === doc.doc_id)
-          .map((r) => r.requirement_name); 
+          .map((r) => r.requirement_name);
         return { ...doc, requirements: reqsForDoc };
       });
       setDocumentsWithRequirements(docsWithReqs);
     }
   }, [documents, requirements]);
 
-
+  // Sort documents by last edited first (doc_id descending for now)
+  const sortedDocuments = [...documentsWithRequirements].sort((a, b) =>
+    b.doc_id.localeCompare(a.doc_id)
+  );
 
   return (
     <div>
-
       <h1 className="title">Manage Documents</h1>
-      
+
       <div className="file-cards-container">
         <AddCard onClick={handleOpen} />
-        {documentsWithRequirements.length > 0
-          ? documentsWithRequirements.map((doc) => (
-              <FileCard
-                key={doc.doc_id}
-                documentName={doc.doc_name}
-                docDescription={doc.description}
-                requirements={doc.requirements}
-                cost={doc.cost}
-                onClick={() => console.log("Clicked", doc.doc_id)}
-              />
-            ))
-          : documents.map((doc) => (
-              <FileCard
-                key={doc.doc_id}
-                documentName={doc.doc_name}
-                docDescription={doc.description}
-                requirements={doc.requirements} // fallback if you don’t have joined data
-                cost={doc.cost}
-                onClick={() => console.log("Clicked", doc.doc_id)}
-              />
-            ))}
+        {sortedDocuments.map((doc) => (
+          <FileCard
+            key={doc.doc_id}
+            document={doc}
+            onEdit={handleEdit}
+            onClick={() => console.log("Clicked", doc.doc_id)}
+          />
+        ))}
       </div>
 
-      {showPopup && <Popup onClose={handleClose} onSuccess={fetchDocuments} />}
-
+      {showPopup && (
+        <Popup
+          onClose={handleClosePopup}
+          document={selectedDoc}
+          onSuccess={fetchDocuments} // Refresh list after add/edit
+        />
+      )}
     </div>
   );
 }

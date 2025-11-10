@@ -11,7 +11,3 @@
   gap: 16px;
   width: 100%;
 }
-
-.file-cards-container > * {
-  outline: 2px dashed red; /* each card slot will have a red dashed outline */
-}
