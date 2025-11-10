@@ -27,22 +27,41 @@ function EnterTrackId({ onNext }) {
                 "DOC-2021-0001": {
                     studentId: "2021-0001",
                     status: "Ready for Pickup",
+                    documents: [
+                        { name: "Transcript of Records", quantity: 1 },
+                        { name: "Certificate of Good Moral", quantity: 2 },
+                        { name: "Honorable Dismissal", quantity: 1 },
+                    ]
                 },
                 "DOC-2022-0001": {
                     studentId: "2022-0001",
                     status: "Processing",
+                    documents: [
+                        { name: "Form 137", quantity: 1 },
+                    ]
                 },
                 "DOC-2023-0001": {
                     studentId: "2023-0001",
                     status: "Under Review",
+                    documents: [
+                        { name: "Diploma (Reissue)", quantity: 1 },
+                        { name: "Authentication", quantity: 5 },
+                    ]
                 },
                 "DOC-2024-0001": {
                     studentId: "2024-0001",
                     status: "For Signature",
+                    documents: [
+                        { name: "Certificate of Graduation", quantity: 1 },
+                    ]
                 },
                 "DOC-2025-0001": {
                     studentId: "2025-0001",
                     status: "Payment Pending",
+                    documents: [
+                        { name: "Transcript of Records", quantity: 2 },
+                        { name: "CAV (CHED)", quantity: 1 },
+                    ]
                 }
             };
 
