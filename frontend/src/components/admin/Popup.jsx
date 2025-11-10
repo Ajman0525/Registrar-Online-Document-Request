@@ -138,7 +138,7 @@ function Popup({ onClose, onSuccess, document }) {
             <p className="price-text">Price Php:</p>
             <input
               className="document-price-field"
-              type="number"
+              type="text"
               placeholder="0000"
               value={price}
               onChange={(e) => setPrice(e.target.value)}

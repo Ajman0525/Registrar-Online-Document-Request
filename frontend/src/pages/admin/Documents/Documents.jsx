@@ -3,13 +3,35 @@ import "./Documents.css";
 import FileCard from "../../../components/common/FileCard";
 import AddCard from "../../../components/common/AddCard";
 import Popup from "../../../components/admin/Popup";
+import DeletePopup from "../../../components/admin/DeletePopup";
 
 function Documents() {
   const [documents, setDocuments] = useState([]);
   const [requirements, setRequirements] = useState([]);
   const [documentsWithRequirements, setDocumentsWithRequirements] = useState([]);
   const [selectedDoc, setSelectedDoc] = useState(null);
+  const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
+
+  const handleOpenDelete = (doc) => {
+    setSelectedDoc(doc);
+    setShowDeletePopup(true);
+  };
+
+  const handleCloseDelete = () => {
+    setSelectedDoc(null);
+    setShowDeletePopup(false);
+  };
+
+  const handleDelete = async (docId) => {
+    try {
+      const res = await fetch(`/admin/delete-document/${docId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete document");
+      fetchDocuments(); // refresh list
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   // Open the add/edit popup
   const handleEdit = (doc) => {
@@ -75,6 +97,7 @@ function Documents() {
             key={doc.doc_id}
             document={doc}
             onEdit={handleEdit}
+            onDelete={handleOpenDelete}
             onClick={() => console.log("Clicked", doc.doc_id)}
           />
         ))}
@@ -83,8 +106,17 @@ function Documents() {
       {showPopup && (
         <Popup
           onClose={handleClosePopup}
+          onDelete={handleOpenDelete}
           document={selectedDoc}
           onSuccess={fetchDocuments} // Refresh list after add/edit
+        />
+      )}
+
+      {showDeletePopup && (
+        <DeletePopup
+          document={selectedDoc}
+          onClose={handleCloseDelete}
+          onDelete={handleDelete}
         />
       )}
     </div>
