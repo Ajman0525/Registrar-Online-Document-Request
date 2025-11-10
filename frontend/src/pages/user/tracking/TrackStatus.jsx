@@ -2,42 +2,10 @@ import React, { useState } from "react";
 import "./Tracking.css";
 import ButtonLink from "../../../components/common/ButtonLink";
 import ContentBox from "../../../components/user/ContentBox";
-
-// request details
-function MyRequestDetails({ trackData }) {
-    return (
-        <div className="text-section">
-            <h3 className="status-title">My Request</h3>
-            <div className="status-body">
-                <div className="documents-list">
-                    <div className="document-item document-header">
-                        <h4 className="document-name">Name</h4>
-                        <span className="quantity-number">Quantity</span>
-                    </div>
-                    {trackData.documents && trackData.documents.map((doc, index) => (
-                        <div key={index} className="document-item">
-                            <h4 className="document-name">{doc.name}</h4>
-                            <span className="quantity-number">&nbsp;{doc.quantity}</span>
-                        </div>
-                    ))}
-                </div>
-
-                <div className="tracking-number-section">
-                    <p>Tracking Number:</p>
-                    <div className="number">
-                        <p>
-                            <strong>{trackData.trackingNumber}</strong>
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-}
+import Details from "./Details";
 
 /* track status component */
-function TrackStatus({ onBack, trackData }) {
-    const [view, setView] = useState("status");
+function TrackStatus({ trackData, onBack, onViewDetails }) {
 
     // config for each status
     const statusConfig = {
@@ -123,42 +91,39 @@ function TrackStatus({ onBack, trackData }) {
         );
     }
 
-    return (
-        <div className="Track-page" >
-            <ContentBox key={view}>
-                {view === 'status' ? (
-                    <>
-                        {/* The className from the config is applied here */}
-                        <div className={`text-section ${config.className}`}>
-                            <h3 className="status-title">{config.title}</h3>
-                            {config.description}
-                            <div className="tracking-number-section">
-                                <p>Tracking Number:</p>
-                                <div className="number">
-                                    <p><strong>{trackData.trackingNumber}</strong></p>
-                                </div>
-                            </div>
-                        </div>
-                        {config.options}
-                    </>
-                ) : (
-                    <MyRequestDetails trackData={trackData} />
-                )}
+    const showViewDetailsButton = !config.options;
 
-                <div className="action-section" >
-                    <div className="button-section">
-                        <ButtonLink onClick={onBack} placeholder="Track Another" variant="secondary" />
-                        {/* render primary action if defined, otherwise toggle view */}
-                        {config.primaryAction || <ButtonLink onClick={() => setView(view === 'status' ? 'details' : 'status')} placeholder={view === 'status' ? "View Request" : "View Status"} variant="primary" />}
+    return (
+        <>
+            {/* Main Status Content */}
+            <div className={`text-section ${config.className}`}>
+                <h3 className="status-title">{config.title}</h3>
+                {config.description}
+                <div className="tracking-number-section">
+                    <p>Tracking Number:</p>
+                    <div className="number">
+                        <p><strong>{trackData.trackingNumber}</strong></p>
                     </div>
                 </div>
-
-                <div className="support-section">
-                    <p className="subtext">Need help? Contact the </p>
-                    <a href="mailto:support@example.com" className="support-email">support.</a>
+            </div>
+            {config.options}
+            <div className="action-section">
+                <div className="button-section">
+                    <ButtonLink onClick={onBack} placeholder="Track Another" variant="secondary" />
+                    {showViewDetailsButton && (
+                        <ButtonLink
+                            onClick={onViewDetails}
+                            placeholder="View Request"
+                            variant="primary"
+                        />
+                    )}
                 </div>
-            </ContentBox>
-        </div>
+            </div>
+            <div className="support-section">
+                <p className="subtext">Need help? Contact the </p>
+                <a href="mailto:support@example.com" className="support-email">support.</a>
+            </div>
+        </>
     );
 }
 
