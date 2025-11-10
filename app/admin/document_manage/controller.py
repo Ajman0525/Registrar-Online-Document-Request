@@ -164,3 +164,56 @@ def add_document():
         return jsonify({"error": str(e)}), 500
     finally:
         cursor.close()
+
+@document_management_bp.route('/edit-document/<string:doc_id>', methods=['PUT'])
+def edit_document(doc_id):
+    try:
+        conn = g.db_conn
+        cursor = conn.cursor()
+        data = request.get_json()
+
+        doc_name = data.get("doc_name")
+        description = data.get("description")
+        cost = data.get("cost")
+        requirements = data.get("requirements", [])
+
+        # update the main document info
+        cursor.execute("""
+            UPDATE documents
+            SET doc_name = %s, description = %s, cost = %s
+            WHERE doc_id = %s;
+        """, (doc_name, description, cost, doc_id))
+
+        # clear old requirements
+        cursor.execute("DELETE FROM document_requirements WHERE doc_id = %s;", (doc_id,))
+
+        # re-insert requirements
+        for req_name in requirements:
+            cursor.execute("SELECT req_id FROM requirements WHERE requirement_name = %s;", (req_name,))
+            existing = cursor.fetchone()
+
+            if existing:
+                req_id = existing[0]
+            else:
+                cursor.execute("SELECT req_id FROM requirements ORDER BY req_id DESC LIMIT 1;")
+                last_req = cursor.fetchone()
+                req_id = f"REQ{int(last_req[0].replace('REQ', '')) + 1:04d}" if last_req else "REQ0001"
+
+                cursor.execute("""
+                    INSERT INTO requirements (req_id, requirement_name)
+                    VALUES (%s, %s);
+                """, (req_id, req_name))
+
+            cursor.execute("""
+                INSERT INTO document_requirements (doc_id, req_id)
+                VALUES (%s, %s);
+            """, (doc_id, req_id))
+
+        conn.commit()
+        return jsonify({"message": "Document updated successfully"}), 200
+
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
