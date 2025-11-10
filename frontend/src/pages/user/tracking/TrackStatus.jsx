@@ -71,9 +71,11 @@ function TrackStatus({ onBack, trackData }) {
                 {/* The className from the config is applied here */}
                 <div className={`text-section ${config.className}`}>
                     <h3 className="status-title">{config.title}</h3>
-                    <div className="subtext">
-                        <p><strong>Tracking Number:</strong> {trackData.trackingNumber}</p>
-                        <p>{trackData.details}</p>
+                    <div className="tracking-number-section">
+                        <p>Tracking Number:</p>
+                        <div className="number">
+                            <p><strong>{trackData.trackingNumber}</strong></p>
+                        </div>
                     </div>
                 </div>
 
