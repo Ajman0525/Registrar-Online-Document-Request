@@ -26,7 +26,6 @@ def get_documents():
     
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
 
 @document_management_bp.route('/get-document-requirements', methods=['GET'])
 def get_document_requirements():
@@ -217,3 +216,25 @@ def edit_document(doc_id):
         return jsonify({"error": str(e)}), 500
     finally:
         cursor.close()
+
+@document_management_bp.route('/delete-document/<string:doc_id>', methods=['DELETE'])
+def delete_document(doc_id):
+    try:
+        conn = g.db_conn
+        cursor = conn.cursor()
+
+        # First, remove any linked requirements in document_requirements
+        cursor.execute("DELETE FROM document_requirements WHERE doc_id = %s;", (doc_id,))
+
+        # Then remove the document itself
+        cursor.execute("DELETE FROM documents WHERE doc_id = %s;", (doc_id,))
+
+        conn.commit()
+        return jsonify({"message": f"Document {doc_id} deleted successfully"}), 200
+
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
+
