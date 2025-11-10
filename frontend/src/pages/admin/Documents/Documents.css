@@ -4,3 +4,14 @@
 .placeholder{
     color: grey;
 }
+
+.file-cards-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(262px, 1fr));
+  gap: 16px;
+  width: 100%;
+}
+
+.file-cards-container > * {
+  outline: 2px dashed red; /* each card slot will have a red dashed outline */
+}
