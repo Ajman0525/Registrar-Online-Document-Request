@@ -98,47 +98,45 @@ function EnterTrackId({ onNext }) {
 
     return (
         <div className="Track-page">
-            <ContentBox>
-                <div className="text-section">
-                    <h3 className="title">Track your request</h3>
-                    <p className="subtext">Only verified students can access request status. Make sure you have your registered number ready.</p>
+            <div className="text-section">
+                <h3 className="title">Track your request</h3>
+                <p className="subtext">Only verified students can access request status. Make sure you have your registered number ready.</p>
+            </div>
+
+            <div className="input-section">
+                <p className="subtext">Tracking Number</p>
+                <input
+                    type="text"
+                    className={`track-input ${error && !studentId ? "input-error" : ""} ${shake ? "shake" : ""}`}
+                    placeholder="e.g., DOC-2021-2134"
+                    value={trackingNumber}
+                    onChange={(e) => setTrackingNumber(e.target.value)}
+                />
+                <p className="subtext">ID Number</p>
+                <input
+                    type="text"
+                    className={`track-input ${error && !trackingNumber ? "input-error" : ""} ${shake ? "shake" : ""}`}
+                    placeholder="0000-0000"
+                    value={studentId}
+                    onChange={handleStudentIdChange}
+                    maxLength={9}
+                />
+                <div className="error-section">
+                    {error && <p className={`error-text ${shake ? "shake" : ""}`}>{error}</p>}
+                </div>
+            </div>
+
+            <div className="action-section">
+                <div className="button-section">
+                    <ButtonLink to={"/user/landing"} placeholder="Return" className="cancel-button" variant="secondary" />
+                    <ButtonLink onClick={handleSubmit} placeholder="Track" className="proceed-button" variant="primary" />
                 </div>
 
-                <div className="input-section">
-                    <p className="subtext">Tracking Number</p>
-                    <input
-                        type="text"
-                        className={`track-input ${error && !studentId ? "input-error" : ""} ${shake ? "shake" : ""}`}
-                        placeholder="e.g., DOC-2021-2134"
-                        value={trackingNumber}
-                        onChange={(e) => setTrackingNumber(e.target.value)}
-                    />
-                    <p className="subtext">ID Number</p>
-                    <input
-                        type="text"
-                        className={`track-input ${error && !trackingNumber ? "input-error" : ""} ${shake ? "shake" : ""}`}
-                        placeholder="0000-0000"
-                        value={studentId}
-                        onChange={handleStudentIdChange}
-                        maxLength={9}
-                    />
-                    <div className="error-section">
-                        {error && <p className={`error-text ${shake ? "shake" : ""}`}>{error}</p>}
-                    </div>
+                <div className="support-section">
+                    <p className="subtext">Forgot ID Number or Tracking Number? Contact the </p>
+                    <a href="mailto:support@example.com" className="forgot-id-link">support.</a>
                 </div>
-
-                <div className="action-section">
-                    <div className="button-section">
-                        <ButtonLink to={"/user/landing"} placeholder="Return" className="cancel-button" variant="secondary" />
-                        <ButtonLink onClick={handleSubmit} placeholder="Track" className="proceed-button" variant="primary" />
-                    </div>
-
-                    <div className="support-section">
-                        <p className="subtext">Forgot ID Number or Tracking Number? Contact the </p>
-                        <a href="mailto:support@example.com" className="forgot-id-link">support.</a>
-                    </div>
-                </div>
-            </ContentBox>
+            </div>
         </div>
     );
 }
