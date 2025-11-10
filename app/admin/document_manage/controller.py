@@ -26,22 +26,23 @@ def get_documents():
     
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
 
 @document_management_bp.route('/get-document-requirements', methods=['GET'])
 def get_document_requirements():
     try:
-        # Use connection from the pool
         conn = g.db_conn
         cursor = conn.cursor()
-        cursor.execute("SELECT doc_id, req_id FROM document_requirements;")
+        cursor.execute("""
+            SELECT dr.doc_id, r.requirement_name
+            FROM document_requirements dr
+            JOIN requirements r ON dr.req_id = r.req_id;
+        """)
         document_requirements = cursor.fetchall()
         cursor.close()
 
         document_requirements_list = [
-            {
-                "doc_id": doc[0],
-                "req_id": doc[1]
-            }
+            {"doc_id": doc[0], "requirement_name": doc[1]}
             for doc in document_requirements
         ]
         return jsonify(document_requirements_list)
@@ -63,6 +64,46 @@ def get_document_requirements_by_id(doc_id):
             for doc in document_requirements
         ]
         return jsonify(document_requirements_list)
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@document_management_bp.route('/get-documents-with-requirements', methods=['GET'])
+def get_documents_with_requirements():
+    try:
+        conn = g.db_conn
+        cursor = conn.cursor()
+
+        # Fetch all documents
+        cursor.execute("SELECT doc_id, doc_name, description, logo_link, cost FROM documents;")
+        documents = cursor.fetchall()
+
+        document_list = []
+
+        for doc in documents:
+            doc_id, doc_name, description, logo_link, cost = doc
+
+            # Fetch requirement names for this document
+            cursor.execute("""
+                SELECT r.requirement_name
+                FROM document_requirements dr
+                JOIN requirements r ON dr.req_id = r.req_id
+                WHERE dr.doc_id = %s;
+            """, (doc_id,))
+            req_rows = cursor.fetchall()
+            req_names = [r[0] for r in req_rows]
+
+            document_list.append({
+                "doc_id": doc_id,
+                "doc_name": doc_name,
+                "description": description,
+                "logo_link": logo_link,
+                "cost": float(cost),
+                "requirements": req_names
+            })
+
+        cursor.close()
+        return jsonify(document_list), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
