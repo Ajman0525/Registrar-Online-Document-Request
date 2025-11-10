@@ -1,7 +1,9 @@
 import "./FileCard.css";
 import ButtonLink from "./ButtonLink";
 
-function FileCard({ documentName, docDescription, requirements = [], cost, onClick }) {
+function FileCard({ document, onClick, onEdit}) {
+    const { doc_name, description, requirements = [], cost } = document;
+
     return (
         <div className="card-container">
              <div className="file-card">
@@ -10,8 +12,8 @@ function FileCard({ documentName, docDescription, requirements = [], cost, onCli
                 </div>
 
                 <div className="name-and-description-section">
-                    <h2 className="document-name">{documentName}</h2>
-                    <p className="subtext">{docDescription}</p>
+                    <h2 className="document-name">{doc_name}</h2>
+                    <p className="subtext">{description}</p>
                 </div>
 
                 <div className="requirements-section">
@@ -30,7 +32,11 @@ function FileCard({ documentName, docDescription, requirements = [], cost, onCli
                         <p className="card-price-text">per copy</p>
                     </div>
                     <div className="action-section">
-                        <ButtonLink text="Edit" placeholder={"Edit"} onClick={onClick} />
+                        <ButtonLink 
+                            text="Edit" 
+                            placeholder={"Edit"} 
+                            onClick={() => onEdit(document)} 
+                        />
                         <button className="delete-button">
                             <img src="/assets/TrashWhite.svg" alt="Delete" />
                         </button>
