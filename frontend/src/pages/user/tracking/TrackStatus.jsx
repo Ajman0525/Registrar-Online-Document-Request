@@ -109,7 +109,7 @@ function TrackStatus({ onBack, trackData }) {
                     <div className="button-section">
                         <ButtonLink onClick={onBack} placeholder="Return" variant="secondary" />
                         {/* render primary action if defined, otherwise default to "Track Another" */}
-                        {config.primaryAction || <ButtonLink onClick={onBack} placeholder="Track Another" variant="primary" />}
+                        {config.primaryAction || <ButtonLink onClick={onBack} placeholder="View Request" variant="primary" />}
                     </div>
                 </div>
 
