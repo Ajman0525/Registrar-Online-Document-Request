@@ -9,19 +9,21 @@ function TrackStatus({ onBack, trackData }) {
         "Ready for Pickup": {
             className: "status-ready",
             title: "Document Ready",
-            action: (
-                <div className="choice-section">
+            description: (
+                <div className="status-body">
                     <p className="subtext">Your document is now ready for release. Please choose how you would like to receive it:</p>
-                    <div className="choice-buttons">
-                        <ButtonLink to="/user/pickup-registrar" placeholder="Pick up at Registrar" className="choice-button pickup-button" />
-                        <ButtonLink to="/user/delivery" placeholder="Delivery" className="choice-button delivery-button" />
-                    </div>
+                </div>
+            ),
+            action: (
+                <div className="claim-options">
+                    <ButtonLink to="/user/pickup-registrar" placeholder="Pick up at Registrar" className="claim-button pickup-button" />
+                    <ButtonLink to="/user/delivery" placeholder="Delivery" className="claim-button delivery-button" />
                 </div>
             )
         },
         "Processing": {
             className: "status-processing",
-            title: "Processing"
+            title: "In Progress"
         },
         "Under Review": {
             className: "status-review",

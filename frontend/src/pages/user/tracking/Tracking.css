@@ -88,9 +88,9 @@
     gap: 4px;
 }
 
-/* Documents Ready Button Style */
+/* Track status body */
 
-.choice-section {
+.status-body {
     width: 100%;
     display: flex;
     flex-direction: column;
@@ -100,14 +100,16 @@
     text-align: center;
 }
 
-.choice-buttons {
+/* claim option buttons */
+
+.claim-options {
     display: flex;
     gap: 1rem;
     width: 100%;
     justify-content: center;
 }
 
-.choice-button {
+.claim-button {
     width: 150px;
     height: 150px;
     display: flex;
@@ -122,12 +124,12 @@
 }
 
 /* "pick up at Registrar" button style */
-.choice-button.pickup-button {
+.claim-button.pickup-button {
     background-color: var(--color-button-gray);
     color: var(--color-black);
 }
 
-.choice-button.pickup-button:hover {
+.claim-button.pickup-button:hover {
     transform: scale(1.05);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     background-color: var(--color-button-gray);
@@ -135,12 +137,12 @@
 }
 
 /* "delivery" button style */
-.choice-button.delivery-button {
+.claim-button.delivery-button {
     background-color: var(--color-button-red);
     color: var(--color-white);
 }
 
-.choice-button.delivery-button:hover {
+.claim-button.delivery-button:hover {
     transform: scale(1.05);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     background-color: var(--color-button-red);
