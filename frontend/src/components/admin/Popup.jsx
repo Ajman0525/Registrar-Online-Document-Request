@@ -3,10 +3,13 @@ import "./Popup.css";
 import ButtonLink from "../common/ButtonLink";
 
 function Popup({ onClose }) {
+  const [docName, setDocName] = useState("");
+  const [description, setDescription] = useState("");
+  const [price, setPrice] = useState("");
   const [requirements, setRequirements] = useState([]);
 
   const handleAddRequirement = () => {
-    setRequirements([...requirements, ""]); // add a new empty requirement
+    setRequirements([...requirements, ""]);
   };
 
   const handleRequirementChange = (index, value) => {
@@ -20,6 +23,31 @@ function Popup({ onClose }) {
     setRequirements(updated);
   };
 
+  const handleSubmit = async () => {
+    const data = {
+      doc_name: docName,
+      description,
+      cost: parseFloat(price) || 0,
+      requirements,
+    };
+
+    try {
+      const res = await fetch("http://127.0.0.1:8000/admin/add-documents", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      if (!res.ok) throw new Error("Failed to add document");
+
+      const result = await res.json();
+      console.log("Document added successfully:", result);
+      onClose();
+    } catch (error) {
+      console.error("Error adding document:", error);
+    }
+  };
+
   return (
     <div className="overlay">
       <div className="Popup">
@@ -31,6 +59,8 @@ function Popup({ onClose }) {
               className="document-name-field"
               type="text"
               placeholder="Document Name"
+              value={docName}
+              onChange={(e) => setDocName(e.target.value)}
             />
             <hr />
           </div>
@@ -39,6 +69,8 @@ function Popup({ onClose }) {
               className="document-description-field"
               type="text"
               placeholder="Document Description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
             />
             <hr />
           </div>
@@ -52,7 +84,7 @@ function Popup({ onClose }) {
               onClick={handleAddRequirement}
               style={{ cursor: "pointer" }}
             >
-              <p className="subtext">Add Requirements</p>
+              <p className="subtext">Add Requirement</p>
               <img src="/assets/AddIcon.svg" alt="Add Icon" />
             </div>
             <hr />
@@ -60,22 +92,22 @@ function Popup({ onClose }) {
             {requirements.map((req, index) => (
               <div className="requirement-item" key={index}>
                 <div className="requirement-action-section">
-                    <input
+                  <input
                     className="requirement-name-field"
                     type="text"
                     placeholder="Untitled Requirement"
                     value={req}
                     onChange={(e) =>
-                        handleRequirementChange(index, e.target.value)
+                      handleRequirementChange(index, e.target.value)
                     }
-                    />
-                    <img
+                  />
+                  <img
                     src="/assets/Trash.svg"
                     alt="Remove Icon"
                     style={{ cursor: "pointer" }}
                     className="remove-icon"
                     onClick={() => handleRemoveRequirement(index)}
-                    />
+                  />
                 </div>
                 <hr />
               </div>
@@ -88,8 +120,10 @@ function Popup({ onClose }) {
             <p className="price-text">Price Php:</p>
             <input
               className="document-price-field"
-              type="text"
+              type="number"
               placeholder="0000"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
             />
           </div>
           <hr />
@@ -104,7 +138,7 @@ function Popup({ onClose }) {
               variant="secondary"
             />
             <ButtonLink
-              onClick={onClose}
+              onClick={handleSubmit}
               placeholder="Add"
               className="proceed-button"
               variant="primary"
