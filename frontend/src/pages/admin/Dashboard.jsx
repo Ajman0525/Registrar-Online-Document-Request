@@ -262,28 +262,28 @@ function Dashboard() {
   }, [isNotificationsOpen, isProfileOpen, dashboardData]);
   const cardData = dashboardData ? [
     {
-      title: "Total Requests",
+      title: "Total Submissions",
       icon: TotalRequestsIcon,
       value: dashboardData.stats.total_requests.toLocaleString(),
       subText: "Total requests in system"
     },
     {
-      title: "Pending Requests",
+      title: "In Process",
       icon: PendingIcon,
       value: dashboardData.stats.pending_requests.toString(),
       subText: "Requests in progress"
     },
     {
-      title: "Unpaid Requests",
+      title: "Outstanding Payments",
       icon: UnpaidIcon,
       value: `₱${parseFloat(dashboardData.stats.unpaid_requests || 0).toFixed(2)}`,
-      subText: "Total outstanding value"
+      subText: "Total unpaid amount"
     },
     {
-      title: "Documents Ready",
+      title: "Ready for Release",
       icon: ProcessedIcon,
       value: dashboardData.stats.documents_ready.toString(),
-      subText: "Ready for release"
+      subText: "Documents ready for pickup"
     },
   ] : [];
 
