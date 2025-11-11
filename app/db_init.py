@@ -185,7 +185,13 @@ def insert_sample_data():
        # Students
        student_values = [
            ("2025-1011", "Juan Dela Cruz", "09171234567", "juan@example.com", False),
-           ("2025-1012", "Maria Clara", "09179876543", "maria@example.com", True)
+           ("2025-1012", "Maria Clara", "09179876543", "maria@example.com", True),
+           ("2025-1013", "Maria Juan", "09179876543", "maria@example.com", True),
+           ("2025-1014", "Maria Mendoza", "09179876543", "maria@example.com", True),
+           ("2025-1015", "Maria Cruz", "09179876543", "maria@example.com", True),
+           ("2025-1017", "Maria Juan", "09179876543", "maria@example.com", False),
+           ("2025-1018", "Maria Mendoza", "09179876543", "maria@example.com", False),
+           ("2025-1019", "Maria Cruz", "09179876543", "maria@example.com", True)
        ]
        extras.execute_values(
            cur,
