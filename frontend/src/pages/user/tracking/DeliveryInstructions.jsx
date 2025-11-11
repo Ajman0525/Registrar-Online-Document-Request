@@ -6,7 +6,7 @@ function DeliveryInstructions({ onBack }) {
     return (
         <>
             <div className="text-section">
-                <h3 className="status-title-red">LBC Delivery</h3>
+                <h3 className="status-title">LBC Delivery</h3>
                 <p className="subtext-long">
                     You have chosen to receive your document via LBC Express. You will be redirected to the official LBC website to complete the delivery request.
                 </p>
