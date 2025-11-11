@@ -414,36 +414,35 @@ function Dashboard() {
                   <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Request ID</th>
                   <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Student</th>
                   <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Status</th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Requested At</th>
+                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Date & Time</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {dashboardData.recent_activity.map((activity, index) => (
-                  <tr
-                    key={index}
-                    className="hover:bg-gray-50 transition"
-                  >
-                    <td className="px-4 py-2 text-sm text-gray-700">{activity.request_id}</td>
-                    <td className="px-4 py-2 text-sm text-gray-700">{activity.full_name}</td>
-                    <td className="px-4 py-2 text-sm text-gray-500">{activity.requested_at}</td>
-                    <td className="px-4 py-2 text-sm font-semibold">
-                      <span
-                        className={`px-2 py-1 rounded-full text-white text-xs ${activity.status === "Processed"
-                            ? "bg-green-600"
-                            : activity.status === "Pending"
-                              ? "bg-yellow-500"
-                              : activity.status === "Unconfirmed"
-                                ? "bg-gray-500"
-                                : activity.status === "Rejected"
-                                  ? "bg-red-600"
-                                  : "bg-blue-600"
-                          }`}
-                      >
-                        {activity.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                {dashboardData.recent_activity.map((activity, index) => {
+                  let statusColor = "bg-gray-500"; // default
+                  switch (activity.status) {
+                    case "UNCONFIRMED": statusColor = "bg-gray-500"; break;
+                    case "SUBMITTED": statusColor = "bg-blue-500"; break;
+                    case "PENDING": statusColor = "bg-yellow-500"; break;
+                    case "IN-PROGRESS": statusColor = "bg-indigo-500"; break;
+                    case "DOC-READY": statusColor = "bg-purple-500"; break;
+                    case "RELEASED": statusColor = "bg-green-600"; break;
+                    case "REJECTED": statusColor = "bg-red-600"; break;
+                  }
+
+                  return (
+                    <tr key={index} className="hover:bg-gray-50 transition">
+                      <td className="px-4 py-2 text-sm text-gray-700">{activity.request_id}</td>
+                      <td className="px-4 py-2 text-sm text-gray-700">{activity.full_name}</td>
+                      <td className="px-4 py-2 text-sm font-semibold">
+                        <span className={`px-2 py-1 rounded-full text-white text-xs ${statusColor}`}>
+                          {activity.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2 text-sm text-gray-500">{activity.requested_at}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
