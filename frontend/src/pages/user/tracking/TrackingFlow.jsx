@@ -22,7 +22,7 @@ function TrackFlow() {
 		if (currentView === "status") {
 			setCurrentView("enter-id");
 		setTrackData(null); // clear data when going back to initial screen
-		} else if (currentView === "details" || currentView === "payment-options" || currentView === "delivery-instructions") {
+		} else if (currentView === "details" || currentView === "payment-options" || currentView === "payment-instructions" || currentView === "delivery-instructions") {
 			setCurrentView("status"); // go back to main status view
 		}
   	};
