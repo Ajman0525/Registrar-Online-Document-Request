@@ -84,7 +84,7 @@ const UserProfilePanel = ({ onClose, onLogout }) => (
 );
 
 
-const StatCard = ({ title, icon: Icon, value, subText }) => (
+const StatCard = ({ title, icon: Icon, value, subText, percentage, trend }) => (
   <div className="stat-card">
     <div className="card-header">
       <div className="card-icon">
@@ -94,8 +94,30 @@ const StatCard = ({ title, icon: Icon, value, subText }) => (
     </div>
     <div className="card-content-body">
       <p className="card-subtext">{subText}</p>
-      <h2 className="card-value">{value}</h2>
-      
+      <div className="card-value-row">
+        <h2 className="card-value">{value}</h2>
+        {percentage !== undefined && (
+          <span
+            className={`card-percentage ${trend === 'up' ? 'trend-up' : 'trend-down'}`}
+            data-tooltip={`${trend === 'up' ? 'Increased' : 'Decreased'} by ${Math.abs(percentage)}% compared to last period`}
+          >
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 12 12"
+              fill="none"
+              className="trend-arrow"
+            >
+              {trend === 'up' ? (
+                <path d="M6 2L10 6L6 6L6 10L6 6L2 6L6 2Z" fill="currentColor" />
+              ) : (
+                <path d="M6 10L2 6L6 6L6 2L6 6L10 6L6 10Z" fill="currentColor" />
+              )}
+            </svg>
+            {Math.abs(percentage)}%
+          </span>
+        )}
+      </div>
     </div>
   </div>
 );
@@ -268,25 +290,33 @@ function Dashboard() {
       title: "Total Submissions",
       icon: TotalRequestsIcon,
       value: dashboardData.stats.total_requests.toLocaleString(),
-      subText: "Total requests in system"
+      subText: "Total requests in system",
+      percentage: 12.67, // Add this
+      trend: "up" // Add this: "up" or "down"
     },
     {
       title: "In Process",
       icon: PendingIcon,
       value: dashboardData.stats.pending_requests.toString(),
-      subText: "Requests in progress"
+      subText: "Requests in progress",
+      percentage: 1.98,
+      trend: "down"
     },
     {
       title: "Outstanding Payments",
       icon: UnpaidIcon,
       value: `₱${parseFloat(dashboardData.stats.unpaid_requests || 0).toFixed(2)}`,
-      subText: "Total unpaid amount"
+      subText: "Total unpaid amount",
+      percentage: 8.35,
+      trend: "up"
     },
     {
       title: "Ready for Release",
       icon: ProcessedIcon,
       value: dashboardData.stats.documents_ready.toString(),
-      subText: "Documents ready for pickup"
+      subText: "Documents ready for pickup",
+      percentage: 2.81,
+      trend: "down"
     },
   ] : [];
 
@@ -382,6 +412,8 @@ function Dashboard() {
                 icon={card.icon}
                 value={card.value}
                 subText={card.subText}
+                percentage={card.percentage}
+                trend={card.trend}
               />
             ))}
           </div>
