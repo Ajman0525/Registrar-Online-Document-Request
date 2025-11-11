@@ -415,8 +415,8 @@ function Dashboard() {
                 <tr>
                   <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Request ID</th>
                   <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Student</th>
+                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Time & Date</th>
                   <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Status</th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Date & Time</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
