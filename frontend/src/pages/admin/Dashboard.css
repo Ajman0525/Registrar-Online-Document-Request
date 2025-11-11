@@ -433,6 +433,8 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  width: 100%;
+  justify-content: space-between; 
 }
 
 .card-percentage {
@@ -446,6 +448,7 @@
   font-weight: 600;
   cursor: pointer;
   transition: transform 0.2s ease;
+  margin-left: auto;
 }
 
 .card-percentage:hover {
@@ -552,6 +555,7 @@
     flex-direction: column;
     align-items: flex-start;
     margin-top: 20px;
+    position: relative;
 }
 
 .card-value {
