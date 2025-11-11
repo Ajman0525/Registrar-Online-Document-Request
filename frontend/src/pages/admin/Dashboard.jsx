@@ -99,7 +99,7 @@ const StatCard = ({ title, icon: Icon, value, subText, percentage, trend }) => (
         {percentage !== undefined && (
           <span
             className={`card-percentage ${trend === 'up' ? 'trend-up' : 'trend-down'}`}
-            data-tooltip={`${trend === 'up' ? 'Increased' : 'Decreased'} by ${Math.abs(percentage)}% compared to last period`}
+            data-tooltip={`${trend === 'up' ? 'Increased' : 'Decreased'} by ${Math.abs(percentage)}% compared to last month`}
           >
             <svg
               width="12"
