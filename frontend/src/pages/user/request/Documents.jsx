@@ -99,9 +99,9 @@ function Documents({ selectedDocs, setSelectedDocs, onNext }) {
                     ))}
                 </div>
 
-                {/* Next button */}
+                {/* View Request button */}
                 <button className="submit-btn" onClick={handleNextStep}>
-                    Next
+                    View Request
                 </button>
             </div>
         </div>
