@@ -139,14 +139,13 @@
     text-align: left;
 }
 
-/* Instructions styling */
+/* instructions styling */
 .instructions-section {
     width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1rem;
-    max-width: 450px;
+    gap: 5px;
     text-align: center;
     align-items: flex-start;
 }
@@ -156,7 +155,6 @@
     font-weight: 600;
     color: var(--color-black);
     margin-top: 10px;
-    margin-bottom: -10px;
     text-align: left;
     align-items: flex-start !important;
 }
@@ -166,6 +164,27 @@
     max-width: 600px;
     text-align: left;
     margin-top: 0px;
+}
+
+.details-container {
+    display: flex;
+    gap: 20px;
+    width: 100%;
+    max-width: 600px;
+}
+
+.details-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    flex: 1;
+}
+
+.details-icon {
+    width: 24px;
+    height: 24px;
+    color: var(--color-tertiary);
+    flex-shrink: 0;
 }
 
 .instructions-intro {
@@ -194,7 +213,25 @@
     position: relative;
 }
 
-.instructions-list li::before {
+.instructions-list li strong {
+    font-weight: 600;
+    color: var(--color-tertiary);   
+}
+
+/* alpha list */
+.alpha-list {
+    list-style: none; 
+    counter-reset: item;
+    padding-left: 30px;
+}
+
+.alpha-list li {
+    counter-increment: item;
+    position: relative;
+    padding-left: 20px;
+}
+
+.alpha-list li::before {
     content: counter(item, lower-alpha) ".";
     position: absolute;
     left: 0;
@@ -202,9 +239,14 @@
     color: var(--color-tertiary);
 }
 
-.instructions-list li strong {
-    font-weight: 600;
-    color: var(--color-tertiary);   
+/* bullet list */
+.bullet-list {
+    list-style-type: disc;
+    padding-left: 20px;
+}
+
+.bullet-list li {
+    padding-left: 0;
 }
 
 /* error section */
