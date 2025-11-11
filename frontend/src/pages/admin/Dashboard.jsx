@@ -400,25 +400,42 @@ function Dashboard() {
       {/*------------------ START OF RECENT ACTIVITY ------------------*/}
 
 
-      <div className="recent-activity-content">
-        <div className="recent-activity-wrapper">
-          <section className="recent-activity-content">
-            <h2>Recent Activity</h2>
-            {loading ? (
-              <p>Loading...</p>
-            ) : error ? (
-              <p>{error}</p>
-            ) : dashboardData && dashboardData.recent_activity.length > 0 ? (
-              <div className="activity-list">
-                {dashboardData.recent_activity.map((activity, index) => (
-                  <ActivityItem key={index} activity={activity} />
-                ))}
+      <div className="mt-10 bg-white rounded-2xl shadow p-6">
+        <h2 className="text-xl font-semibold text-gray-800 mb-4">Recent Activity</h2>
+        {loading ? (
+          <p className="text-gray-500">Loading...</p>
+        ) : error ? (
+          <p className="text-red-500">{error}</p>
+        ) : dashboardData && dashboardData.recent_activity.length > 0 ? (
+          <div className="space-y-3">
+            {dashboardData.recent_activity.map((activity, index) => (
+              <div
+                key={index}
+                className="flex items-start justify-between bg-gray-50 hover:bg-gray-100 transition rounded-lg p-4 border border-gray-200"
+              >
+                <div>
+                  <p className="text-gray-700 font-medium">
+                    Request #{activity.request_id} by{" "}
+                    <span className="font-semibold">{activity.full_name}</span> –{" "}
+                    <span
+                      className={`${activity.status === "Processed"
+                          ? "text-green-600"
+                          : activity.status === "Pending"
+                            ? "text-yellow-600"
+                            : "text-gray-600"
+                        }`}
+                    >
+                      {activity.status}
+                    </span>
+                  </p>
+                </div>
+                <span className="text-sm text-gray-500">{activity.requested_at}</span>
               </div>
-            ) : (
-              <p>No recent activity.</p>
-            )}
-          </section>
-        </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-500">No recent activity.</p>
+        )}
       </div>
 
 
