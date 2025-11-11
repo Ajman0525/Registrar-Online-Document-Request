@@ -34,7 +34,7 @@ const NotificationPanel = ({ notifications, onClose }) => (
     </div>
     <div className="panel-content">
       {notifications.length === 0 ? (
-        <div class="notification-empty-state">
+        <div className="notification-empty-state">
           <p>No new notifications.</p>
         </div>
       ) : (
