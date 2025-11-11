@@ -1,11 +1,9 @@
-import React, { useState } from "react";
 import "./Tracking.css";
 import ButtonLink from "../../../components/common/ButtonLink";
 import ContentBox from "../../../components/user/ContentBox";
-import Details from "./Details";
 
 /* track status component */
-function TrackStatus({ trackData, onBack, onViewDetails }) {
+function TrackStatus({ trackData, onBack, onViewDetails, onViewDeliveryInstructions, onViewPaymentOptions }) {
 
     // config for each status
     const statusConfig = {
@@ -19,8 +17,8 @@ function TrackStatus({ trackData, onBack, onViewDetails }) {
             ),
             options: (
                 <div className="claim-options">
-                    <ButtonLink to="/user/pickup-registrar" placeholder="Pick up at Registrar" className="claim-button pickup-button" />
-                    <ButtonLink to="/user/delivery" placeholder="Delivery" className="claim-button delivery-button" />
+                    <ButtonLink to="/user/delivery" placeholder="Pick up at Registrar" className="claim-button pickup-button" />
+                    <ButtonLink onClick={onViewDeliveryInstructions} placeholder="Delivery" className="claim-button delivery-button" />
                 </div>
             )
         },
@@ -59,9 +57,11 @@ function TrackStatus({ trackData, onBack, onViewDetails }) {
                     <p className="subtext">Your document is now ready. Please complete your payment using the button below. A confirmation will be sent once payment is received.</p>
                 </div>
             ),
-            primaryAction: (
-                <ButtonLink to="link" placeholder="Pay Now" variant="primary" /> /*replace "link" with actual payment link*/
-            ),
+            options: (
+                <div className="claim-options">
+                    <ButtonLink onClick={onViewPaymentOptions} placeholder="Proceed to Payment" className="claim-button delivery-button" />
+                </div>
+            )
         }
     };
 
