@@ -425,6 +425,7 @@ function Dashboard() {
                   >
                     <td className="px-4 py-2 text-sm text-gray-700">{activity.request_id}</td>
                     <td className="px-4 py-2 text-sm text-gray-700">{activity.full_name}</td>
+                    <td className="px-4 py-2 text-sm text-gray-500">{activity.requested_at}</td>
                     <td className="px-4 py-2 text-sm font-semibold">
                       <span
                         className={`px-2 py-1 rounded-full text-white text-xs ${activity.status === "Processed"
@@ -441,7 +442,6 @@ function Dashboard() {
                         {activity.status}
                       </span>
                     </td>
-                    <td className="px-4 py-2 text-sm text-gray-500">{activity.requested_at}</td>
                   </tr>
                 ))}
               </tbody>
