@@ -299,7 +299,7 @@ function Dashboard() {
       icon: PendingIcon,
       value: dashboardData.stats.pending_requests.toString(),
       subText: "Requests in progress",
-      percentage: 1.98,
+      // percentage: 1.98,
       trend: "down"
     },
     {
@@ -307,7 +307,7 @@ function Dashboard() {
       icon: UnpaidIcon,
       value: `₱${parseFloat(dashboardData.stats.unpaid_requests || 0).toFixed(2)}`,
       subText: "Total unpaid amount",
-      percentage: 8.35,
+      // percentage: 8.35,
       trend: "up"
     },
     {
@@ -315,7 +315,7 @@ function Dashboard() {
       icon: ProcessedIcon,
       value: dashboardData.stats.documents_ready.toString(),
       subText: "Documents ready for pickup",
-      percentage: 2.81,
+      // percentage: 2.81,
       trend: "down"
     },
   ] : [];
