@@ -93,8 +93,9 @@ const StatCard = ({ title, icon: Icon, value, subText }) => (
       <p className="card-title">{title}</p>
     </div>
     <div className="card-content-body">
-      <h2 className="card-value">{value}</h2>
       <p className="card-subtext">{subText}</p>
+      <h2 className="card-value">{value}</h2>
+      
     </div>
   </div>
 );
