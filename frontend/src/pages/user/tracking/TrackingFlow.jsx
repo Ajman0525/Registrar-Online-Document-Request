@@ -62,7 +62,12 @@ function TrackFlow() {
 				)}
 
 				{currentView === "payment-options" && (
-					<PaymentOptions onSelectMethod={handleSelectPaymentMethod} onBack={handleBack} />
+					<PaymentOptions 
+						trackData={trackData} 
+						onSelectMethod={handleSelectPaymentMethod} 
+						onBack={handleBack}
+						onViewDetails={handleViewDetails}
+					/>
 				)}
 
 				{currentView === "payment-instructions" && (
