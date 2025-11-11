@@ -432,6 +432,7 @@
     margin-top: 0px;
     overflow: hidden;
     
+    animation: slideDown 0.2s ease-out;
     font-family: var(--font-family-base); 
 }
 
