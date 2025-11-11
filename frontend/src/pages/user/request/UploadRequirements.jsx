@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import "./UploadRequirements.css";
 import { getCSRFToken } from "../../../utils/csrf";
+import LoadingSpinner from "../../../components/common/LoadingSpinner";
 
 function UploadRequirements({ selectedDocs = [], uploadedFiles = {}, setUploadedFiles, onNext, onBack }) {
   /*
@@ -16,6 +17,7 @@ function UploadRequirements({ selectedDocs = [], uploadedFiles = {}, setUploaded
 
   const [requirements, setRequirements] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
 
   // Fetch requirements from backend
   useEffect(() => {
@@ -94,6 +96,8 @@ function UploadRequirements({ selectedDocs = [], uploadedFiles = {}, setUploaded
       return;
     }
 
+    setUploading(true);
+
     // Prepare FormData for submission
     const formData = new FormData();
     const reqs = requirementsList.map(({ req_id }) => ({ requirement_id: req_id }));
@@ -124,63 +128,68 @@ function UploadRequirements({ selectedDocs = [], uploadedFiles = {}, setUploaded
     } catch (error) {
       console.error("Error uploading files:", error);
       alert("An error occurred while uploading files. Please try again.");
+    } finally {
+      setUploading(false);
     }
   };
 
   if (loading) {
-    return <div>Loading requirements...</div>;
+    return <LoadingSpinner message="Loading requirements..." />;
   }
 
   return (
-    <div className="upload-requirements-page">
-      <h2>Upload Requirements</h2>
-      <p>Please upload the required documents. Note that all submissions are subject to verification before approval.</p>
+    <>
+      {uploading && <LoadingSpinner message="Uploading files..." />}
+      <div className="upload-requirements-page">
+        <h2>Upload Requirements</h2>
+        <p>Please upload the required documents. Note that all submissions are subject to verification before approval.</p>
 
-      <div className="requirements-container">
-        <div className="requirements-header">
-          <span className="requirements-label">Requirements</span>
-          <hr />
+        <div className="requirements-container">
+          <div className="requirements-header">
+            <span className="requirements-label">Requirements</span>
+            <hr />
+          </div>
+
+          {requirementsList.length === 0 ? (
+            <p>No requirements to upload.</p>
+          ) : (
+            requirementsList.map(({ req_id, reqText }) => (
+              <div key={req_id} className="requirement-upload-row">
+                <label htmlFor={`upload-${req_id}`}>
+                  {reqText}
+                </label>
+                <input
+                  type="file"
+                  id={`upload-${req_id}`}
+                  onChange={(e) => handleFileChange(req_id, e)}
+                  disabled={uploading}
+                />
+                {uploadedFiles[req_id] && (
+                  <span className="file-name">{uploadedFiles[req_id].name}</span>
+                )}
+              </div>
+            ))
+          )}
         </div>
 
-        {requirementsList.length === 0 ? (
-          <p>No requirements to upload.</p>
-        ) : (
-          requirementsList.map(({ req_id, reqText }) => (
-            <div key={req_id} className="requirement-upload-row">
-              <label htmlFor={`upload-${req_id}`}>
-                {reqText}
-              </label>
-              <input
-                type="file"
-                id={`upload-${req_id}`}
-                onChange={(e) => handleFileChange(req_id, e)}
-                disabled={false}
-              />
-              {uploadedFiles[req_id] && (
-                <span className="file-name">{uploadedFiles[req_id].name}</span>
-              )}
-            </div>
-          ))
+        {!allRequiredUploaded && (
+          <p className="error-text">all fields are required*</p>
         )}
-      </div>
 
-      {!allRequiredUploaded && (
-        <p className="error-text">all fields are required*</p>
-      )}
-
-      <div className="button-row">
-        <button className="back-btn" onClick={onBack}>
-          Edit Request
-        </button>
-        <button
-          className="proceed-btn"
-          onClick={handleProceedClick}
-          disabled={!allRequiredUploaded}
-        >
-          Proceed
-        </button>
+        <div className="button-row">
+          <button className="back-btn" onClick={onBack} disabled={uploading}>
+            Edit Request
+          </button>
+          <button
+            className="proceed-btn"
+            onClick={handleProceedClick}
+            disabled={!allRequiredUploaded || uploading}
+          >
+            {uploading ? "Uploading..." : "Proceed"}
+          </button>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
