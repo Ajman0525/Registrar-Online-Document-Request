@@ -2,6 +2,9 @@ import { useState } from "react";
 import EnterTrackId from "./EnterTrackId";
 import TrackStatus from "./TrackStatus";
 import Details from "./Details";
+import PaymentOptions from "./PaymentOptions";
+import PaymentInstructions from "./PaymentInstructions";
+import PickupInstructions from "./PickupInstructions";
 import ContentBox from "../../../components/user/ContentBox";
 import "./Tracking.css";
 
@@ -25,21 +28,49 @@ function TrackFlow() {
   	};
 
 	const handleViewDetails = () => setCurrentView("details");
+	const handleTrackAnother = () => setCurrentView("enter-id");
+	const handleViewPaymentOptions = () => setCurrentView("payment-options");
+	const handleViewPaymentInstructions = () => setCurrentView("payment-instructions");
+	const handleViewPickupInstructions = () => setCurrentView("pickup-instructions");
 
+	const handleSelectPaymentMethod = (method) => {
+		if (method === "online") {
+			console.log("Redirecting to online payment gateway...");
+			setCurrentView("status"); // DELETE WHEN ACTUAL LINK IS AVAILABLE
+		} else if (method === "in-person") {
+			handleViewPaymentInstructions();
+		}
+	};
+	
     return (
         <div className="Track-page">
 			<ContentBox key={currentView}> {/* animation on every view change */}
 				{currentView === "enter-id" && <EnterTrackId onNext={handleTrackIdSubmit} />}
 
 				{currentView === "status" && trackData && (
-				<TrackStatus
-					trackData={trackData}
-					onViewDetails={handleViewDetails}
-					onBack={handleBack} // pass handleBack for the "Track Another" button
-				/>
+					<TrackStatus
+						trackData={trackData}
+						onViewDetails={handleViewDetails}
+						onViewPaymentOptions={handleViewPaymentOptions}
+						onViewPickupInstructions={handleViewPickupInstructions}
+						onBack={handleBack} // pass handleBack for the "Track Another" button
+					/>
 				)}
+
 				{currentView === "details" && trackData && (
-					<Details trackData={trackData} onBack={handleBack} />
+					<Details trackData={trackData} onTrackAnoter={handleTrackAnother} onBack={handleBack} />
+				)}
+
+				{currentView === "payment-options" && (
+					<PaymentOptions onSelectMethod={handleSelectPaymentMethod} onBack={handleBack} />
+				)}
+
+				{currentView === "payment-instructions" && (
+					<PaymentInstructions onBack={handleBack} />
+				)}
+
+				{currentView === "pickup-instructions" && (
+					<PickupInstructions onBack={handleBack} />
 				)}
 			</ContentBox>
 		</div>
@@ -47,4 +78,3 @@ function TrackFlow() {
 }
 
 export default TrackFlow;
-
