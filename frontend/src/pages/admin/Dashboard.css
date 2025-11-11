@@ -195,6 +195,7 @@
 /* ---------- DASHBOARD USER PROFILE ---------- */
 .user-profile-container {
     position: relative;
+    z-index: 250;
 }
 
 .user-profile-wrapper{
