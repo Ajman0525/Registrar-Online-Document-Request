@@ -291,8 +291,8 @@ function Dashboard() {
       icon: TotalRequestsIcon,
       value: dashboardData.stats.total_requests.toLocaleString(),
       subText: "Total requests in system",
-      percentage: 12.67, // Add this
-      trend: "up" // Add this: "up" or "down"
+      percentage: 12.67, 
+      trend: "up" 
     },
     {
       title: "In Process",
@@ -462,7 +462,7 @@ function Dashboard() {
                     minute: '2-digit'
                   });
 
-                  let statusColor = "bg-gray-500"; // default
+                  let statusColor = "bg-gray-500"; 
                   switch (activity.status) {
                     case "UNCONFIRMED": statusColor = "bg-gray-500"; break;
                     case "SUBMITTED": statusColor = "bg-blue-500"; break;
