@@ -4,7 +4,7 @@ import ButtonLink from "../../../components/common/ButtonLink";
 
 
 // request details
-function Details({ trackData, onBack }) {
+function Details({ trackData, onTrackAnoter, onBack }) {
     return (
         <div className="text-section">
             <h3 className="status-title">My Request</h3>
@@ -24,7 +24,7 @@ function Details({ trackData, onBack }) {
 
                 <div className="action-section">
                     <div className="button-section">
-                        <ButtonLink onClick={onBack} placeholder="Track Another" variant="secondary" />
+                        <ButtonLink onClick={onTrackAnoter} placeholder="Track Another" variant="secondary" />
                         <ButtonLink onClick={onBack} placeholder="Back to Status" variant="primary" />
                     </div>
                 </div>
