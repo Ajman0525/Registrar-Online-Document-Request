@@ -415,12 +415,20 @@ function Dashboard() {
                 <tr>
                   <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Request ID</th>
                   <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Student</th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Time & Date</th>
+                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Date & Time</th>
                   <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {dashboardData.recent_activity.map((activity, index) => {
+                  const formattedDate = new Date(activity.requested_at).toLocaleString('en-GB', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  });
+
                   let statusColor = "bg-gray-500"; // default
                   switch (activity.status) {
                     case "UNCONFIRMED": statusColor = "bg-gray-500"; break;
@@ -436,7 +444,7 @@ function Dashboard() {
                     <tr key={index} className="hover:bg-gray-50 transition">
                       <td className="px-4 py-2 text-sm text-gray-700">{activity.request_id}</td>
                       <td className="px-4 py-2 text-sm text-gray-700">{activity.full_name}</td>
-                      <td className="px-4 py-2 text-sm text-gray-500">{activity.requested_at}</td>
+                      <td className="px-4 py-2 text-sm text-gray-500">{formattedDate}</td>
                       <td className="px-4 py-2 text-sm font-semibold">
                         <span className={`px-2 py-1 rounded-full text-white text-xs ${statusColor}`}>
                           {activity.status}
