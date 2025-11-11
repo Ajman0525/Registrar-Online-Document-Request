@@ -442,9 +442,9 @@ function Dashboard() {
 
                   return (
                     <tr key={index} className="hover:bg-gray-50 transition">
-                      <td className="px-4 py-2 text-sm text-gray-700">{activity.request_id}</td>
-                      <td className="px-4 py-2 text-sm text-gray-700">{activity.full_name}</td>
-                      <td className="px-4 py-2 text-sm text-gray-500">{formattedDate}</td>
+                      <td className="px-4 py-2 text-sm text-black font-semibold">{activity.request_id}</td>
+                      <td className="px-4 py-2 text-sm text-black">{activity.full_name}</td>
+                      <td className="px-4 py-2 text-sm text-black">{formattedDate}</td>
                       <td className="px-4 py-2 text-sm font-semibold">
                         <span className={`px-2 py-1 rounded-full text-white text-xs ${statusColor}`}>
                           {activity.status}
