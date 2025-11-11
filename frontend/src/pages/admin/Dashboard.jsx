@@ -490,7 +490,7 @@ function Dashboard() {
             </table>
           </div>
         ) : (
-          <p className="text-gray-500">No recent activity.</p>
+          <p className="text-gray-500 flex justify-center">No recent activity.</p>
         )}
       </div>
       {/*------------------ END OF RECENT ACTIVITY ------------------*/}
