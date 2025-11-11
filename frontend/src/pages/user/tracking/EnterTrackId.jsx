@@ -62,6 +62,7 @@ function EnterTrackId({ onNext }) {
                 "DOC-2025-0001": {
                     studentId: "2025-0001",
                     status: "Payment Pending",
+                    amountDue: 550.00,
                     documents: [
                         { name: "Transcript of Records", quantity: 2, requirements: ["Valid ID", "Birth Certificate", "Birth Certificate"] },
                         { name: "CAV (CHED)", quantity: 1, requirements: ["Valid ID", "Birth Certificate", "Birth Certificate"] },
