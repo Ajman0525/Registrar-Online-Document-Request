@@ -4,6 +4,7 @@ import TrackStatus from "./TrackStatus";
 import Details from "./Details";
 import PaymentOptions from "./PaymentOptions";
 import PaymentInstructions from "./PaymentInstructions";
+import PaymentSuccess from "./PaymentSuccess";
 import DeliveryInstructions from "./DeliveryInstructions";
 import ContentBox from "../../../components/user/ContentBox";
 import "./Tracking.css";
@@ -21,7 +22,7 @@ function TrackFlow() {
     const handleBack = () => {
 		if (currentView === "status") {
 			setCurrentView("enter-id");
-		setTrackData(null); // clear data when going back to initial screen
+			setTrackData(null); // clear data when going back to initial screen
 		} else if (currentView === "details" || currentView === "payment-options" || currentView === "payment-instructions" || currentView === "delivery-instructions") {
 			setCurrentView("status"); // go back to main status view
 		}
@@ -35,13 +36,19 @@ function TrackFlow() {
 
 	const handleSelectPaymentMethod = (method) => {
 		if (method === "online") {
-			console.log("Redirecting to online payment gateway...");
-			setCurrentView("status"); // DELETE WHEN ACTUAL LINK IS AVAILABLE
+			// simulate successful online payment
+			setCurrentView("payment-success");
 		} else if (method === "in-person") {
 			handleViewPaymentInstructions();
 		}
 	};
 	
+	const handlePaymentComplete = () => {
+		// Update the status in trackData and go to the status page
+		setTrackData(prevData => ({ ...prevData, status: "Ready for Pickup" }));
+		setCurrentView("status");
+	};
+
     return (
         <div className="Track-page">
 			<ContentBox key={currentView}> {/* animation on every view change */}
@@ -68,6 +75,10 @@ function TrackFlow() {
 						onBack={handleBack}
 						onViewDetails={handleViewDetails}
 					/>
+				)}
+
+				{currentView === "payment-success" && (
+					<PaymentSuccess onPaymentComplete={handlePaymentComplete} />
 				)}
 
 				{currentView === "payment-instructions" && (
