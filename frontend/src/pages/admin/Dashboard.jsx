@@ -18,7 +18,9 @@ import LogoutIcon from "../../components/icons/LogoutIcon";
 const ActivityItem = ({ activity }) => (
   <div className="activity-item">
     <div className="activity-details">
-      <p className="activity-message">Request #{activity.request_id} by {activity.full_name} - {activity.status}</p>
+      <p className={`activity-message status ${activity.status.toLowerCase()}`}>
+        Request #{activity.request_id} by {activity.full_name} - {activity.status}
+      </p>
       <span className="activity-time">{activity.requested_at}</span>
     </div>
   </div>
@@ -398,8 +400,6 @@ function Dashboard() {
 
 
       {/*------------------ START OF RECENT ACTIVITY ------------------*/}
-
-
       <div className="mt-10 bg-white rounded-2xl shadow p-6">
         <h2 className="text-xl font-semibold text-gray-800 mb-4">Recent Activity</h2>
         {loading ? (
@@ -407,39 +407,52 @@ function Dashboard() {
         ) : error ? (
           <p className="text-red-500">{error}</p>
         ) : dashboardData && dashboardData.recent_activity.length > 0 ? (
-          <div className="space-y-3">
-            {dashboardData.recent_activity.map((activity, index) => (
-              <div
-                key={index}
-                className="flex items-start justify-between bg-gray-50 hover:bg-gray-100 transition rounded-lg p-4 border border-gray-200"
-              >
-                <div>
-                  <p className="text-gray-700 font-medium">
-                    Request #{activity.request_id} by{" "}
-                    <span className="font-semibold">{activity.full_name}</span> –{" "}
-                    <span
-                      className={`${activity.status === "Processed"
-                          ? "text-green-600"
-                          : activity.status === "Pending"
-                            ? "text-yellow-600"
-                            : "text-gray-600"
-                        }`}
-                    >
-                      {activity.status}
-                    </span>
-                  </p>
-                </div>
-                <span className="text-sm text-gray-500">{activity.requested_at}</span>
-              </div>
-            ))}
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Request ID</th>
+                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Student</th>
+                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Status</th>
+                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Requested At</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {dashboardData.recent_activity.map((activity, index) => (
+                  <tr
+                    key={index}
+                    className="hover:bg-gray-50 transition"
+                  >
+                    <td className="px-4 py-2 text-sm text-gray-700">{activity.request_id}</td>
+                    <td className="px-4 py-2 text-sm text-gray-700">{activity.full_name}</td>
+                    <td className="px-4 py-2 text-sm font-semibold">
+                      <span
+                        className={`px-2 py-1 rounded-full text-white text-xs ${activity.status === "Processed"
+                            ? "bg-green-600"
+                            : activity.status === "Pending"
+                              ? "bg-yellow-500"
+                              : activity.status === "Unconfirmed"
+                                ? "bg-gray-500"
+                                : activity.status === "Rejected"
+                                  ? "bg-red-600"
+                                  : "bg-blue-600"
+                          }`}
+                      >
+                        {activity.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2 text-sm text-gray-500">{activity.requested_at}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         ) : (
           <p className="text-gray-500">No recent activity.</p>
         )}
       </div>
+      {/*------------------ END OF RECENT ACTIVITY ------------------*/}
 
-
-      {/*------------------ START OF RECENT ACTIVITY ------------------*/}
     </div>
   );
 }
