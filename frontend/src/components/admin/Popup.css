@@ -18,7 +18,7 @@
     flex-direction: column;
     align-items: center;
     padding: 60px 100px;
-    gap: 20px;
+    gap: 24px;
 
     width: 620px;
     height: 620px;
@@ -67,7 +67,9 @@ hr{
     width: 100%;
 }
 
-.name-section, .description-section, .requirements-section, .price-section, .requirement-item{
+.name-section, .description-section, 
+.requirements-section, .price-section, 
+.requirement-item, .add-requirement-section{
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -122,12 +124,40 @@ hr{
     font-weight: 600;
 }
 
-.document-price-field{
+.document-price-field{  
     text-align: right;
     font-size: var(--font-size-regular);
     color: var(--color-black);
     font-weight: 600;
 }
+
+.document-price-field {
+  -moz-appearance: textfield;
+}
+
+.document-price-field::-webkit-outer-spin-button,
+.document-price-field::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 .document-price-field::placeholder{
     text-align: right;
+}
+
+.popup-error-section{
+    display: flex;
+    justify-content: left;
+    height: 8px;
+    width: 100%;
+}
+.cancel-button-wrapper,
+.proceed-button-wrapper {
+  width: 76.47px;
+}
+
+
+.cancel-button,
+.proceed-button {
+  width: 100%;
 }
