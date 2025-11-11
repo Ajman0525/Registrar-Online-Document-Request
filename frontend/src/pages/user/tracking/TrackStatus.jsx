@@ -57,11 +57,14 @@ function TrackStatus({ trackData, onBack, onViewDetails, onViewDeliveryInstructi
                     <p className="subtext">Your document is now ready. Please complete your payment using the button below. A confirmation will be sent once payment is received.</p>
                 </div>
             ),
-            options: (
-                <div className="claim-options">
-                    <ButtonLink onClick={onViewPaymentOptions} placeholder="Proceed to Payment" className="claim-button delivery-button" />
+            actionSection: (
+                <div className="action-section">
+                    <div className="button-section">
+                        <ButtonLink onClick={onBack} placeholder="Track Another" variant="secondary" />
+                        <ButtonLink onClick={onViewPaymentOptions} placeholder="Pay Now" variant="primary" />
+                    </div>
                 </div>
-            )
+            ),
         }
     };
 
@@ -107,18 +110,19 @@ function TrackStatus({ trackData, onBack, onViewDetails, onViewDeliveryInstructi
                 </div>
             </div>
             {config.options}
-            <div className="action-section">
-                <div className="button-section">
-                    <ButtonLink onClick={onBack} placeholder="Track Another" variant="secondary" />
-                    {showViewDetailsButton && (
-                        <ButtonLink
-                            onClick={onViewDetails}
-                            placeholder="View Request"
-                            variant="primary"
-                        />
-                    )}
+            {config.actionSection ? (
+                config.actionSection
+            ) : (
+                <div className="action-section">
+                    <div className="button-section">
+                        <ButtonLink onClick={onBack} placeholder="Track Another" variant="secondary" />
+                        {/* Only show "View Request" if there are no main option buttons like "Pay Now" */}
+                        {showViewDetailsButton &&
+                            <ButtonLink onClick={onViewDetails} placeholder="View Request" variant="primary" />
+                        }
+                    </div>
                 </div>
-            </div>
+            )}
             <div className="support-section">
                 <p className="subtext">Need help? Contact the </p>
                 <a href="mailto:support@example.com" className="support-email">support.</a>
