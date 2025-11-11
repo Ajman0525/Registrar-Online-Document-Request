@@ -18,7 +18,9 @@ import LogoutIcon from "../../components/icons/LogoutIcon";
 const ActivityItem = ({ activity }) => (
   <div className="activity-item">
     <div className="activity-details">
-      <p className="activity-message">Request #{activity.request_id} by {activity.full_name} - {activity.status}</p>
+      <p className={`activity-message status ${activity.status.toLowerCase()}`}>
+        Request #{activity.request_id} by {activity.full_name} - {activity.status}
+      </p>
       <span className="activity-time">{activity.requested_at}</span>
     </div>
   </div>
@@ -82,7 +84,7 @@ const UserProfilePanel = ({ onClose, onLogout }) => (
 );
 
 
-const StatCard = ({ title, icon: Icon, value, subText }) => (
+const StatCard = ({ title, icon: Icon, value, subText, percentage, trend }) => (
   <div className="stat-card">
     <div className="card-header">
       <div className="card-icon">
@@ -91,8 +93,31 @@ const StatCard = ({ title, icon: Icon, value, subText }) => (
       <p className="card-title">{title}</p>
     </div>
     <div className="card-content-body">
-      <h2 className="card-value">{value}</h2>
       <p className="card-subtext">{subText}</p>
+      <div className="card-value-row">
+        <h2 className="card-value">{value}</h2>
+        {percentage !== undefined && (
+          <span
+            className={`card-percentage ${trend === 'up' ? 'trend-up' : 'trend-down'}`}
+            data-tooltip={`${trend === 'up' ? 'Increased' : 'Decreased'} by ${Math.abs(percentage)}% compared to last month`}
+          >
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 12 12"
+              fill="none"
+              className="trend-arrow"
+            >
+              {trend === 'up' ? (
+                <path d="M6 2L10 6L6 6L6 10L6 6L2 6L6 2Z" fill="currentColor" />
+              ) : (
+                <path d="M6 10L2 6L6 6L6 2L6 6L10 6L6 10Z" fill="currentColor" />
+              )}
+            </svg>
+            {Math.abs(percentage)}%
+          </span>
+        )}
+      </div>
     </div>
   </div>
 );
@@ -265,25 +290,33 @@ function Dashboard() {
       title: "Total Submissions",
       icon: TotalRequestsIcon,
       value: dashboardData.stats.total_requests.toLocaleString(),
-      subText: "Total requests in system"
+      subText: "Total requests in system",
+      percentage: 12.67, 
+      trend: "up" 
     },
     {
       title: "In Process",
       icon: PendingIcon,
       value: dashboardData.stats.pending_requests.toString(),
-      subText: "Requests in progress"
+      subText: "Requests in progress",
+      // percentage: 1.98,
+      trend: "down"
     },
     {
       title: "Outstanding Payments",
       icon: UnpaidIcon,
       value: `₱${parseFloat(dashboardData.stats.unpaid_requests || 0).toFixed(2)}`,
-      subText: "Total unpaid amount"
+      subText: "Total unpaid amount",
+      // percentage: 8.35,
+      trend: "up"
     },
     {
       title: "Ready for Release",
       icon: ProcessedIcon,
       value: dashboardData.stats.documents_ready.toString(),
-      subText: "Documents ready for pickup"
+      subText: "Documents ready for pickup",
+      // percentage: 2.81,
+      trend: "down"
     },
   ] : [];
 
@@ -308,7 +341,7 @@ function Dashboard() {
       {/*------------------- START OF HEADER CONTENT -------------------*/}
       <div className="dashboard-header-wrapper">
         <div className="header-content">
-          <h1>Dashboard</h1>
+          <h1>Welcome, Administrator.</h1>
 
 
           <div className="header-controls">
@@ -379,6 +412,8 @@ function Dashboard() {
                 icon={card.icon}
                 value={card.value}
                 subText={card.subText}
+                percentage={card.percentage}
+                trend={card.trend}
               />
             ))}
           </div>
@@ -398,31 +433,68 @@ function Dashboard() {
 
 
       {/*------------------ START OF RECENT ACTIVITY ------------------*/}
-
-
-      <div className="recent-activity-content">
-        <div className="recent-activity-wrapper">
-          <section className="recent-activity-content">
-            <h2>Recent Activity</h2>
-            {loading ? (
-              <p>Loading...</p>
-            ) : error ? (
-              <p>{error}</p>
-            ) : dashboardData && dashboardData.recent_activity.length > 0 ? (
-              <div className="activity-list">
-                {dashboardData.recent_activity.map((activity, index) => (
-                  <ActivityItem key={index} activity={activity} />
-                ))}
-              </div>
-            ) : (
-              <p>No recent activity.</p>
-            )}
-          </section>
+      <div className="recent-activity-wrapper mt-10 bg-white rounded-2xl shadow p-6">
+        <div className="recent-activity-title">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">Recent Activity</h2>
         </div>
+        {loading ? (
+          <p className="text-gray-500">Loading...</p>
+        ) : error ? (
+          <p className="text-red-500">{error}</p>
+        ) : dashboardData && dashboardData.recent_activity.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Request ID</th>
+                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Student</th>
+                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Date & Time</th>
+                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {dashboardData.recent_activity.map((activity, index) => {
+                  const formattedDate = new Date(activity.requested_at).toLocaleString('en-GB', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  });
+
+                  let statusColor = "bg-gray-500"; 
+                  switch (activity.status) {
+                    case "UNCONFIRMED": statusColor = "bg-gray-500"; break;
+                    case "SUBMITTED": statusColor = "bg-blue-500"; break;
+                    case "PENDING": statusColor = "bg-yellow-500"; break;
+                    case "IN-PROGRESS": statusColor = "bg-indigo-500"; break;
+                    case "DOC-READY": statusColor = "bg-purple-500"; break;
+                    case "RELEASED": statusColor = "bg-green-600"; break;
+                    case "REJECTED": statusColor = "bg-red-600"; break;
+                  }
+
+                  return (
+                    <tr key={index} className="hover:bg-gray-50 transition">
+                      <td className="px-4 py-2 text-sm text-black font-semibold">{activity.request_id}</td>
+                      <td className="px-4 py-2 text-sm text-black">{activity.full_name}</td>
+                      <td className="px-4 py-2 text-sm text-black">{formattedDate}</td>
+                      <td className="px-4 py-2 text-sm font-semibold">
+                        <span className={`px-2 py-1 rounded-full text-white text-xs ${statusColor}`}>
+                          {activity.status}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="text-gray-500">No recent activity.</p>
+        )}
       </div>
+      {/*------------------ END OF RECENT ACTIVITY ------------------*/}
 
-
-      {/*------------------ START OF RECENT ACTIVITY ------------------*/}
     </div>
   );
 }
