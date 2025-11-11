@@ -512,12 +512,19 @@
     pointer-events: none;
 }
 
+.recent-activity-wrapper {
+    margin-left: 15px;   
+    margin-right: 15px;
+    background-color: var(--color-white);
+    border-radius: 20px;
+    padding: 15px 15px;
+    font-family: var(--font-family-base);
+}
 
 .recent-activity-title h2 {
   text-align: left; 
   font-size: 20px;
   font-weight: 600; 
   color: var(--color-black); 
-  margin-bottom: 20px; 
-  margin-top: 0;
+  margin: 10px 10px 25px;
 }
