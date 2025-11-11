@@ -401,7 +401,9 @@ function Dashboard() {
 
       {/*------------------ START OF RECENT ACTIVITY ------------------*/}
       <div className="mt-10 bg-white rounded-2xl shadow p-6">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">Recent Activity</h2>
+        <div className="recent-activity-title">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">Recent Activity</h2>
+        </div>
         {loading ? (
           <p className="text-gray-500">Loading...</p>
         ) : error ? (
