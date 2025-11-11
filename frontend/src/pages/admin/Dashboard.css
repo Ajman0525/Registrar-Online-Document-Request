@@ -444,7 +444,7 @@
   border-radius: 6px;
   font-size: 0.75rem;
   font-weight: 600;
-  cursor: help;
+  cursor: pointer;
   transition: transform 0.2s ease;
 }
 
