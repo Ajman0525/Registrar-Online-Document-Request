@@ -4,7 +4,7 @@ import TrackStatus from "./TrackStatus";
 import Details from "./Details";
 import PaymentOptions from "./PaymentOptions";
 import PaymentInstructions from "./PaymentInstructions";
-import PickupInstructions from "./PickupInstructions";
+import DeliveryInstructions from "./DeliveryInstructions";
 import ContentBox from "../../../components/user/ContentBox";
 import "./Tracking.css";
 
@@ -22,7 +22,7 @@ function TrackFlow() {
 		if (currentView === "status") {
 			setCurrentView("enter-id");
 		setTrackData(null); // clear data when going back to initial screen
-		} else if (currentView === "details" || currentView === "payment-options" || currentView === "pickup-instructions") {
+		} else if (currentView === "details" || currentView === "payment-options" || currentView === "delivery-instructions") {
 			setCurrentView("status"); // go back to main status view
 		}
   	};
@@ -31,7 +31,7 @@ function TrackFlow() {
 	const handleTrackAnother = () => setCurrentView("enter-id");
 	const handleViewPaymentOptions = () => setCurrentView("payment-options");
 	const handleViewPaymentInstructions = () => setCurrentView("payment-instructions");
-	const handleViewPickupInstructions = () => setCurrentView("pickup-instructions");
+	const handleViewDeliveryInstructions = () => setCurrentView("delivery-instructions");
 
 	const handleSelectPaymentMethod = (method) => {
 		if (method === "online") {
@@ -52,7 +52,7 @@ function TrackFlow() {
 						trackData={trackData}
 						onViewDetails={handleViewDetails}
 						onViewPaymentOptions={handleViewPaymentOptions}
-						onViewPickupInstructions={handleViewPickupInstructions}
+						onViewDeliveryInstructions={handleViewDeliveryInstructions}
 						onBack={handleBack} // pass handleBack for the "Track Another" button
 					/>
 				)}
@@ -69,8 +69,8 @@ function TrackFlow() {
 					<PaymentInstructions onBack={handleBack} />
 				)}
 
-				{currentView === "pickup-instructions" && (
-					<PickupInstructions onBack={handleBack} />
+				{currentView === "delivery-instructions" && (
+					<DeliveryInstructions onBack={handleBack} />
 				)}
 			</ContentBox>
 		</div>
