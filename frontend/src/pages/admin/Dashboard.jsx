@@ -311,7 +311,7 @@ function Dashboard() {
       {/*------------------- START OF HEADER CONTENT -------------------*/}
       <div className="dashboard-header-wrapper">
         <div className="header-content">
-          <h1>Dashboard</h1>
+          <h1>Welcome, Administrator.</h1>
 
 
           <div className="header-controls">
