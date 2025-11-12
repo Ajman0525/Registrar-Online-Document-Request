@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
-import "./PreferredContact.css";
+import "./Request.css"
 import { getCSRFToken } from "../../../utils/csrf";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
+import ContentBox from "../../../components/user/ContentBox";
+import ButtonLink from "../../../components/common/ButtonLink";
 
 function PreferredContact({ preferredContactInfo = {}, setPreferredContactInfo, contactInfo, setContactInfo, onNext, onBack }) {
   /*
@@ -88,7 +90,8 @@ function PreferredContact({ preferredContactInfo = {}, setPreferredContactInfo, 
       {(loadingContact || savingContact) && (
         <LoadingSpinner message={loadingContact ? "Loading contact info..." : "Saving contact preference..."} />
       )}
-      <div className="preferred-contact-page">
+
+      <ContentBox className="preferred-contact-box">
         <h2>Preferred Contact</h2>
 
         <form>
@@ -146,15 +149,22 @@ function PreferredContact({ preferredContactInfo = {}, setPreferredContactInfo, 
           </div>
         </form>
 
-        <div className="button-row">
-          <button type="button" className="back-btn" onClick={onBack} disabled={loadingContact || savingContact}>
-            Back
-          </button>
-          <button type="button" className="next-btn" onClick={handleNextClick} disabled={!canProceed || loadingContact || savingContact}>
-            {savingContact ? "Saving..." : "Next"}
-          </button>
-        </div>
+       <div className="action-buttons">
+        <ButtonLink
+          placeholder="Back"
+          onClick={onBack}
+          variant="secondary"
+          disabled={loadingContact || savingContact}
+        />
+        <ButtonLink
+          placeholder={savingContact ? "Saving..." : "Next"}
+          onClick={handleNextClick}
+          variant="primary"
+          disabled={!canProceed || loadingContact || savingContact}
+        />
       </div>
+
+      </ContentBox>
     </>
   );
 }
