@@ -4,6 +4,8 @@ from app.utils.decorator import jwt_required_with_role
 from flask_jwt_extended import get_jwt_identity
 from .models import Request
 from app.user.document_list.models import DocumentList
+import os
+from werkzeug.utils import secure_filename
 
 role = 'user'
 
@@ -17,10 +19,16 @@ def get_request_page_data():
     Step 3: Return JSON data to React
     """
     try:
+        
         # step 1: initialize the db
-        request_id = Request.generate_unique_request_id()
-        student_id = get_jwt_identity()
-    
+        request_id = session.get("request_id")
+        
+        if not request_id:
+            request_id = Request.generate_unique_request_id()
+            session["request_id"] = request_id
+            
+        student_id = session.get("student_id")
+              
         ##store req_id and student_id to db
         Request.store_request(request_id, student_id)
         
@@ -33,12 +41,13 @@ def get_request_page_data():
         student_email = student_data.get("email")
         
         #Store student info in the database
-        Request.store_student_info(student_id, student_name, student_contact, student_email)
+        Request.store_student_info(request_id, student_id, student_name, student_contact, student_email)
 
         # Step 2: Fetch documents available for request
         documents = DocumentList.get_all_documents()
 
-        session[request_id] = request_id  # Store request_id in session for later use
+        session["request_id"] = request_id  # Store request_id in session for later use
+        
         # Step 3: send the needed data to React
         return jsonify({
             "status": "success",
@@ -53,66 +62,31 @@ def get_request_page_data():
             "status": "error",
             "message": "An unexpected error occurred while fetching request data."
         }), 500
-        
-#view requests
-@request_bp.route("/api/view-request", methods=["GET"])
-@jwt_required_with_role(role)
-def view_request_page():
-    """
-    Accepts selected documents from React and returns them as JSON.
-    If no documents are selected, return a user-friendly notification.
-    """
-    data = request.get_json()
 
-    # Check if the 'documents' key exists
-    if not data or "documents" not in data:
-        return jsonify({
-            "success": False,
-            "notification": "No documents were selected.",
-            "documents": []
-        }), 200  # 200 so frontend can handle it gracefully
-
-    selected_docs = data.get("documents", [])
-
-    # If the list is empty, return a notification
-    if not selected_docs:
-        return jsonify({
-            "success": False,
-            "notification": "Please select at least one document before proceeding.",
-            "documents": []
-        }), 200
-
-    # If documents exist, return them
-    return jsonify({
-        "success": True,
-        "message": "Documents sent successfully.",
-        "documents": selected_docs
-    }), 200
-    
     
 #submit requests
-@request_bp.route("/api/save-request", methods=["POST"])
+@request_bp.route("/api/save-documents", methods=["POST"])
 @jwt_required_with_role(role)
-def submit_request_page():
+def save_documents():
     """
     Accepts final submission data from React and processes the request.
     Returns a success or error notification based on processing outcome.
     """
     
-    """accepts data from react: request id, document id, quantity"""
+    """accepts data from react: document id, quantity"""
     data = request.get_json()
-
+    request_id = session.get("request_id")
+    
     try:
         #store requested documents to db
         Request.store_requested_documents(
-            data["request_id"],
+            request_id,
             data["document_ids"],
             data["quantity_list"]
         )
 
         return jsonify({
             "success": True,
-            "request_id": data["request_id"],
             "notification": "Your request has been submitted successfully."
         }), 200
 
@@ -125,7 +99,7 @@ def submit_request_page():
         
 
 @request_bp.route("/api/list-requirements", methods=["GET"])
-@jwt_required_with_role(role)  # replace role variable as needed
+@jwt_required_with_role(role)  
 def get_requirements():
     """
     Returns all unique requirements for a specific request.
@@ -154,32 +128,61 @@ def get_requirements():
         "requirements": result["requirements"]
     }), 200
 
-#submit requirement links
-@request_bp.route("/api/submit-links", methods=["POST"])
+#submit requirement files
+@request_bp.route("/api/save-file", methods=["POST"])
 @jwt_required_with_role(role)
-def submit_requirement_links():
+def submit_requirement_files():
     """
-    Accepts requirement links from React and stores them to the database.
-    Expected JSON format:
-    {
-        "request_id": "R0000123",
-        "requirements": [
-            {"requirement_id": "REQ0001", "file_link": "https://example.com/id.png"},
-            {"requirement_id": "REQ0002", "file_link": "https://example.com/address.pdf"}
-        ]
-    }
+    Accepts requirement files from React, saves them to disk, and stores file paths to the database.
+    Expected multipart/form-data format:
+    - request_id: "R0000123"
+    - requirements: JSON string like [{"requirement_id": "REQ0001"}, {"requirement_id": "REQ0002"}]
+    - files: file uploads with keys like "file_REQ0001", "file_REQ0002"
     """
-    
-    data = request.get_json()
     request_id = session.get("request_id")
-    requirements = data.get("requirements")
+    requirements_json = request.form.get("requirements")
+    if not requirements_json:
+        return jsonify({"success": False, "notification": "No requirements provided."}), 400
 
-    #store requirement links to db
-    success, message = Request.submit_requirement_links(request_id, requirements)
+    try:
+        import json
+        requirements = json.loads(requirements_json)
+    except json.JSONDecodeError:
+        return jsonify({"success": False, "notification": "Invalid requirements format."}), 400
+
+    # Directory to save files
+    upload_dir = os.path.join(os.getcwd(), 'uploads', request_id)
+    os.makedirs(upload_dir, exist_ok=True)
+
+    saved_files = []
+    for req in requirements:
+        requirement_id = req.get("requirement_id")
+        if not requirement_id:
+            continue
+        file_key = f"file_{requirement_id}"
+        if file_key in request.files:
+            file = request.files[file_key]
+            if file.filename:
+                filename = secure_filename(file.filename)
+                file_path = os.path.join(upload_dir, f"{requirement_id}_{filename}")
+                
+                # Delete existing files for this requirement_id
+                for existing_file in os.listdir(upload_dir):
+                    if existing_file.startswith(f"{requirement_id}_"):
+                        os.remove(os.path.join(upload_dir, existing_file))
+                        
+                file.save(file_path)
+                saved_files.append({"requirement_id": requirement_id, "file_path": file_path})
+
+    if not saved_files:
+        return jsonify({"success": False, "notification": "No files uploaded."}), 400
+
+    #store requirement files to db
+    success, message = Request.store_requirement_files(request_id, saved_files)
     status_code = 200 if success else 400
     return jsonify({"success": success, "notification": message}), status_code
 
-#proceed upload req button
+
 #get preferred contact
 @request_bp.route("/api/get-contact", methods=["GET"])
 @jwt_required_with_role(role)
@@ -187,7 +190,7 @@ def get_preferred_contact():
     """
     Fetches the preferred contact method for the logged-in student.
     """
-    student_id = get_jwt_identity()
+    student_id = session.get("student_id")  
     contact_info = Request.get_contact_info_by_student_id(student_id)
 
     if contact_info:
@@ -200,52 +203,54 @@ def get_preferred_contact():
             "success": False,
             "notification": "Could not retrieve contact information."
         }), 500
-        
-#next button in contact page
-#get the summary of request
-@request_bp.route("/api/summary", methods=["GET"])
-@jwt_required_with_role(role)
-def get_request_summary():
-    """
-    Fetches a summary of the request including documents.
-    """
-    request_id = session.get("request_id")
 
-    if not request_id:
+#set preferred contact
+@request_bp.route("/api/set-preferred-contact", methods=["POST"])
+@jwt_required_with_role(role)
+def set_preferred_contact():
+    """
+    Sets the preferred contact method for the request.
+    """
+    data = request.get_json()
+    request_id = session.get("request_id")
+    preferred_contact = data.get("preferred_contact")
+
+    if not request_id or not preferred_contact:
         return jsonify({
             "success": False,
-            "notification": "Missing request_id parameter.",
-            "summary": {}
+            "notification": "Missing request_id or preferred_contact."
         }), 400
 
-    summary = Request.get_request_documents_with_cost(request_id)
+    success = Request.store_preferred_contact(request_id, preferred_contact)
 
-    # Sample Output:
-    # {
-    #     "documents": [
-    #         {"doc_id": "DOC0001", "doc_name": "Certificate of Residency", "quantity": 2, "unit_cost": 50.0, "total_cost": 100.0},
-    #         {"doc_id": "DOC0002", "doc_name": "Barangay Clearance", "quantity": 1, "unit_cost": 75.0, "total_cost": 75.0}
-    #     ],
-    #     "total_cost": 175.0
-    # }
-    
-    
-    return jsonify({
-        "success": True,
-        "summary": summary
-    }), 200
-    
-#complete button in summary page
-@request_bp.route("/api/submit-request", methods=["POST"])
-@jwt_required_with_role(role)
-def complete_request():
-    
-    request_id = session.get("request_id")
-    try:
-        Request.mark_request_complete(request_id)
+    if success:
         return jsonify({
             "success": True,
-            "request_id": request_id, # for tracking purposes: TRACKING ID
+            "notification": "Preferred contact method updated successfully."
+        }), 200
+    else:
+        return jsonify({
+            "success": False,
+            "notification": "Failed to update preferred contact method."
+        }), 500
+        
+#complete button in summary page
+@request_bp.route("/api/complete-request", methods=["POST"])
+@jwt_required_with_role(role)
+def complete_request():
+
+    request_id = session.get("request_id")
+    total_price = request.get_json().get("total_price", 0.0)
+
+    try:
+        Request.mark_request_complete(request_id, total_price)
+        
+        #Todo send details include: request id to preferred contact
+        #Todo delete the jwt session and other session variables
+        
+        return jsonify({
+            "success": True,
+            "request_id": request_id,
             "notification": "Your request has been completed successfully."
         }), 200
     except Exception as e:

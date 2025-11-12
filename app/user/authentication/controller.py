@@ -82,6 +82,13 @@ def resend_otp():
         "masked_phone": phone[-2:]
     }), 200
 
+# Mock SMS sender (in production you replace this with an actual SMS API)
+# For now, it prints OTP in console for debugging/dev testing
+def send_sms(phone, message):
+    print("=========== DEV OTP ===========")
+    print(f"To: {phone}")
+    print(f"Message: {message}")
+    print("================================")
 
 @authentication_user_bp.route('/verify-otp', methods=['POST'])
 def verify_otp():
