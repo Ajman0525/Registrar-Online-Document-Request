@@ -1,6 +1,7 @@
 import { useState } from "react";
 import EnterTrackId from "./EnterTrackId";
 import TrackStatus from "./TrackStatus";
+import OtpVerification from "../OtpVerification";
 import Details from "./Details";
 import PaymentOptions from "./PaymentOptions";
 import PaymentInstructions from "./PaymentInstructions";
@@ -12,18 +13,22 @@ import "./Tracking.css";
 function TrackFlow() {
     const [currentView, setCurrentView] = useState("enter-id");
     const [trackData, setTrackData] = useState(null);
+    const [studentId, setStudentId] = useState("");
 
     // the 'data' parameter will hold the response from the tracking API
     const handleTrackIdSubmit = (data) => {
-		setTrackData(data);
-		setCurrentView("status");
+		setTrackData(data.trackData);
+        setStudentId(data.studentId);
+		setCurrentView("otp");
     };
 
     const handleBack = () => {
 		if (currentView === "status") {
 			setCurrentView("enter-id");
 			setTrackData(null); // clear data when going back to initial screen
-		} else if (currentView === "details" || currentView === "payment-options" || currentView === "payment-instructions" || currentView === "delivery-instructions") {
+		} else if (currentView === "otp") {
+            setCurrentView("enter-id");
+        } else if (currentView === "details" || currentView === "payment-options" || currentView === "payment-instructions" || currentView === "delivery-instructions") {
 			setCurrentView("status"); // go back to main status view
 		}
   	};
@@ -32,6 +37,7 @@ function TrackFlow() {
 	const handleTrackAnother = () => setCurrentView("enter-id");
 	const handleViewPaymentOptions = () => setCurrentView("payment-options");
 	const handleViewPaymentInstructions = () => setCurrentView("payment-instructions");
+	const handleOtpSuccess = () => setCurrentView("status");
 	const handleViewDeliveryInstructions = () => setCurrentView("delivery-instructions");
 
 	const handleSelectPaymentMethod = (method) => {
@@ -53,6 +59,14 @@ function TrackFlow() {
         <div className="Track-page">
 			<ContentBox key={currentView}> {/* animation on every view change */}
 				{currentView === "enter-id" && <EnterTrackId onNext={handleTrackIdSubmit} />}
+
+				{currentView === "otp" && (
+                    <OtpVerification
+                        onNext={handleOtpSuccess}
+                        onBack={handleBack}
+                        studentId={studentId}
+                    />
+                )}
 
 				{currentView === "status" && trackData && (
 					<TrackStatus
