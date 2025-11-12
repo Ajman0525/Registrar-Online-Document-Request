@@ -39,6 +39,13 @@ class DashboardModel:
             cur.close()
             db_pool.putconn(conn)
 
+    @staticmethod
+    def calculate_percentage_change(current, previous):
+        if previous == 0:
+            return 100.0 if current > 0 else 0.0
+        
+        change = ((current - previous) / previous) * 100
+        return round(change, 2)
 
     @staticmethod
     def get_notifications():
