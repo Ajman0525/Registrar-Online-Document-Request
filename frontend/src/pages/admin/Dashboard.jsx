@@ -104,7 +104,7 @@ const StatCard = ({ title, icon: Icon, value, subText, percentage, trend }) => (
               }`}
             data-tooltip={
               trend === 'neutral'
-                ? `No change (${percentage}%) compared to last month`
+                ? `No change compared to last month`
                 : `${trend === 'up' ? 'Increased' : 'Decreased'} by ${Math.abs(percentage)}% compared to last month`
             }
           >
