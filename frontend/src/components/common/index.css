@@ -1,4 +1,5 @@
 
+
 :root {
   /* Color Variables */
     --color-primary: #EAEAEA;
@@ -14,8 +15,11 @@
     --color-button-destructive-hover: #FEE4E3;
     --color-button-disabled: #E3E3E1;
 
-    /* Input Colors */
-    --color-input-border: #6E6E73;
+    /* Shadow Colors when hovered */
+    --color-when-hovered: #f0f0f0;
+
+    /* Shadow Colors when active */
+    --color-when-active: #e0e0e0;
 
     /* Text Colors */
     --color-white: #FFFFFF;

@@ -34,6 +34,17 @@
   text-decoration: none;
 }
 
+.button-link.destructive {
+  background-color: var(--color-button-destructive-default);
+  color: var(--color-white);
+}
+
+.button-link.destructive:hover {
+  background-color: var(--color-button-destructive-hover);
+  color: var(--color-white);
+  text-decoration: none;
+}
+
 .button-link.primary:disabled,
 .button-link.secondary:disabled {
   background-color: var(--color-button-disabled);
