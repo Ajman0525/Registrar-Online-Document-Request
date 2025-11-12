@@ -54,10 +54,10 @@ function AdminLogin() {
             >
               <div className="flex-1 flex flex-col justify-center">
                 <div>
-                  <h1 className="text-5xl font-bold leading-none">
+                  <h1 className="text-5xl font-bold mb-0 leading-none">
                     Hello,
                   </h1>
-                  <h1 className="text-5xl font-bold leading-none">
+                  <h1 className="text-5xl font-bold mb-0 leading-none">
                     Welcome!
                   </h1>
                   <p className="text-lg text-white/90 max-w-md leading-relaxed mt-6">
@@ -69,10 +69,10 @@ function AdminLogin() {
               <div className="mt-8">
                 <div className="inline-flex items-center gap-2">
                   <img src={logo} alt="IIT Logo" className="w-20 h-20 object-contain" />
-                  <div className="flex flex-col">
-                    <span className="font-bold text-sm">Online</span>
-                    <span className="font-bold text-sm">Document</span>
-                    <span className="font-bold text-sm">Request</span>
+                  <div className="flex flex-col leading-none">
+                    <span className="font-bold text-base text-yellow-400">Online</span>
+                    <span className="font-bold text-base">Document</span>
+                    <span className="font-bold text-base">Request</span>
                   </div>
                 </div>
               </div>
