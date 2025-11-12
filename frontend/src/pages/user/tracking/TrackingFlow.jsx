@@ -13,11 +13,13 @@ import "./Tracking.css";
 function TrackFlow() {
     const [currentView, setCurrentView] = useState("enter-id");
     const [trackData, setTrackData] = useState(null);
+    const [maskedPhone, setMaskedPhone] = useState("");
     const [studentId, setStudentId] = useState("");
 
     // the 'data' parameter will hold the response from the tracking API
     const handleTrackIdSubmit = (data) => {
 		setTrackData(data.trackData);
+        setMaskedPhone(data.maskedPhone);
         setStudentId(data.studentId);
 		setCurrentView("otp");
     };
@@ -57,52 +59,53 @@ function TrackFlow() {
 
     return (
         <div className="Track-page">
-			<ContentBox key={currentView}> {/* animation on every view change */}
-				{currentView === "enter-id" && <EnterTrackId onNext={handleTrackIdSubmit} />}
+            {currentView === "otp" ? (
+                <OtpVerification
+                    onNext={handleOtpSuccess}
+                    onBack={handleBack}
+                    studentId={studentId}
+                    maskedPhone={maskedPhone}
+                />
+            ) : (
+                <ContentBox key={currentView}> {/* animation on every view change */}
+                    {currentView === "enter-id" && <EnterTrackId onNext={handleTrackIdSubmit} />}
 
-				{currentView === "otp" && (
-                    <OtpVerification
-                        onNext={handleOtpSuccess}
-                        onBack={handleBack}
-                        studentId={studentId}
-                    />
-                )}
+                    {currentView === "status" && trackData && (
+                        <TrackStatus
+                            trackData={trackData}
+                            onViewDetails={handleViewDetails}
+                            onViewPaymentOptions={handleViewPaymentOptions}
+                            onViewDeliveryInstructions={handleViewDeliveryInstructions}
+                            onBack={handleBack} // pass handleBack for the "Track Another" button
+                        />
+                    )}
 
-				{currentView === "status" && trackData && (
-					<TrackStatus
-						trackData={trackData}
-						onViewDetails={handleViewDetails}
-						onViewPaymentOptions={handleViewPaymentOptions}
-						onViewDeliveryInstructions={handleViewDeliveryInstructions}
-						onBack={handleBack} // pass handleBack for the "Track Another" button
-					/>
-				)}
+                    {currentView === "details" && trackData && (
+                        <Details trackData={trackData} onTrackAnoter={handleTrackAnother} onBack={handleBack} />
+                    )}
 
-				{currentView === "details" && trackData && (
-					<Details trackData={trackData} onTrackAnoter={handleTrackAnother} onBack={handleBack} />
-				)}
+                    {currentView === "payment-options" && (
+                        <PaymentOptions
+                            trackData={trackData}
+                            onSelectMethod={handleSelectPaymentMethod}
+                            onBack={handleBack}
+                            onViewDetails={handleViewDetails}
+                        />
+                    )}
 
-				{currentView === "payment-options" && (
-					<PaymentOptions 
-						trackData={trackData} 
-						onSelectMethod={handleSelectPaymentMethod} 
-						onBack={handleBack}
-						onViewDetails={handleViewDetails}
-					/>
-				)}
+                    {currentView === "payment-success" && (
+                        <PaymentSuccess onPaymentComplete={handlePaymentComplete} />
+                    )}
 
-				{currentView === "payment-success" && (
-					<PaymentSuccess onPaymentComplete={handlePaymentComplete} />
-				)}
+                    {currentView === "payment-instructions" && (
+                        <PaymentInstructions onBack={handleBack} />
+                    )}
 
-				{currentView === "payment-instructions" && (
-					<PaymentInstructions onBack={handleBack} />
-				)}
-
-				{currentView === "delivery-instructions" && (
-					<DeliveryInstructions onBack={handleBack} />
-				)}
-			</ContentBox>
+                    {currentView === "delivery-instructions" && (
+                        <DeliveryInstructions onBack={handleBack} />
+                    )}
+                </ContentBox>
+            )}
 		</div>
     );
 }
