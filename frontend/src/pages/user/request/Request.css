@@ -314,6 +314,11 @@ html {
   flex-direction: row;
 }
 
+.upload-requirements-page .text-section{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
 
 .upload-requirements-page h2 {
   font-weight: 700;
@@ -360,16 +365,23 @@ html {
   gap: 16px;
 }
 
-.request-item-container .requirement-item:hover{
+.upload-requirements-box .requirement-item:hover{
   background-color: #E1E1FD;
 }
 
 .file-upload-info{
   display: flex;
   flex-direction: row;
+  align-items: center;
   justify-content: space-between;
   width: 100%;
-  margin-top: 8px;
+  margin-top: 16px;
+}
+
+.file-upload-info .file-name{
+  font-size: 10px;
+  color: var(--color-text-subtext);
+  font-family: var(--font-family-base);
 }
 
 .requirement-item input[type="file"] {
@@ -518,4 +530,29 @@ label{
   gap: 16px;
   width: 100%;
 }
+
+.tracking-id-section{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+
+width: 100%;
+}
+
+.requirement-item-action{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.upload-requirements-page .tracking-id {
+  font-family: var(--font-family-base);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-button-destructive-default);
+}
+
+
 

@@ -197,7 +197,7 @@ function UploadRequirements({ selectedDocs = [], uploadedFiles = {}, setUploaded
                       document.getElementById(`upload-${req_id}`).click();
                     }
                   }}
-                  style={{ cursor: uploading || uploadedFiles[req_id] ? "not-allowed" : "pointer" }}
+                  style={{ cursor: uploading || uploadedFiles[req_id] ? "pointer" : "pointer" }}
                 >
                   <div className="file-upload-info">
                     <span className="requirement-text">{reqText}</span>
@@ -213,15 +213,21 @@ function UploadRequirements({ selectedDocs = [], uploadedFiles = {}, setUploaded
                     />
                     {uploadedFiles[req_id] ? (
                       <>
-                        <span className="file-name">
-                          {uploadedFiles[req_id] instanceof File
-                            ? uploadedFiles[req_id].name
-                            : uploadedFiles[req_id].split("/").pop()}
-                        </span>
-                        <button type="button" className="delete-btn" onClick={() => handleDeleteFile(req_id)} disabled={uploading}>
-                          Delete
-                        </button>
-                      </>
+                        <div className="requirement-item-action">
+                          <span className="file-name">
+                            {uploadedFiles[req_id] instanceof File
+                              ? uploadedFiles[req_id].name
+                              : uploadedFiles[req_id].split("/").pop()}
+                          </span>
+                          <img
+                            src="/assets/XIcon.svg"
+                            alt="Remove Icon"
+                            style={{ cursor: "pointer" }}
+                            className="remove-icon"
+                            onClick={() => handleDeleteFile(req_id)}
+                          />
+                          </div>
+                         </>
                     ) : (
                       <p className="file-name">Select file</p>
                     )}

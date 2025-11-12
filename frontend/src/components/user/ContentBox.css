@@ -31,6 +31,7 @@
 }
 
 .subtext{
+    margin: 0px;
     color: var(--color-text-subtext);
     font-size: var(--font-size-subtext);
 }

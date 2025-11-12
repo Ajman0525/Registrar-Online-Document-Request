@@ -18,9 +18,9 @@ function FileCard({
       className={`file-card ${selectable ? "selectable" : ""} ${isSelected ? "selected" : ""}`}
       onClick={selectable ? () => onClick(document) : undefined}
     >
-      <div className="logo-section">
-        {/* {logo_link && <img src={logo_link} alt="Logo" className="card-logo" />} */}
-      </div>
+      {/* <div className="logo-section">
+        {logo_link && <img src={logo_link} alt="Logo" className="card-logo" />}
+      </div> */}
 
       <div className="name-and-description-section">
         <h2 className="document-name">{doc_name}</h2>
