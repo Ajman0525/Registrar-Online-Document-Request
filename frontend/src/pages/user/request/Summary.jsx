@@ -3,17 +3,6 @@ import "./Summary.css";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
 
 function Summary({ selectedDocs = [], uploadedFiles = {}, preferredContactInfo = {}, contactInfo = {}, onBack, onNext }) {
-  /**
-   * Props:
-   * - selectedDocs: array of documents with quantity, e.g.
-   *     [{ doc_name: "Transcript of Records", quantity: 5 }, ...]
-   * - uploadedFiles: object { req_id: File }
-   * - preferredContactInfo: object with contact info
-   * - contactInfo: object with email and contact_number
-   * - onBack: function handler for Back button
-   * - onNext: function handler for Complete button
-   */
-
   const [completing, setCompleting] = useState(false);
 
   // Calculate total price (placeholder, assuming each doc has cost)
@@ -53,7 +42,11 @@ function Summary({ selectedDocs = [], uploadedFiles = {}, preferredContactInfo =
             ) : (
               Object.entries(uploadedFiles).map(([req_id, file]) => (
                 <div key={req_id}>
-                  {file ? file.name : "No file"}
+                  {file
+                    ? file instanceof File
+                      ? file.name
+                      : file.split("/").pop() // show the filename from the server path
+                    : "No file"}
                 </div>
               ))
             )}

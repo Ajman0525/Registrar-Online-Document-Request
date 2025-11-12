@@ -127,16 +127,19 @@ def get_requirements():
         "success": True,
         "requirements": result["requirements"]
     }), 200
-
-#submit requirement files
+# submit requirement files
 @request_bp.route("/api/save-file", methods=["POST"])
 @jwt_required_with_role(role)
 def submit_requirement_files():
     """
     Accepts requirement files from React, saves them to disk, and stores file paths to the database.
+    Skips saving requirements that are already uploaded.
     Expected multipart/form-data format:
     - request_id: "R0000123"
-    - requirements: JSON string like [{"requirement_id": "REQ0001"}, {"requirement_id": "REQ0002"}]
+    - requirements: JSON string like [
+          {"requirement_id": "REQ0001", "alreadyUploaded": true},
+          {"requirement_id": "REQ0002", "alreadyUploaded": false}
+      ]
     - files: file uploads with keys like "file_REQ0001", "file_REQ0002"
     """
     request_id = session.get("request_id")
@@ -150,35 +153,68 @@ def submit_requirement_files():
     except json.JSONDecodeError:
         return jsonify({"success": False, "notification": "Invalid requirements format."}), 400
 
-    # Directory to save files
     upload_dir = os.path.join(os.getcwd(), 'uploads', request_id)
     os.makedirs(upload_dir, exist_ok=True)
 
     saved_files = []
     for req in requirements:
         requirement_id = req.get("requirement_id")
-        if not requirement_id:
+        already_uploaded = req.get("alreadyUploaded", False)
+
+        # Skip saving if already uploaded
+        if already_uploaded:
             continue
+
         file_key = f"file_{requirement_id}"
         if file_key in request.files:
             file = request.files[file_key]
             if file.filename:
                 filename = secure_filename(file.filename)
                 file_path = os.path.join(upload_dir, f"{requirement_id}_{filename}")
-                
+
                 # Delete existing files for this requirement_id
                 for existing_file in os.listdir(upload_dir):
                     if existing_file.startswith(f"{requirement_id}_"):
                         os.remove(os.path.join(upload_dir, existing_file))
-                        
+
                 file.save(file_path)
                 saved_files.append({"requirement_id": requirement_id, "file_path": file_path})
 
     if not saved_files:
-        return jsonify({"success": False, "notification": "No files uploaded."}), 400
+        # Nothing new to save, return success
+        return jsonify({"success": True, "notification": "All files already uploaded, nothing to save."}), 200
 
-    #store requirement files to db
+    # Store newly uploaded requirement files to DB
     success, message = Request.store_requirement_files(request_id, saved_files)
+    status_code = 200 if success else 400
+    return jsonify({"success": success, "notification": message}), status_code
+
+
+@request_bp.route("/api/get-uploaded-files", methods=["GET"])
+@jwt_required_with_role(role)
+def get_uploaded_files():
+    """
+    Return previously uploaded files for the current request.
+    """
+    request_id = session.get("request_id")
+    if not request_id:
+        return jsonify({"success": False, "notification": "No active request."}), 400
+
+    uploaded_files = Request.get_uploaded_files(request_id)
+    return jsonify({"success": True, "uploaded_files": uploaded_files}), 200
+
+
+@request_bp.route("/api/delete-file/<requirement_id>", methods=["DELETE"])
+@jwt_required_with_role(role)
+def delete_requirement_file(requirement_id):
+    """
+    Delete a previously uploaded requirement file.
+    """
+    request_id = session.get("request_id")
+    if not request_id:
+        return jsonify({"success": False, "notification": "No active request."}), 400
+
+    success, message = Request.delete_requirement_file(request_id, requirement_id)
     status_code = 200 if success else 400
     return jsonify({"success": success, "notification": message}), status_code
 
