@@ -55,13 +55,9 @@ function AdminLogin() {
               }}
             >
               <div className="flex-1 flex flex-col justify-center">
-                <div>
-                  <h1 className="text-5xl font-bold mb-0 leading-none">
-                    Hello,
-                  </h1>
-                  <h1 className="text-5xl font-bold mb-0 leading-none">
-                    Welcome!
-                  </h1>
+                <div className="leading-tight space-y-0.5">
+                  <h1 className="text-5xl font-bold mb-0">Hello,</h1>
+                  <h1 className="text-5xl font-bold mb-0">Welcome!</h1>
                   <p className="text-lg text-white/90 max-w-md leading-relaxed mt-6">
                     Access your administrative dashboard securely using your institutional account. Manage requests, process documents, and streamline operations all in one place.
                   </p>
