@@ -11,6 +11,8 @@ flask-cors = "*"
 flask-jwt-extended = "*"
 requests = "*"
 flask-session = "*"
+python3-saml = "*"
+xmlsec = "*"
 
 [dev-packages]
 
