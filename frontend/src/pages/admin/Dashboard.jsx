@@ -98,22 +98,42 @@ const StatCard = ({ title, icon: Icon, value, subText, percentage, trend }) => (
         <h2 className="card-value">{value}</h2>
         {percentage !== undefined && (
           <span
-            className={`card-percentage ${trend === 'up' ? 'trend-up' : 'trend-down'}`}
-            data-tooltip={`${trend === 'up' ? 'Increased' : 'Decreased'} by ${Math.abs(percentage)}% compared to last month`}
+            className={`card-percentage ${trend === 'up' ? 'trend-up' :
+                trend === 'down' ? 'trend-down' :
+                  'trend-neutral'
+              }`}
+            data-tooltip={
+              trend === 'neutral'
+                ? `No change (${percentage}%) compared to last month`
+                : `${trend === 'up' ? 'Increased' : 'Decreased'} by ${Math.abs(percentage)}% compared to last month`
+            }
           >
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 12 12"
-              fill="none"
-              className="trend-arrow"
-            >
-              {trend === 'up' ? (
-                <path d="M6 2L10 6L6 6L6 10L6 6L2 6L6 2Z" fill="currentColor" />
-              ) : (
-                <path d="M6 10L2 6L6 6L6 2L6 6L10 6L6 10Z" fill="currentColor" />
-              )}
-            </svg>
+            {trend !== 'neutral' && (
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 12 12"
+                fill="none"
+                className="trend-arrow"
+              >
+                {trend === 'up' ? (
+                  <path d="M6 2L10 6L6 6L6 10L6 6L2 6L6 2Z" fill="currentColor" />
+                ) : (
+                  <path d="M6 10L2 6L6 6L6 2L6 6L10 6L6 10Z" fill="currentColor" />
+                )}
+              </svg>
+            )}
+            {trend === 'neutral' && (
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 12 12"
+                fill="none"
+                className="trend-arrow"
+              >
+                <path d="M2 6 L10 6" stroke="currentColor" strokeWidth="2" />
+              </svg>
+            )}
             {Math.abs(percentage)}%
           </span>
         )}
