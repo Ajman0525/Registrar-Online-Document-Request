@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
 import { useNavigate } from "react-router-dom";
 import bgImage from "./assets/Motif.png";
+import logo from "./assets/msuiit-logo.png";
 
 function AdminLogin() {
   const navigate = useNavigate();
@@ -52,22 +53,27 @@ function AdminLogin() {
               }}
             >
               <div className="flex-1 flex flex-col justify-center">
-                <div className="space-y-6">
-                  <h1 className="text-5xl font-bold leading-tight">
-                    Hello, Welcome!
+                <div>
+                  <h1 className="text-5xl font-bold leading-none">
+                    Hello,
                   </h1>
-                  <p className="text-lg text-white/90 max-w-md leading-relaxed">
+                  <h1 className="text-5xl font-bold leading-none">
+                    Welcome!
+                  </h1>
+                  <p className="text-lg text-white/90 max-w-md leading-relaxed mt-6">
                     Access your administrative dashboard securely using your institutional account. Manage requests, process documents, and streamline operations all in one place.
                   </p>
                 </div>
               </div>
 
               <div className="mt-8">
-                <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-lg">
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M10 2a8 8 0 100 16 8 8 0 000-16zm1 11H9v-2h2v2zm0-4H9V5h2v4z" />
-                  </svg>
-                  <span className="font-semibold">Online Document Request System</span>
+                <div className="inline-flex items-center gap-2   px-4 py-2 ">
+                  <img src="" alt="IIT Logo" className="w-10 h-10 object-contain" />
+                  <div className="flex flex-col">
+                    <span className="font-bold text-sm">Online</span>
+                    <span className="font-bold text-sm">Document</span>
+                    <span className="font-bold text-sm">Request</span>
+                  </div>
                 </div>
               </div>
             </div>
