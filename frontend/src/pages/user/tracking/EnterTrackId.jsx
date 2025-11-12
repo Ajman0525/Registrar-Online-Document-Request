@@ -21,15 +21,26 @@ function EnterTrackId({ onNext }) {
         }
 
         try {
+            const payload = { 
+                tracking_number: trackingNumber, 
+                student_id: studentId 
+            };
+            
+            console.log("Sending payload:", payload); 
+            
             const response = await fetch('/api/track', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ trackingNumber, studentId }),
+                body: JSON.stringify({ tracking_number: trackingNumber, student_id: studentId }),
             });
 
+            console.log("Response status:", response.status);
+            console.log("Response ok:", response.ok);
+
             const data = await response.json();
+            console.log("Response data:", data);
 
             if (!response.ok) {
                 // if response is not successful use the message from the backend
@@ -38,8 +49,15 @@ function EnterTrackId({ onNext }) {
             }
 
             setError("");
-            onNext(data); // pass the data from the backend to the next step
+            onNext({
+                trackData: data.track_data,
+                maskedPhone: data.masked_phone,
+                studentId: studentId
+            }); // pass the data from the backend to the next step
         } catch (err) {
+            console.error("Full error object:", err);
+            console.error("Error message:", err.message);
+            console.error("Error stack:", err.stack);
             triggerError("An error occurred. Please try again.");
             console.error(err);
         }
