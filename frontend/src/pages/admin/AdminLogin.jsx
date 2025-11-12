@@ -59,7 +59,7 @@ function AdminLogin() {
                   <h1 className="text-5xl font-bold mb-0">Hello,</h1>
                   <h1 className="text-5xl font-bold mb-0">Welcome!</h1>
                   <p className="text-lg text-white/90 max-w-md leading-relaxed mt-6">
-                    Access your administrative dashboard securely using your institutional account. Manage requests, process documents, and streamline operations all in one place.
+                    Manage document requests, maintain official documents, and track activity logs securely and efficiently.
                   </p>
                 </div>
               </div>
