@@ -41,7 +41,7 @@ const NotificationPanel = ({ notifications, onClose }) => (
         notifications.map(n => (
           <div key={n.id} className="notification-item">
             <div className="item-icon-type">
-              <span className={`item-icon ${n.type.replace(/\s/g, '-')}`}>{n.type === 'New Request' ? 'R' : 'D'}</span>  {/* To be replaced by icons based on the type of notification */}
+              <span className={`item-icon ${n.type.replace(/\s/g, '-')}`}>{n.type === 'New Request' ? 'R' : n.type === 'Payment Due' ? 'P' : 'D'}</span>  {/* To be replaced by icons based on the type of notification */}
               <p className="item-type">{n.type}</p>
             </div>
             <p className="item-message">{n.message}</p>
