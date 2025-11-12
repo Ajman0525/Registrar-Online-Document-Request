@@ -625,6 +625,11 @@
   color: #991b1b;
 }
 
+.card-percentage.trend-neutral {
+  background-color: #e5e7eb;  
+  color: #374151;           
+}
+
 .trend-arrow {
   width: 12px;
   height: 12px;
