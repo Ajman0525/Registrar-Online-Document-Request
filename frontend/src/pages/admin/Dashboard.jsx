@@ -34,14 +34,14 @@ const NotificationPanel = ({ notifications, onClose }) => (
     </div>
     <div className="panel-content">
       {notifications.length === 0 ? (
-        <div class="notification-empty-state">
+        <div className="notification-empty-state">
           <p>No new notifications.</p>
         </div>
       ) : (
         notifications.map(n => (
           <div key={n.id} className="notification-item">
             <div className="item-icon-type">
-              <span className={`item-icon ${n.type.replace(/\s/g, '-')}`}>{n.type === 'New Request' ? 'R' : 'D'}</span>  {/* To be replaced by icons based on the type of notification */}
+              <span className={`item-icon ${n.type.replace(/\s/g, '-')}`}>{n.type === 'New Request' ? 'R' : n.type === 'Payment Due' ? 'P' : 'D'}</span>  {/* To be replaced by icons based on the type of notification */}
               <p className="item-type">{n.type}</p>
             </div>
             <p className="item-message">{n.message}</p>
@@ -98,22 +98,42 @@ const StatCard = ({ title, icon: Icon, value, subText, percentage, trend }) => (
         <h2 className="card-value">{value}</h2>
         {percentage !== undefined && (
           <span
-            className={`card-percentage ${trend === 'up' ? 'trend-up' : 'trend-down'}`}
-            data-tooltip={`${trend === 'up' ? 'Increased' : 'Decreased'} by ${Math.abs(percentage)}% compared to last month`}
+            className={`card-percentage ${trend === 'up' ? 'trend-up' :
+                trend === 'down' ? 'trend-down' :
+                  'trend-neutral'
+              }`}
+            data-tooltip={
+              trend === 'neutral'
+                ? `No change compared to last month`
+                : `${trend === 'up' ? 'Increased' : 'Decreased'} by ${Math.abs(percentage)}% compared to last month`
+            }
           >
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 12 12"
-              fill="none"
-              className="trend-arrow"
-            >
-              {trend === 'up' ? (
-                <path d="M6 2L10 6L6 6L6 10L6 6L2 6L6 2Z" fill="currentColor" />
-              ) : (
-                <path d="M6 10L2 6L6 6L6 2L6 6L10 6L6 10Z" fill="currentColor" />
-              )}
-            </svg>
+            {trend !== 'neutral' && (
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 12 12"
+                fill="none"
+                className="trend-arrow"
+              >
+                {trend === 'up' ? (
+                  <path d="M6 2L10 6L6 6L6 10L6 6L2 6L6 2Z" fill="currentColor" />
+                ) : (
+                  <path d="M6 10L2 6L6 6L6 2L6 6L10 6L6 10Z" fill="currentColor" />
+                )}
+              </svg>
+            )}
+            {trend === 'neutral' && (
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 12 12"
+                fill="none"
+                className="trend-arrow"
+              >
+                <path d="M2 6 L10 6" stroke="currentColor" strokeWidth="2" />
+              </svg>
+            )}
             {Math.abs(percentage)}%
           </span>
         )}
@@ -291,32 +311,30 @@ function Dashboard() {
       icon: TotalRequestsIcon,
       value: dashboardData.stats.total_requests.toLocaleString(),
       subText: "Total requests in system",
-      percentage: 12.67, 
-      trend: "up" 
+      percentage: dashboardData.stats.total_requests_percentage,  
+      trend: dashboardData.stats.total_requests_trend              
     },
     {
       title: "In Process",
       icon: PendingIcon,
       value: dashboardData.stats.pending_requests.toString(),
       subText: "Requests in progress",
-      // percentage: 1.98,
-      trend: "down"
+      percentage: dashboardData.stats.pending_requests_percentage, 
+      trend: dashboardData.stats.pending_requests_trend            
     },
     {
       title: "Outstanding Payments",
       icon: UnpaidIcon,
       value: `₱${parseFloat(dashboardData.stats.unpaid_requests || 0).toFixed(2)}`,
       subText: "Total unpaid amount",
-      // percentage: 8.35,
-      trend: "up"
+      percentage: dashboardData.stats.unpaid_requests_percentage,  
+      trend: dashboardData.stats.unpaid_requests_trend             
     },
     {
       title: "Ready for Release",
       icon: ProcessedIcon,
       value: dashboardData.stats.documents_ready.toString(),
-      subText: "Documents ready for pickup",
-      // percentage: 2.81,
-      trend: "down"
+      subText: "Documents ready for pickup",          
     },
   ] : [];
 
@@ -490,7 +508,7 @@ function Dashboard() {
             </table>
           </div>
         ) : (
-          <p className="text-gray-500">No recent activity.</p>
+          <p className="text-gray-500 flex justify-center">No recent activity.</p>
         )}
       </div>
       {/*------------------ END OF RECENT ACTIVITY ------------------*/}
