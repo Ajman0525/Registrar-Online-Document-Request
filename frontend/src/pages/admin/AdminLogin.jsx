@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
 import { useNavigate } from "react-router-dom";
 import bgImage from "./assets/Motif.png";
-import logo from "./assets/msuiit-logo.png";
+import logo from "./assets/MSUIITLogo.png";
 
 function AdminLogin() {
   const navigate = useNavigate();
@@ -49,7 +49,7 @@ function AdminLogin() {
             <div
               className="flex-1 relative bg-cover bg-center p-12 flex flex-col justify-between text-white"
               style={{
-                backgroundImage:  `url(${bgImage})`,
+                backgroundImage:`url(${bgImage})`,
               }}
             >
               <div className="flex-1 flex flex-col justify-center">
@@ -67,8 +67,8 @@ function AdminLogin() {
               </div>
 
               <div className="mt-8">
-                <div className="inline-flex items-center gap-2   px-4 py-2 ">
-                  <img src="" alt="IIT Logo" className="w-10 h-10 object-contain" />
+                <div className="inline-flex items-center gap-2">
+                  <img src={logo} alt="IIT Logo" className="w-20 h-20 object-contain" />
                   <div className="flex flex-col">
                     <span className="font-bold text-sm">Online</span>
                     <span className="font-bold text-sm">Document</span>
