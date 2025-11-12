@@ -4,7 +4,7 @@ import "./login/Login.css";
 import ButtonLink from "../../components/common/ButtonLink";
 import ContentBox from "../../components/user/ContentBox";
 
-function OtpVerification({ onNext, onBack, studentId, maskedPhone, setMaskedPhone}) {
+function OtpVerification({ onNext, onBack, studentId, maskedPhone, setMaskedPhone, isTracking = false}) {
   const [otpCode, setOtpCode] = useState("");
   const [error, setError] = useState("");
   const [shake, setShake] = useState(false);
@@ -37,13 +37,18 @@ function OtpVerification({ onNext, onBack, studentId, maskedPhone, setMaskedPhon
         return triggerError(data.message || "Invalid OTP code. Try again.");
       }
 
-      // Success - navigate to request page
-      navigate("/user/request");
+      // Success - navigate based on flow
+      if (isTracking) {
+        onNext();
+      } else {
+        navigate("/user/request");
+      }
     } catch (err) {
       triggerError("Server error. Please try again.");
       console.error("Verify OTP error:", err);
     }
   };
+
 
   const handleResendOtp = async () => {
     if (resending || counter > 0) return;

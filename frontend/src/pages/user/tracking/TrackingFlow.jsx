@@ -38,8 +38,11 @@ function TrackFlow() {
 	const handleViewDetails = () => setCurrentView("details");
 	const handleTrackAnother = () => setCurrentView("enter-id");
 	const handleViewPaymentOptions = () => setCurrentView("payment-options");
-	const handleViewPaymentInstructions = () => setCurrentView("payment-instructions");
-	const handleOtpSuccess = () => setCurrentView("status");
+	const handleViewPaymentInstructions = () => setCurrentView("payment-instructions");	
+	const handleOtpSuccess = (data) => {
+		setTrackData(data); // Update trackData with the data from OTP verification
+		setCurrentView("status");
+	};
 	const handleViewDeliveryInstructions = () => setCurrentView("delivery-instructions");
 
 	const handleSelectPaymentMethod = (method) => {
@@ -65,6 +68,7 @@ function TrackFlow() {
                     onBack={handleBack}
                     studentId={studentId}
                     maskedPhone={maskedPhone}
+                    isTracking={true}
                 />
             ) : (
                 <ContentBox key={currentView}> {/* animation on every view change */}

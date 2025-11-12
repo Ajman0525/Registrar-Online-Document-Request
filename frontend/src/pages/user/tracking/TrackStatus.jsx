@@ -86,10 +86,8 @@ function TrackStatus({ trackData, onBack, onViewDetails, onViewDeliveryInstructi
     if (!config) {
         return (
             <div className="Track-page">
-                <ContentBox>
-                    <p>An unknown status was received. Please contact support.</p>
-                    <ButtonLink onClick={onBack} placeholder="Return" variant="primary" />
-                </ContentBox>
+                <p>An unknown status was received. Please contact support.</p>
+                <ButtonLink onClick={onBack} placeholder="Return" variant="primary" />
             </div>
         );
     }
