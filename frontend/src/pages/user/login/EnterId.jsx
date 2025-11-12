@@ -116,7 +116,7 @@ function EnterId({ onNext, onBack, maskedPhone, setMaskedPhone}) {
                         <input
                             id="student-id"
                             type="text"
-                            className={`id-input ${error ? "input-error" : ""} ${shake ? "shake" : ""}`}
+                            className={`box-input ${error ? "input-error" : ""} ${shake ? "shake" : ""}`}
                             placeholder="0000-0000"
                             value={studentId}
                             onChange={handleInputChange}
