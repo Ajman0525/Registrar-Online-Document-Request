@@ -213,7 +213,7 @@ class DashboardModel:
                 ORDER BY requested_at DESC
                 LIMIT 5
             """)
-            for request_id, full_name, total_cost in cur.fetchall():
+            for request_id, full_name, total_cost, requested_at in cur.fetchall():
                 notifications.append({
                     "id": request_id,
                     "type": "Payment Due",
