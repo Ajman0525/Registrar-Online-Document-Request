@@ -45,7 +45,11 @@ function Summary({ selectedDocs = [], uploadedFiles = {}, preferredContactInfo =
             ) : (
               Object.entries(uploadedFiles).map(([req_id, file]) => (
                 <div key={req_id} className="summary-item">
-                  {file ? file.name : "No file"}
+                  {file
+                    ? file instanceof File
+                      ? file.name
+                      : file.split("/").pop() // show the filename from the server path
+                    : "No file"}
                 </div>
               ))
             )}

@@ -1,7 +1,7 @@
 from . import request_bp
 from flask import jsonify, request, session
 from app.utils.decorator import jwt_required_with_role
-from flask_jwt_extended import get_jwt_identity
+from flask_jwt_extended import get_jwt_identity, unset_jwt_cookies
 from .models import Request
 from app.user.document_list.models import DocumentList
 import os
@@ -295,3 +295,20 @@ def complete_request():
             "success": False,
             "notification": "An error occurred while completing your request. Please try again later."
         }), 500
+
+@request_bp.route("/api/clear-session", methods=["POST"])
+@jwt_required_with_role(role)
+def logout_user():
+    """
+    Clears user session and JWT cookies.
+    """
+    response = jsonify({"message": "Logout successful"})
+    
+    # Remove any JWT cookies set via set_access_cookies()
+    unset_jwt_cookies(response)
+    
+    # Clear server-side session
+    session.clear()
+    
+    print("[INFO] Session and JWT cleared successfully.")
+    return response, 200

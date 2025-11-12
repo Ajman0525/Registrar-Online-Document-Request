@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./Request.css";
 import { getCSRFToken } from "../../../utils/csrf";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
@@ -9,14 +10,14 @@ import SearchBar from "../../../components/common/SearchBar";
 function Documents({ selectedDocs, setSelectedDocs, onNext }) {
   const [documents, setDocuments] = useState([]);
   const [showPopup, setShowPopup] = useState(false);
-  const [searchTerm, setSearchTerm] = useState(""); // search state
-
+  const [searchTerm, setSearchTerm] = useState("");
   const [requestInfo, setRequestInfo] = useState({
     status: "",
     request_id: "",
     student_name: "",
   });
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetch("/api/request", {
@@ -26,8 +27,14 @@ function Documents({ selectedDocs, setSelectedDocs, onNext }) {
       },
       credentials: "include",
     })
-      .then((res) => res.json())
-      .then((data) => {
+      .then(async (res) => {
+        if (res.status === 401 || res.status === 403) {
+          // Redirect unauthorized users
+          navigate("/user/login");
+          return;
+        }
+
+        const data = await res.json();
         setDocuments(data.documents || []);
         setRequestInfo({
           status: data.status,
@@ -40,7 +47,7 @@ function Documents({ selectedDocs, setSelectedDocs, onNext }) {
         console.error("Error fetching documents:", err);
         setLoading(false);
       });
-  }, []);
+  }, [navigate]);
 
   const handleSelect = (doc) => {
     setSelectedDocs((prevSelected) => {
@@ -66,10 +73,10 @@ function Documents({ selectedDocs, setSelectedDocs, onNext }) {
       (doc.description || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-
   return (
     <>
       {loading && <LoadingSpinner message="Loading documents..." />}
+      {!loading && (
         <div className="select-documents-page">
           <div className="hero-section">
             <img src="/Assets/HeroImage.png" alt="Request" className="hero-image" />
@@ -85,7 +92,7 @@ function Documents({ selectedDocs, setSelectedDocs, onNext }) {
               Get Started
             </a>
           </div>
-    
+
           <div className="bottom-section" id="documents-section">
             <h1 className="title">Select Your Documents</h1>
             <div className="user-searchbar-container">
@@ -103,16 +110,17 @@ function Documents({ selectedDocs, setSelectedDocs, onNext }) {
                   className="document-card"
                 />
               ))}
-            <button className="submit-btn" onClick={handleNextStep} disabled={loading}>
-                My Requests 
+              <button className="submit-btn" onClick={handleNextStep} disabled={loading}>
+                My Requests
                 {selectedDocs.length > 0 && (
                   <span className="request-counter">{selectedDocs.length}</span>
                 )}
-            </button>
+              </button>
             </div>
           </div>
-    </div>
-    {showPopup && <RequestPopup onClose={() => setShowPopup(false)} />}
+        </div>
+      )}
+      {showPopup && <RequestPopup onClose={() => setShowPopup(false)} />}
     </>
   );
 }

@@ -7,18 +7,6 @@ import ContentBox from "../../../components/user/ContentBox";
 
 
 function UploadRequirements({ selectedDocs = [], uploadedFiles = {}, setUploadedFiles, onNext, onBack }) {
-
-  /*
-    props:
-    - selectedDocs: array of documents with requirements array, e.g.
-      [{ doc_id, doc_name, requirements: ["Requirement 1", "Requirement 2"] }, ...]
-    - uploadedFiles: object mapping doc_id to arrays of uploaded File objects by requirement index:
-      { [doc_id]: [ File | null, File | null, ... ] }
-    - setUploadedFiles: function to update uploadedFiles state in parent
-    - onNext: function to call to proceed to next step
-    - onBack: function to call to go back to previous step
-  */
-
   const [requirements, setRequirements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -201,41 +189,70 @@ function UploadRequirements({ selectedDocs = [], uploadedFiles = {}, setUploaded
               <p>No requirements to upload.</p>
             ) : (
               requirementsList.map(({ req_id, reqText }) => (
-              <div
-                key={req_id}
-                className="requirement-item"
-                onClick={() => {
-                  if (!uploading) {
-                    document.getElementById(`upload-${req_id}`).click();
-                  }
-                }}
-                style={{ cursor: uploading ? "not-allowed" : "pointer" }}
-              >
-                <div className="file-upload-info">
-                  <span className="requirement-text">{reqText}</span>
-                  <label htmlFor={`upload-${req_id}`} style={{ display: "none" }}>
-                    {reqText}
-                  </label>
-                  <input
-                    type="file"
-                    id={`upload-${req_id}`}
-                    onChange={(e) => handleFileChange(req_id, e)}
-                    disabled={uploading}
-                    style={{ display: "none" }} // hide the native input
-                  />
-                  <p className="file-name">
-                    {uploadedFiles[req_id] ? uploadedFiles[req_id].name : "Select file"}
-                  </p>
+                <div
+                  key={req_id}
+                  className="requirement-item"
+                  onClick={() => {
+                    if (!uploading && !uploadedFiles[req_id]) {
+                      document.getElementById(`upload-${req_id}`).click();
+                    }
+                  }}
+                  style={{ cursor: uploading || uploadedFiles[req_id] ? "not-allowed" : "pointer" }}
+                >
+                  <div className="file-upload-info">
+                    <span className="requirement-text">{reqText}</span>
+                    <label htmlFor={`upload-${req_id}`} style={{ display: "none" }}>
+                      {reqText}
+                    </label>
+                    <input
+                      type="file"
+                      id={`upload-${req_id}`}
+                      onChange={(e) => handleFileChange(req_id, e)}
+                      disabled={uploading}
+                      style={{ display: "none" }} // hide the native input
+                    />
+                    {uploadedFiles[req_id] ? (
+                      <>
+                        <span className="file-name">
+                          {uploadedFiles[req_id] instanceof File
+                            ? uploadedFiles[req_id].name
+                            : uploadedFiles[req_id].split("/").pop()}
+                        </span>
+                        <button type="button" className="delete-btn" onClick={() => handleDeleteFile(req_id)} disabled={uploading}>
+                          Delete
+                        </button>
+                      </>
+                    ) : (
+                      <p className="file-name">Select file</p>
+                    )}
+                  </div>
+                  <hr />
                 </div>
-                <hr />
-              </div>
               ))
             )}
           </div>
         </div>
+
+        {/* Deselected uploads 
+        {deselectedUploads.length > 0 && (
+          <div className="deselected-uploads-container">
+            <h2>Deselected Files</h2>
+            <p>These files are no longer required. You can delete them if you wish:</p>
+            {deselectedUploads.map(({ req_id, file }) => (
+              <div key={req_id} className="requirement-upload-row">
+                <span className="file-name">{file instanceof File ? file.name : file.split("/").pop()}</span>
+                <button type="button" className="delete-btn" onClick={() => handleDeleteFile(req_id)} disabled={uploading}>
+                  Delete
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        */}
+
         <div className="action-section">
           {!allRequiredUploaded && (
-            <p className="error-text">all fields are required*</p>
+            <p className="error-text">All required fields are required*</p>
           )}
 
           <div className="action-buttons">
