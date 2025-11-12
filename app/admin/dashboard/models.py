@@ -196,31 +196,29 @@ class DashboardModel:
                 ORDER BY requested_at DESC
                 LIMIT 5
             """)
-            new_requests = cur.fetchall()
-            for req in new_requests:
+            for request_id, full_name, requested_at in cur.fetchall():
                 notifications.append({
-                    "id": req[0],
+                    "id": request_id,
                     "type": "New Request",
-                    "message": f"Request #{req[0]} submitted by {req[1]}.",
-                    "time": req[2].strftime("%H:%M %d/%m/%Y") if req[2] else "Unknown"
+                    "message": f"Request #{request_id} submitted by {full_name}.",
+                    "time": requested_at.strftime("%H:%M %d/%m/%Y")
                 })
 
 
             # Payment Due (unpaid)
             cur.execute("""
-                SELECT request_id, full_name, total_cost
+                SELECT request_id, full_name, total_cost, requested_at
                 FROM requests
-                WHERE payment_status = FALSE AND total_cost > 0
+                WHERE payment_status = FALSE AND total_cost > 0 and requested_at IS NOT NULL
                 ORDER BY requested_at DESC
                 LIMIT 5
             """)
-            unpaid_requests = cur.fetchall()
-            for req in unpaid_requests:
+            for request_id, full_name, total_cost in cur.fetchall():
                 notifications.append({
-                    "id": req[0],
+                    "id": request_id,
                     "type": "Payment Due",
-                    "message": f"Payment due for Request #{req[0]} by {req[1]}, amount: ₱{req[2]}.",
-                    "time": "Pending"
+                    "message": f"Payment due for Request #{request_id} by {full_name}, amount: ₱{total_cost}.",
+                    "time": requested_at.strftime("%H:%M %d/%m/%Y") 
                 })
 
 
@@ -228,22 +226,24 @@ class DashboardModel:
             cur.execute("""
                 SELECT request_id, full_name, completed_at
                 FROM requests
-                WHERE status = 'DOC-READY'
+                WHERE status = 'DOC-READY' AND completed_at IS NOT NULL
                 ORDER BY completed_at DESC
                 LIMIT 5
             """)
-            ready_docs = cur.fetchall()
-            for req in ready_docs:
+            for request_id, full_name, completed_at in cur.fetchall():
                 notifications.append({
-                    "id": req[0],
+                    "id": request_id,
                     "type": "Document Ready",
-                    "message": f"Document for Request #{req[0]} by {req[1]} is ready.",
-                    "time": req[2].strftime("%H:%M %d/%m/%Y") if req[2] else "Unknown"
+                    "message": f"Document for Request #{request_id} by {full_name} is ready.",
+                    "time": completed_at.strftime("%H:%M %d/%m/%Y")
                 })
 
 
-            # Sort notifications by time (most recent first)
-            notifications.sort(key=lambda x: x["time"], reverse=True)
+            # Sort by actual datetime objects
+            notifications.sort(
+                key=lambda x: datetime.strptime(x["time"], "%H:%M %d/%m/%Y"),
+                reverse=True
+            )
             return notifications[:10]  # Limit to 10
         finally:
             cur.close()
