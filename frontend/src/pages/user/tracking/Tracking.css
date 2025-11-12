@@ -269,8 +269,9 @@
 .error-section{
     display: flex;
     justify-content: center;
-    height: 8px;
+    min-height: 20px;
     width: 100%;
+    margin-bottom: 10px;
 }
 
 .error-text{
