@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import "./Login.css";
+import "./login/Login.css";
 import ButtonLink from "../../components/common/ButtonLink";
 import ContentBox from "../../components/user/ContentBox";
 
@@ -106,7 +106,9 @@ function OtpVerification({ onNext, onBack, studentId, maskedPhone, setMaskedPhon
           <h3 className="title">Enter 6-Digit Code</h3>
           <div className="subtext">
             <p>We've sent an OTP to your registered mobile number</p>
-            <p>********{maskedPhone}.</p>
+            {maskedPhone &&
+              <p>ending in **{maskedPhone}.</p>
+            }
           </div>
         </div>
 
