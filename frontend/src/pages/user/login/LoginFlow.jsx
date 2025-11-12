@@ -1,6 +1,6 @@
 import { useState } from "react";
 import EnterId from "./EnterId";
-import OtpVerification from "./OtpVerification";
+import OtpVerification from "../OtpVerification";
 import LiabilityDetected from "./LiabilityDetected";
 
 function LoginFlow() {
