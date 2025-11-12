@@ -78,14 +78,6 @@ class DashboardModel:
             """, (current_month_start,))
             current_month_unpaid = cur.fetchone()[0] or 0
 
-            # Documents ready from this month
-            cur.execute("""
-                SELECT COUNT(*) FROM requests 
-                WHERE status = 'DOC-READY'
-                AND requested_at >= %s
-            """, (current_month_start,))
-            current_month_ready = cur.fetchone()[0]
-
             # ============================================
             # PREVIOUS MONTH DATA (for percentage comparison)
             # ============================================
@@ -116,15 +108,6 @@ class DashboardModel:
             """, (last_month_start, current_month_start))
             prev_month_unpaid = cur.fetchone()[0] or 0
 
-            # Documents ready from last month
-            cur.execute("""
-                SELECT COUNT(*) FROM requests 
-                WHERE status = 'DOC-READY'
-                AND requested_at >= %s 
-                AND requested_at < %s
-            """, (last_month_start, current_month_start))
-            prev_month_ready = cur.fetchone()[0]
-
             # ============================================
             # CALCULATE PERCENTAGE CHANGES
             # ============================================
@@ -138,9 +121,6 @@ class DashboardModel:
             unpaid_pct = DashboardModel.calculate_percentage_change(
                 current_month_unpaid, prev_month_unpaid
             )
-            ready_pct = DashboardModel.calculate_percentage_change(
-                current_month_ready, prev_month_ready
-            )
 
             # ============================================
             # RETURN COMPLETE STATS WITH PERCENTAGES
@@ -150,22 +130,17 @@ class DashboardModel:
                 # Total Requests - ALL TIME VALUE with monthly comparison
                 "total_requests": total_requests,
                 "total_requests_percentage": abs(total_pct),
-                "total_requests_trend": "up" if total_pct >= 0 else "down",
+                "total_requests_trend": "up" if total_pct > 0 else ("down" if total_pct < 0 else "neutral"),
                 
                 # Pending Requests - CURRENT STATUS with monthly comparison
                 "pending_requests": pending_requests,
                 "pending_requests_percentage": abs(pending_pct),
-                "pending_requests_trend": "up" if pending_pct >= 0 else "down",
+                "pending_requests_trend": "up" if pending_pct > 0 else ("down" if pending_pct < 0 else "neutral"),
                 
                 # Unpaid Requests - CURRENT UNPAID with monthly comparison
                 "unpaid_requests": float(unpaid_amount),
                 "unpaid_requests_percentage": abs(unpaid_pct),
-                "unpaid_requests_trend": "up" if unpaid_pct >= 0 else "down",
-                
-                # Documents Ready - CURRENT STATUS with monthly comparison
-                "documents_ready": documents_ready,
-                "documents_ready_percentage": abs(ready_pct),
-                "documents_ready_trend": "up" if ready_pct >= 0 else "down",
+                "unpaid_requests_trend": "up" if unpaid_pct > 0 else ("down" if unpaid_pct < 0 else "neutral"),
             }
         finally:
             cur.close()
