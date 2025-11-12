@@ -58,7 +58,7 @@
 }
 
 .subtext{
-  height: 100%;
+  margin: 0px;
 }
 .announcement-container { 
   display: flex;

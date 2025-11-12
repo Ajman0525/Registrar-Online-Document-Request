@@ -1,0 +1,131 @@
+.card-container{
+    margin: 20px 20px 20px 0px;
+}
+
+.file-card, .add-card {
+    width: 262px;
+    height: 321px;
+    background: var(--color-white);
+
+    -webkit-mask-image: url('../../../public/Assets/FileCard.svg');
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-size: cover;
+    -webkit-mask-position: center;
+
+    mask-image: url('../../../public/Assets/FileCard.svg');
+    mask-repeat: no-repeat;
+    mask-size: cover;
+    mask-position: center;
+
+    transition: all 0.3s ease;
+}
+
+
+.file-card:hover, .add-card:hover{
+    transform: scale(1.05);
+}
+
+.file-card .action-section {
+  opacity: 0;
+  transition: opacity 0.3s ease; 
+}
+
+.file-card:hover .action-section {
+  opacity: 1;
+}
+.add-card {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.file-card{
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  align-items: center;
+  padding: 20px;
+  gap: 16px;
+}
+
+.name-and-description-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left;
+    width: 100%;
+}
+
+.document-name {
+    width: 90%;
+    font-family: var(--font-family-base);
+    color: var(--color-black);
+    margin: 0;
+}
+
+.requirements-section{
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    width: 100%;
+    height: 100%;
+}
+.requirements-title{
+    font-weight: bold;
+    color: var(--color-text-subtext);
+    margin: 0;
+}
+
+.price-and-action-section{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+}
+
+.card-action-section{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    width: 100%;
+    
+}
+
+.card-price-section{
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    width: 90%;
+}
+
+.price-amount{
+    margin: 0;
+    font-weight: bold;
+    font-family: var(--font-family-base);
+}
+
+.card-price-text{
+    margin: 0;
+    font-size: 10px;
+    color: var(--color-text-subtext);
+}
+
+.delete-button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--color-destructive);
+    border: none;
+    outline: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    flex: none; 
+}
+
+.delete-button:hover{
+    background-color: var(--color-button-destructive-hover);
+}
