@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import "./Tracking.css";
 import ButtonLink from "../../../components/common/ButtonLink";
-import ContentBox from "../../../components/user/ContentBox";
 
 function EnterTrackId({ onNext }) {
     const [trackingNumber, setTrackingNumber] = useState("");
@@ -21,64 +20,25 @@ function EnterTrackId({ onNext }) {
             return;
         }
 
-        // mock database for status checking
         try {
-            const mockDatabase = {
-                "DOC-2021-0001": {
-                    studentId: "2021-0001",
-                    status: "Ready for Pickup",
-                    documents: [
-                        { name: "Transcript of Records", quantity: 1, requirements: ["Valid ID", "Birth Certificate", "Birth Certificate"] },
-                        { name: "Certificate of Good Moral", quantity: 2, requirements: ["Valid ID", "Birth Certificate", "Birth Certificate"] },
-                        { name: "Honorable Dismissal", quantity: 1, requirements: ["Valid ID", "Birth Certificate", "Birth Certificate"] },
-                    ]
+            const response = await fetch('/api/track', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
                 },
-                "DOC-2022-0001": {
-                    studentId: "2022-0001",
-                    status: "Processing",
-                    documents: [
-                        { name: "Form 137", quantity: 1, requirements: ["Valid ID", "Birth Certificate", "Birth Certificate"] },
-                    ]
-                },
-                "DOC-2023-0001": {
-                    studentId: "2023-0001",
-                    status: "Under Review",
-                    documents: [
-                        { name: "Diploma (Reissue)", quantity: 1, requirements: ["Valid ID", "Birth Certificate", "Birth Certificate"] },
-                        { name: "Authentication", quantity: 5, requirements: ["Valid ID", "Birth Certificate", "Birth Certificate"] },
-                        { name: "Transcript of Records", quantity: 1, requirements: ["Valid ID", "Birth Certificate", "Birth Certificate"] },
-                        { name: "Certificate of Good Moral", quantity: 2, requirements: ["Valid ID", "Birth Certificate", "Birth Certificate"] },
-                        { name: "Honorable Dismissal", quantity: 1, requirements: ["Valid ID", "Birth Certificate", "Birth Certificate"] },
-                    ]
-                },
-                "DOC-2024-0001": {
-                    studentId: "2024-0001",
-                    status: "For Signature",
-                    documents: [
-                        { 
-                            name: "Certificate of Graduation", quantity: 1, requirements: ["Valid ID", "Birth Certificate", "Birth Certificate"] },
-                    ]
-                },
-                "DOC-2025-0001": {
-                    studentId: "2025-0001",
-                    status: "Payment Pending",
-                    amountDue: 550.00,
-                    documents: [
-                        { name: "Transcript of Records", quantity: 2, requirements: ["Valid ID", "Birth Certificate", "Birth Certificate"] },
-                        { name: "CAV (CHED)", quantity: 1, requirements: ["Valid ID", "Birth Certificate", "Birth Certificate"] },
-                    ]
-                }
-            };
+                body: JSON.stringify({ trackingNumber, studentId }),
+            });
 
-            const record = mockDatabase[trackingNumber];
+            const data = await response.json();
 
-            if (!record || record.studentId !== studentId) {
-                triggerError("Invalid Tracking Number or Student ID.");
+            if (!response.ok) {
+                // if response is not successful use the message from the backend
+                triggerError(data.message || "An error occurred.");
                 return;
             }
 
             setError("");
-            onNext({ ...record, trackingNumber, studentId }); // pass the tracking data to the next step
+            onNext(data); // pass the data from the backend to the next step
         } catch (err) {
             triggerError("An error occurred. Please try again.");
             console.error(err);
