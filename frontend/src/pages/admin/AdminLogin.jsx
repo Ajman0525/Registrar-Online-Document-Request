@@ -43,7 +43,9 @@ function AdminLogin() {
 
   return (
     <GoogleOAuthProvider clientId={clientId}>
-      <div className="min-h-screen bg-gradient-to-br from-red-600 to-red-700 flex items-center justify-center p-4">
+      <div className="min-h-screen flex items-center justify-center p-4"
+      
+        style={{ backgroundColor: "var(--color-primary)" }}>
         <div className="w-full max-w-6xl bg-white rounded-2xl shadow-2xl overflow-hidden">
           <div className="flex flex-col md:flex-row min-h-[600px]">
             <div
