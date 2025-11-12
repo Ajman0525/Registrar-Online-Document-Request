@@ -54,7 +54,7 @@ function AdminLogin() {
                 backgroundImage:`url(${bgImage})`,
               }}
             >
-              <div className="flex-1 flex flex-col justify-center">
+              <div className="flex-1 flex flex-col justify-center mt-12">
                 <div className="leading-tight space-y-2">
                   <h1 className="text-5xl font-bold mb-0">Hello,</h1>
                   <h1 className="text-5xl font-bold mb-0">Welcome!</h1>
