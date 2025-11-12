@@ -62,16 +62,28 @@ function UploadRequirements({ selectedDocs = [], uploadedFiles = {}, setUploaded
 
   // Initialize uploaded files entries to object mapping req_id to File | null
   useEffect(() => {
-    const newUploadedFiles = { ...uploadedFiles };
-    let hasChanges = false;
+    // Build new valid set of requirement IDs from currently selected docs
+    const validReqIds = new Set(requirementsList.map(r => r.req_id));
+
+    // Create a fresh object only with still-valid entries
+    const filteredUploads = Object.fromEntries(
+      Object.entries(uploadedFiles).filter(([req_id]) => validReqIds.has(parseInt(req_id)))
+    );
+
+    // Add new requirements that aren't in uploadedFiles yet
     requirementsList.forEach(({ req_id }) => {
-      if (!(req_id in newUploadedFiles)) {
-        newUploadedFiles[req_id] = null;
-        hasChanges = true;
+      if (!(req_id in filteredUploads)) {
+        filteredUploads[req_id] = null;
       }
     });
+
+    // Update only if there are actual changes
+    const hasChanges =
+      Object.keys(filteredUploads).length !== Object.keys(uploadedFiles).length ||
+      Object.keys(filteredUploads).some(k => uploadedFiles[k] !== filteredUploads[k]);
+
     if (hasChanges) {
-      setUploadedFiles(newUploadedFiles);
+      setUploadedFiles(filteredUploads);
     }
   }, [requirementsList]);
 
