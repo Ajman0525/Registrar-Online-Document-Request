@@ -1,8 +1,240 @@
 from . import document_management_bp
-from flask import render_template, session, redirect, url_for
+from flask import jsonify, g, request
+import psycopg2
 
+@document_management_bp.route('/get-documents', methods=['GET'])
+def get_documents():
+    try:
+        # Use connection from the pool
+        conn = g.db_conn
+        cursor = conn.cursor()
+        cursor.execute("SELECT doc_id, doc_name, description, logo_link, cost FROM documents;")
+        documents = cursor.fetchall()
+        cursor.close()
 
-@document_management_bp.route('/admin/document_management')
-def document_management():
- 
-    return render_template('admin/document_management.html', username=session.get('username'), active='document_management')
+        document_list = [
+            {
+                "doc_id": doc[0],
+                "doc_name": doc[1],
+                "description": doc[2],
+                "logo_link": doc[3],
+                "cost": float(doc[4])
+            }
+            for doc in documents
+        ]
+        return jsonify(document_list)
+    
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@document_management_bp.route('/get-document-requirements', methods=['GET'])
+def get_document_requirements():
+    try:
+        conn = g.db_conn
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT dr.doc_id, r.requirement_name
+            FROM document_requirements dr
+            JOIN requirements r ON dr.req_id = r.req_id;
+        """)
+        document_requirements = cursor.fetchall()
+        cursor.close()
+
+        document_requirements_list = [
+            {"doc_id": doc[0], "requirement_name": doc[1]}
+            for doc in document_requirements
+        ]
+        return jsonify(document_requirements_list)
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@document_management_bp.route('/get-document-requirements/<string:doc_id>', methods=['GET'])
+def get_document_requirements_by_id(doc_id):
+    try:
+        conn = g.db_conn
+        cursor = conn.cursor()
+        cursor.execute("SELECT doc_id, req_id FROM document_requirements WHERE doc_id = %s;", (doc_id,))
+        document_requirements = cursor.fetchall()
+        cursor.close()
+
+        document_requirements_list = [
+            {"doc_id": doc[0], "req_id": doc[1]}
+            for doc in document_requirements
+        ]
+        return jsonify(document_requirements_list)
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@document_management_bp.route('/get-documents-with-requirements', methods=['GET'])
+def get_documents_with_requirements():
+    try:
+        conn = g.db_conn
+        cursor = conn.cursor()
+
+        # Fetch all documents
+        cursor.execute("SELECT doc_id, doc_name, description, logo_link, cost FROM documents;")
+        documents = cursor.fetchall()
+
+        document_list = []
+
+        for doc in documents:
+            doc_id, doc_name, description, logo_link, cost = doc
+
+            # Fetch requirement names for this document
+            cursor.execute("""
+                SELECT r.requirement_name
+                FROM document_requirements dr
+                JOIN requirements r ON dr.req_id = r.req_id
+                WHERE dr.doc_id = %s;
+            """, (doc_id,))
+            req_rows = cursor.fetchall()
+            req_names = [r[0] for r in req_rows]
+
+            document_list.append({
+                "doc_id": doc_id,
+                "doc_name": doc_name,
+                "description": description,
+                "logo_link": logo_link,
+                "cost": float(cost),
+                "requirements": req_names
+            })
+
+        cursor.close()
+        return jsonify(document_list), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@document_management_bp.route('/add-documents', methods=['POST'])
+def add_document():
+    try:
+        conn = g.db_conn
+        cursor = conn.cursor()
+        data = request.get_json()
+
+        doc_name = data.get("doc_name")
+        description = data.get("description")
+        cost = data.get("cost")
+        requirements = data.get("requirements", [])
+
+        if not all([doc_name, description, cost]):
+            return jsonify({"error": "Missing required fields"}), 400
+
+        cursor.execute("SELECT doc_id FROM documents ORDER BY doc_id DESC LIMIT 1;")
+        last_doc = cursor.fetchone()
+        new_doc_id = f"DOC{int(last_doc[0].replace('DOC', '')) + 1:04d}" if last_doc else "DOC0001"
+
+        cursor.execute("""
+            INSERT INTO documents (doc_id, doc_name, description, cost)
+            VALUES (%s, %s, %s, %s);
+        """, (new_doc_id, doc_name, description, cost))
+
+        for req_name in requirements:
+            cursor.execute("SELECT req_id FROM requirements WHERE requirement_name = %s;", (req_name,))
+            existing = cursor.fetchone()
+
+            if existing:
+                req_id = existing[0]
+            else:
+                cursor.execute("SELECT req_id FROM requirements ORDER BY req_id DESC LIMIT 1;")
+                last_req = cursor.fetchone()
+                req_id = f"REQ{int(last_req[0].replace('REQ', '')) + 1:04d}" if last_req else "REQ0001"
+
+                cursor.execute("""
+                    INSERT INTO requirements (req_id, requirement_name)
+                    VALUES (%s, %s);
+                """, (req_id, req_name))
+
+            cursor.execute("""
+                INSERT INTO document_requirements (doc_id, req_id)
+                VALUES (%s, %s);
+            """, (new_doc_id, req_id))
+
+        conn.commit()
+        return jsonify({"message": "Document added successfully", "doc_id": new_doc_id}), 201
+
+    except psycopg2.IntegrityError:
+        conn.rollback()
+        return jsonify({"error": "Duplicate document or invalid data."}), 400
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
+
+@document_management_bp.route('/edit-document/<string:doc_id>', methods=['PUT'])
+def edit_document(doc_id):
+    try:
+        conn = g.db_conn
+        cursor = conn.cursor()
+        data = request.get_json()
+
+        doc_name = data.get("doc_name")
+        description = data.get("description")
+        cost = data.get("cost")
+        requirements = data.get("requirements", [])
+
+        # update the main document info
+        cursor.execute("""
+            UPDATE documents
+            SET doc_name = %s, description = %s, cost = %s
+            WHERE doc_id = %s;
+        """, (doc_name, description, cost, doc_id))
+
+        # clear old requirements
+        cursor.execute("DELETE FROM document_requirements WHERE doc_id = %s;", (doc_id,))
+
+        # re-insert requirements
+        for req_name in requirements:
+            cursor.execute("SELECT req_id FROM requirements WHERE requirement_name = %s;", (req_name,))
+            existing = cursor.fetchone()
+
+            if existing:
+                req_id = existing[0]
+            else:
+                cursor.execute("SELECT req_id FROM requirements ORDER BY req_id DESC LIMIT 1;")
+                last_req = cursor.fetchone()
+                req_id = f"REQ{int(last_req[0].replace('REQ', '')) + 1:04d}" if last_req else "REQ0001"
+
+                cursor.execute("""
+                    INSERT INTO requirements (req_id, requirement_name)
+                    VALUES (%s, %s);
+                """, (req_id, req_name))
+
+            cursor.execute("""
+                INSERT INTO document_requirements (doc_id, req_id)
+                VALUES (%s, %s);
+            """, (doc_id, req_id))
+
+        conn.commit()
+        return jsonify({"message": "Document updated successfully"}), 200
+
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
+
+@document_management_bp.route('/delete-document/<string:doc_id>', methods=['DELETE'])
+def delete_document(doc_id):
+    try:
+        conn = g.db_conn
+        cursor = conn.cursor()
+
+        # First, remove any linked requirements in document_requirements
+        cursor.execute("DELETE FROM document_requirements WHERE doc_id = %s;", (doc_id,))
+
+        # Then remove the document itself
+        cursor.execute("DELETE FROM documents WHERE doc_id = %s;", (doc_id,))
+
+        conn.commit()
+        return jsonify({"message": f"Document {doc_id} deleted successfully"}), 200
+
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
+

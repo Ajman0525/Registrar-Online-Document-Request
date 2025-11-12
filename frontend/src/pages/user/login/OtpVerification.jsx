@@ -116,7 +116,7 @@ function OtpVerification({ onNext, onBack, studentId, maskedPhone, setMaskedPhon
           <input
             id="Code"
             type="numeric"
-            className={`otp-input ${error ? "input-error" : ""} ${shake ? "shake" : ""}`}
+            className={`box-input ${error ? "input-error" : ""} ${shake ? "shake" : ""}`}
             placeholder="000000"
             autoComplete="one-time-code"
             value={otpCode}
