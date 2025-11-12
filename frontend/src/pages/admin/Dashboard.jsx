@@ -291,32 +291,32 @@ function Dashboard() {
       icon: TotalRequestsIcon,
       value: dashboardData.stats.total_requests.toLocaleString(),
       subText: "Total requests in system",
-      percentage: 12.67, 
-      trend: "up" 
+      percentage: dashboardData.stats.total_requests_percentage,  
+      trend: dashboardData.stats.total_requests_trend              
     },
     {
       title: "In Process",
       icon: PendingIcon,
       value: dashboardData.stats.pending_requests.toString(),
       subText: "Requests in progress",
-      // percentage: 1.98,
-      trend: "down"
+      percentage: dashboardData.stats.pending_requests_percentage, 
+      trend: dashboardData.stats.pending_requests_trend            
     },
     {
       title: "Outstanding Payments",
       icon: UnpaidIcon,
       value: `₱${parseFloat(dashboardData.stats.unpaid_requests || 0).toFixed(2)}`,
       subText: "Total unpaid amount",
-      // percentage: 8.35,
-      trend: "up"
+      percentage: dashboardData.stats.unpaid_requests_percentage,  
+      trend: dashboardData.stats.unpaid_requests_trend             
     },
     {
       title: "Ready for Release",
       icon: ProcessedIcon,
       value: dashboardData.stats.documents_ready.toString(),
       subText: "Documents ready for pickup",
-      // percentage: 2.81,
-      trend: "down"
+      percentage: dashboardData.stats.documents_ready_percentage,  
+      trend: dashboardData.stats.documents_ready_trend             
     },
   ] : [];
 
