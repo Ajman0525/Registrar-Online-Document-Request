@@ -48,7 +48,7 @@ function AdminLogin() {
             <div
               className="flex-1 relative bg-cover bg-center p-12 flex flex-col justify-between text-white"
               style={{
-                backgroundImage: `linear-gradient(rgba(194, 5, 5, 0.85), rgba(194, 5, 5, 0.85)), url(${bgImage})`,
+                backgroundImage:  `url(${bgImage})`,
               }}
             >
               <div className="flex-1 flex flex-col justify-center">
