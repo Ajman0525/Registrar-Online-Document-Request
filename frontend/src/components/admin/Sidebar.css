@@ -28,6 +28,10 @@
     line-height: 1.5;
 }
 
+.brand-name #online{
+    color: #F3D358;
+}
+
 .sidebar-header p{
     margin: 0;
     font-family: var(--font-family-base);

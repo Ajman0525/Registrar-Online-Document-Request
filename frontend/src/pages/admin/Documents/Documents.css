@@ -1,0 +1,25 @@
+.title{
+    font-family: var(--font-family-base);
+    margin: 0;
+}
+
+.placeholder{
+    color: grey;
+}
+
+.toolbar {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+
+}
+
+.file-cards-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(262px, 1fr));
+  justify-content: start; /* prevents stretching last row */
+  width: 100%;
+  max-width: 1200px;    /* optional, keeps layout neat on big screens */
+  margin: 0 auto;       /* centers the grid */
+}
