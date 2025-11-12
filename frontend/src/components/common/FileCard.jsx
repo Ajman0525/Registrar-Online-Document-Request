@@ -31,7 +31,7 @@ function FileCard({ document, onClick, onEdit, onDelete }) {
                         <p className="price-amount">Php{Number(cost).toFixed(2)}</p>
                         <p className="card-price-text">per copy</p>
                     </div>
-                    <div className="action-section">
+                    <div className="card-action-section">
                         <ButtonLink 
                             text="Edit" 
                             placeholder={"Edit"} 
