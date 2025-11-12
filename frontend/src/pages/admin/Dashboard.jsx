@@ -314,9 +314,7 @@ function Dashboard() {
       title: "Ready for Release",
       icon: ProcessedIcon,
       value: dashboardData.stats.documents_ready.toString(),
-      subText: "Documents ready for pickup",
-      percentage: dashboardData.stats.documents_ready_percentage,  
-      trend: dashboardData.stats.documents_ready_trend             
+      subText: "Documents ready for pickup",          
     },
   ] : [];
 
