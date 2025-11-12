@@ -1,7 +1,7 @@
 import React from "react";
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
 import { useNavigate } from "react-router-dom";
-import bgImage from "./assets/Left.png";
+import bgImage from "./assets/Motif.png";
 
 
 function AdminLogin() {
@@ -63,7 +63,6 @@ function AdminLogin() {
             width: "1100px",
           }}
         >
-          {/* Left side with image */}
           <div
             className="image-container"
             style={{
