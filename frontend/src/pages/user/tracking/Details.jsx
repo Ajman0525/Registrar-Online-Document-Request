@@ -1,10 +1,38 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import "./Tracking.css";
 import ButtonLink from "../../../components/common/ButtonLink";
 
 
 // request details
 function Details({ trackData, onTrackAnoter, onBack }) {
+    const [documents, setDocuments] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        if (trackData && trackData.trackingNumber) {
+            fetchDocuments();
+        }
+    }, [trackData]);
+
+
+    const fetchDocuments = async () => {
+        try {
+            const response = await fetch(`/api/track/document/${trackData.trackingNumber}`);
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to fetch documents');
+            }
+            console.log("Fetched documents data:", data);
+            setDocuments(data.documents || []);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="text-section">
             <h3 className="status-title">My Request</h3>
@@ -14,13 +42,24 @@ function Details({ trackData, onTrackAnoter, onBack }) {
                         <h4 className="document-name">Name</h4>
                         <span className="quantity-number">Quantity</span>
                     </div>
-                    {trackData.documents && trackData.documents.map((doc, index) => (
-                        <div key={index} className="document-item">
-                            <h4 className="document-name">{doc.name}</h4>
-                            <span className="quantity-number">&nbsp;{doc.quantity}</span>
+                    {loading ? (
+                        <div className="document-item">
+                            <span>Loading documents...</span>
                         </div>
-                    ))}
+                    ) : error ? (
+                        <div className="document-item">
+                            <span>Error: {error}</span>
+                        </div>
+                    ) : (
+                        documents.map((doc, index) => (
+                            <div key={index} className="document-item">
+                                <h4 className="document-name">{doc.name}</h4>
+                                <span className="quantity-number">&nbsp;{doc.quantity}</span>
+                            </div>
+                        ))
+                    )}
                 </div>
+
 
                 <div className="action-section">
                     <div className="button-section">
@@ -36,5 +75,6 @@ function Details({ trackData, onTrackAnoter, onBack }) {
         </div>
     );
 }
+
 
 export default Details;

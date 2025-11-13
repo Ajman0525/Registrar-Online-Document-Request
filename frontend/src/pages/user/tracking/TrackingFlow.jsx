@@ -54,15 +54,31 @@ function TrackFlow() {
 		}
 	};
 	
-	const handlePaymentComplete = () => {
-		// Update the status in trackData and go to the status page
-		setTrackData(prevData => ({ 
-			...prevData, 
-			status: "DOC-READY", 
-			paymentStatus: true 
-		}));
-		setCurrentView("status");
-	};
+	const handlePaymentComplete = async () => {
+        try {
+            const response = await fetch('/api/track/payment-complete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tracking_number: trackData.trackingNumber }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to update payment status.');
+            }
+
+            // If API call is successful, update the local state
+            setTrackData(prevData => ({
+                ...prevData,
+                status: "DOC-READY",
+                paymentStatus: true
+            }));
+            setCurrentView("status");
+        } catch (error) {
+            console.error("Payment completion error:", error);
+            // Optionally, show an error message to the user
+        }
+    };
 
     return (
         <div className="Track-page">
@@ -88,8 +104,8 @@ function TrackFlow() {
                         />
                     )}
 
-                    {currentView === "details" && trackData && (
-                        <Details trackData={trackData} onTrackAnoter={handleTrackAnother} onBack={handleBack} />
+                    {currentView === "details" && (
+                        <Details onTrackAnoter={handleTrackAnother} onBack={handleBack} trackData={trackData} />
                     )}
 
                     {currentView === "payment-options" && (

@@ -81,3 +81,52 @@ def get_tracking_data():
             "status": "error",
             "message": "An unexpected error occurred while fetching tracking data."
         }), 500
+
+@tracking_bp.route('/api/track/document/<tracking_number>', methods=['GET'])
+def get_requested_documents(tracking_number):
+    """
+    API endpoint to fetch requested documents for a given tracking number and student ID.
+    """
+    try:
+        documents = Tracking.get_requested_documents(tracking_number)
+        if documents is None:
+            return jsonify({"message": "No documents found for the provided Tracking Number and Student ID."}), 404
+
+
+        return jsonify({
+            "message": "Requested documents retrieved successfully",
+            "documents": documents
+        }), 200
+
+
+    except Exception as e:
+        current_app.logger.error(f"Error in /api/track/document: {e}")
+        return jsonify({
+            "status": "error",
+            "message": "An unexpected error occurred while fetching requested documents."
+        }), 500
+
+@tracking_bp.route('/api/track/payment-complete', methods=['POST'])
+def mark_payment_complete():
+    """
+    API endpoint to mark a request's payment as complete.
+    """
+    student_id = session.get('student_id')
+    if not student_id:
+        return jsonify({"message": "User session not found or invalid."}), 401
+
+    data = request.get_json(silent=True) or {}
+    tracking_number = data.get('tracking_number')
+
+    if not tracking_number:
+        return jsonify({"message": "Tracking number is required."}), 400
+
+    try:
+        success = Tracking.update_payment_status(tracking_number, student_id)
+        if success:
+            return jsonify({"message": "Payment status updated successfully."}), 200
+        else:
+            return jsonify({"message": "Failed to update payment status. Record not found or you do not have permission."}), 404
+    except Exception as e:
+        current_app.logger.error(f"Error in /api/track/payment-complete: {e}")
+        return jsonify({"status": "error", "message": f"An unexpected error occurred: {str(e)}"}), 500
