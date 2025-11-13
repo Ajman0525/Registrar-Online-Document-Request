@@ -7,8 +7,8 @@ function TrackStatus({ trackData, onBack, onViewDetails, onViewDeliveryInstructi
 
     // config for each status
     const statusConfig = {
-        "Ready for Pickup": {
-            className: "status-ready",
+        "DOC-READY": {
+            className: "status-doc-ready",
             title: "Document Ready",
             description: (
                 <div className="status-body">
@@ -22,7 +22,7 @@ function TrackStatus({ trackData, onBack, onViewDetails, onViewDeliveryInstructi
                 </div>
             )
         },
-        "Processing": {
+        "IN-PROGRESS": {
             className: "status-processing",
             title: "In Progress",
             description: (  
@@ -31,21 +31,21 @@ function TrackStatus({ trackData, onBack, onViewDetails, onViewDeliveryInstructi
                 </div>
             )
         },
-        "Under Review": {
+        "SUBMITTED": {
+            className: "status-submitted",
+            title: "Request Submitted",
+            description: (
+                <div className="status-body">
+                    <p className="subtext">Your request has been received and will be processed soon.</p>
+                </div>
+            )
+        },
+        "PENDING": {
             className: "status-review",
             title: "Under Review",
             description: (  
                 <div className="status-body">
                     <p className="subtext">Your request and submitted requirements are being carefully checked by the registrar's office to confirm that all details and documents are complete and valid.</p>
-                </div>
-            )
-        },
-        "For Signature": {
-            className: "status-signature",
-            title: "For Signature",
-            description: (  
-                <div className="status-body">
-                    <p className="subtext">Your documents are ready and are now awaiting the official signature and approval from the registrar or authorized school official.</p>
                 </div>
             )
         },
@@ -65,6 +65,27 @@ function TrackStatus({ trackData, onBack, onViewDetails, onViewDeliveryInstructi
                     </div>
                 </div>
             ),
+        },
+        "RELEASED": {
+            className: "status-released",
+            title: "Document Released",
+            description: (
+                <div className="status-body">
+                    <p className="subtext">Your document has been successfully claimed or delivered. Thank you for using our service.</p>
+                </div>
+            )
+        },
+        "REJECTED": {
+            className: "status-rejected",
+            title: "Request Rejected",
+            description: (
+                <div className="status-body">
+                    <p className="subtext">
+                        We are unable to proceed with your request at this time. Please review the reason below.
+                        If you have questions, please contact support.
+                    </p>
+                </div>
+            )
         }
     };
 
@@ -80,7 +101,13 @@ function TrackStatus({ trackData, onBack, onViewDetails, onViewDeliveryInstructi
     }
 
     // get the specific configuration for the current status
-    const config = statusConfig[trackData.status];
+    // convert status to uppercase for case-insensitive matching
+    let statusKey = trackData.status ? trackData.status.toUpperCase() : '';
+    if (statusKey === 'DOC-READY' && !trackData.paymentStatus) {
+        statusKey = 'Payment Pending';
+    }
+
+    const config = statusConfig[statusKey];
 
     // data not found case
     if (!config) {
@@ -106,6 +133,13 @@ function TrackStatus({ trackData, onBack, onViewDetails, onViewDeliveryInstructi
                         <p><strong>{trackData.trackingNumber}</strong></p>
                     </div>
                 </div>
+                {/* Display rejection remarks if the status is REJECTED */}
+                {statusKey === 'REJECTED' && trackData.remarks && (
+                    <div className="rejection-remarks-section">
+                        <p className="remarks-title">Reason for Rejection:</p>
+                        <p className="remarks-text">{trackData.remarks}</p>
+                    </div>
+                )}
             </div>
             {config.options}
             {config.actionSection ? (
