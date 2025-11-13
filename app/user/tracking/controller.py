@@ -81,36 +81,13 @@ def get_tracking_data():
             "status": "error",
             "message": "An unexpected error occurred while fetching tracking data."
         }), 500
-
-@tracking_bp.route('/api/track/document/<tracking_number>', methods=['GET'])
-def get_requested_documents(tracking_number):
-    """
-    API endpoint to fetch requested documents for a given tracking number and student ID.
-    """
-    try:
-        documents = Tracking.get_requested_documents(tracking_number)
-        if documents is None:
-            return jsonify({"message": "No documents found for the provided Tracking Number and Student ID."}), 404
-
-
-        return jsonify({
-            "message": "Requested documents retrieved successfully",
-            "documents": documents
-        }), 200
-
-
-    except Exception as e:
-        current_app.logger.error(f"Error in /api/track/document: {e}")
-        return jsonify({
-            "status": "error",
-            "message": "An unexpected error occurred while fetching requested documents."
-        }), 500
-
-@tracking_bp.route('/api/track/payment-complete', methods=['POST'])
+    
+@tracking_bp.route('/api/track/payment-complete', methods=['POST'], strict_slashes=False)
 def mark_payment_complete():
     """
     API endpoint to mark a request's payment as complete.
     """
+    print("[DEBUG] Payment complete endpoint hit")
     student_id = session.get('student_id')
     if not student_id:
         return jsonify({"message": "User session not found or invalid."}), 401
@@ -130,3 +107,29 @@ def mark_payment_complete():
     except Exception as e:
         current_app.logger.error(f"Error in /api/track/payment-complete: {e}")
         return jsonify({"status": "error", "message": f"An unexpected error occurred: {str(e)}"}), 500
+
+@tracking_bp.route('/api/track/document/<tracking_number>', methods=['GET'])
+def get_requested_documents(tracking_number):
+    """
+    API endpoint to fetch requested documents for a given tracking number and student ID.
+    """
+    try:
+        documents = Tracking.get_requested_documents(tracking_number)
+        if documents is None:
+            return jsonify({"message": "No documents found for the provided Tracking Number and Student ID."}), 404
+
+        # Log the retrieved documents as requested
+        current_app.logger.info(f"Retrieved documents for tracking number {tracking_number}: {documents}")
+
+        return jsonify({
+            "message": "Requested documents retrieved successfully",
+            "documents": documents
+        }), 200
+
+
+    except Exception as e:
+        current_app.logger.error(f"Error in /api/track/document: {e}")
+        return jsonify({
+            "status": "error",
+            "message": f"An unexpected error occurred: {str(e)}"
+        }), 500

@@ -59,8 +59,11 @@ function TrackFlow() {
             const response = await fetch('/api/track/payment-complete', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({ tracking_number: trackData.trackingNumber }),
             });
+
+            const data = await response.json();
 
             if (!response.ok) {
                 const errorData = await response.json();

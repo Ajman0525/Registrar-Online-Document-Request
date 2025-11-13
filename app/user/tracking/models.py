@@ -20,7 +20,7 @@ class Tracking:
         try:
             # Query to get the main request details
             cur.execute("""
-                SELECT status, total_cost, contact_number
+                SELECT status, total_cost, contact_number, payment_status
                 FROM requests
                 WHERE request_id = %s AND student_id = %s
             """, (tracking_number, student_id))
@@ -35,6 +35,7 @@ class Tracking:
                 "status": record[0],
                 "amountDue": float(record[1]) if record[1] is not None else 0.0,
                 "contact_number": record[2],
+                "paymentStatus": record[3],
                 "trackingNumber": tracking_number,
                 "studentId": student_id,
             }
