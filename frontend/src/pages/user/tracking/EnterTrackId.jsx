@@ -83,23 +83,29 @@ function EnterTrackId({ onNext }) {
             </div>
 
             <div className="input-section">
-                <p className="subtext">Tracking Number</p>
-                <input
-                    type="text"
-                    className={`track-input ${error && !studentId ? "input-error" : ""} ${shake ? "shake" : ""}`}
-                    placeholder="e.g., DOC-2021-2134"
-                    value={trackingNumber}
-                    onChange={(e) => setTrackingNumber(e.target.value)}
-                />
-                <p className="subtext">ID Number</p>
-                <input
-                    type="text"
-                    className={`track-input ${error && !trackingNumber ? "input-error" : ""} ${shake ? "shake" : ""}`}
-                    placeholder="0000-0000"
-                    value={studentId}
-                    onChange={handleStudentIdChange}
-                    maxLength={9}
-                />
+                <div className="inputs-container">
+                    <div className="input-wrapper">
+                        <p className="subtext">Tracking Number</p>
+                        <input
+                            type="text"
+                            className={`box-input ${error && !trackingNumber ? "input-error" : ""} ${shake ? "shake" : ""}`}
+                            placeholder="e.g., DOC-2021-2134"
+                            value={trackingNumber}
+                            onChange={(e) => setTrackingNumber(e.target.value)}
+                        />
+                    </div>
+                    <div className="input-wrapper">
+                        <p className="subtext">ID Number</p>
+                        <input
+                            type="text"
+                            className={`box-input ${error && !studentId ? "input-error" : ""} ${shake ? "shake" : ""}`}
+                            placeholder="0000-0000"
+                            value={studentId}
+                            onChange={handleStudentIdChange}
+                            maxLength={9}
+                        />
+                    </div>
+                </div>
                 <div className="error-section">
                     {error && <p className={`error-text ${shake ? "shake" : ""}`}>{error}</p>}
                 </div>
