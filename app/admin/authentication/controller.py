@@ -1,35 +1,64 @@
 from . import authentication_admin_bp
-from flask import Blueprint, jsonify, request, current_app
+from flask import jsonify, request, current_app
 from flask_jwt_extended import create_access_token, set_access_cookies
-from datetime import timedelta
+from authlib.integrations.flask_client import OAuth
+from config import GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
 
-@authentication_admin_bp.route("/api/admin/login", methods=["POST"])
-def admin_login():
-    """Secure admin login endpoint using JWT + CSRF-protected cookies."""
-    
-    data = request.get_json(silent=True) or {}
-    username = data.get("username")
-    password = data.get("password")
 
-    if not username or not password:
-        return jsonify({"error": "Username and password are required"}), 400
+oauth = OAuth(current_app)
+google = oauth.register(
+   name='google',
+   client_id=GOOGLE_CLIENT_ID,
+   client_secret=GOOGLE_CLIENT_SECRET,
+   authorize_url='https://accounts.google.com/o/oauth2/auth',
+   authorize_params=None,
+   access_token_url='https://accounts.google.com/o/oauth2/token',
+   access_token_params=None,
+   refresh_token_url=None,
+   redirect_uri='http://localhost:8000/api/admin/google/callback',
+   client_kwargs={'scope': 'openid email profile'},
+)
 
-    # Dummy user for illustration
-    user = {"username": "admin", "role": "admin"} if username == "admin" and password == "1234" else None
 
-    if user:
-        
-        access_token = create_access_token(
-            identity=user["username"],                 # string identity
-            additional_claims={"role": user["role"]}
-        )
-        
-        response = jsonify({"message": "Admin login successful", "role": user["role"]})
-        set_access_cookies(response, access_token)
+@authentication_admin_bp.route("/api/admin/google-login", methods=["POST"])
+def google_login():
+   """Verify Google ID token and create JWT."""
+   data = request.get_json(silent=True) or {}
+   token = data.get("token")
 
-        current_app.logger.info(f"Admin {username} logged in successfully.")
-        return response, 200
 
-    current_app.logger.warning(f"Failed admin login attempt for username: {username}")
-    current_app.config["JWT_COOKIE_CSRF_PROTECT"] = True
-    return jsonify({"error": "Invalid credentials"}), 401
+   if not token:
+       return jsonify({"error": "ID token required"}), 400
+
+
+   try:
+       # Verify the ID token
+       CLIENT_ID = GOOGLE_CLIENT_ID
+       id_info = id_token.verify_oauth2_token(token, google_requests.Request(), CLIENT_ID)
+
+
+       # Check if email is authorized (e.g., domain check)
+       if not id_info['email'].endswith('@g.msuiit.edu.ph'):
+           return jsonify({"error": "Unauthorized email"}), 403
+
+
+       # Create JWT
+       access_token = create_access_token(
+           identity=id_info['email'],
+           additional_claims={"role": "admin"}
+       )
+
+
+       response = jsonify({"message": "Admin login successful", "role": "admin"})
+       set_access_cookies(response, access_token)
+
+
+       current_app.logger.info(f"Admin {id_info['email']} logged in via Google.")
+       return response, 200
+
+
+   except ValueError as e:
+       current_app.logger.warning(f"Invalid ID token: {e}")
+       return jsonify({"error": "Invalid token"}), 401
