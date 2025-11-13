@@ -1,7 +1,10 @@
 .user-master-layout {
   display: flex;
   flex-direction: column;
-  min-height: 100vh; /* full viewport height */
+  align-items: stretch;
+  padding: 0px;
+
+  height: 100vh;
   background: #FFFFFF;
 }
 
@@ -18,14 +21,19 @@
 
 /* Content area */
 .user-content-area {
-  flex: 1 1 auto; /* take remaining space */
-  overflow-y: auto; /* scroll only this area */
   display: flex;
   flex-direction: column;
-  justify-content: flex-start; /* top aligned content */
+  justify-content: center;
   align-items: center;
+  padding : 0px 0px 60px 0px;
   width: 100%;
+
   background: var(--color-primary);
+
+  /* Inside auto layout */
+  flex: 1;
+  order: 0;
+  flex-grow: 1;
 }
 
 /* Footer */
