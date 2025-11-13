@@ -18,6 +18,7 @@ function TrackFlow() {
 
     // the 'data' parameter will hold the response from the tracking API
     const handleTrackIdSubmit = (data) => {
+		console.log("Tracking data received:", data.trackData);
 		setTrackData(data.trackData);
         setMaskedPhone(data.maskedPhone);
         setStudentId(data.studentId);
@@ -40,7 +41,6 @@ function TrackFlow() {
 	const handleViewPaymentOptions = () => setCurrentView("payment-options");
 	const handleViewPaymentInstructions = () => setCurrentView("payment-instructions");	
 	const handleOtpSuccess = (data) => {
-		setTrackData(data); // Update trackData with the data from OTP verification
 		setCurrentView("status");
 	};
 	const handleViewDeliveryInstructions = () => setCurrentView("delivery-instructions");
@@ -56,7 +56,11 @@ function TrackFlow() {
 	
 	const handlePaymentComplete = () => {
 		// Update the status in trackData and go to the status page
-		setTrackData(prevData => ({ ...prevData, status: "Ready for Pickup" }));
+		setTrackData(prevData => ({ 
+			...prevData, 
+			status: "DOC-READY", 
+			paymentStatus: true 
+		}));
 		setCurrentView("status");
 	};
 
