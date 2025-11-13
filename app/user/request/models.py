@@ -389,7 +389,7 @@ class Request:
         try:
             cur.execute("""
                 UPDATE requests
-                SET status = 'submitted', completed_at = NOW(), total_cost = %s
+                SET status = 'SUBMITTED', completed_at = NOW(), total_cost = %s
                 WHERE request_id = %s
             """, (total_cost, request_id))
             conn.commit()
