@@ -7,6 +7,7 @@ import PaymentOptions from "./PaymentOptions";
 import PaymentInstructions from "./PaymentInstructions";
 import PaymentSuccess from "./PaymentSuccess";
 import DeliveryInstructions from "./DeliveryInstructions";
+import PickupInstructions from "./PickupInstructions";
 import ContentBox from "../../../components/user/ContentBox";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
 import "./Tracking.css";
@@ -34,15 +35,16 @@ function TrackFlow() {
 			setTrackData(null); // clear data when going back to initial screen
 		} else if (currentView === "otp") {
             setCurrentView("enter-id");
-        } else if (currentView === "details" || currentView === "payment-options" || currentView === "payment-instructions" || currentView === "delivery-instructions") {
+        } else if (currentView === "details" || currentView === "payment-options" || currentView === "payment-instructions" || currentView === "delivery-instructions" || currentView === "pickup-instructions") {
 			setCurrentView("status"); // go back to main status view
 		}
-  	};
+    };
 
 	const handleViewDetails = () => setCurrentView("details");
 	const handleTrackAnother = () => setCurrentView("enter-id");
 	const handleViewPaymentOptions = () => setCurrentView("payment-options");
 	const handleViewPaymentInstructions = () => setCurrentView("payment-instructions");	
+    const handleViewPickupInstructions = () => setCurrentView("pickup-instructions");
 	const handleOtpSuccess = (data) => {
 		setCurrentView("status");
         setLoading(false);
@@ -111,6 +113,7 @@ function TrackFlow() {
                             onViewDetails={handleViewDetails}
                             onViewPaymentOptions={handleViewPaymentOptions}
                             onViewDeliveryInstructions={handleViewDeliveryInstructions}
+                            onViewPickupInstructions={handleViewPickupInstructions}
                             onBack={handleBack} // pass handleBack for the "Track Another" button
                         />
                     )}
@@ -138,6 +141,9 @@ function TrackFlow() {
 
                     {currentView === "delivery-instructions" && (
                         <DeliveryInstructions onBack={handleBack} />
+                    )}
+                    {currentView === "pickup-instructions" && (
+                        <PickupInstructions onBack={handleBack} />
                     )}
                 </ContentBox>
             )}

@@ -3,7 +3,7 @@ import ButtonLink from "../../../components/common/ButtonLink";
 import ContentBox from "../../../components/user/ContentBox";
 
 /* track status component */
-function TrackStatus({ trackData, onBack, onViewDetails, onViewDeliveryInstructions, onViewPaymentOptions }) {
+function TrackStatus({ trackData, onBack, onViewDetails, onViewDeliveryInstructions, onViewPaymentOptions, onViewPickupInstructions }) {
 
     // config for each status
     const statusConfig = {
@@ -17,7 +17,7 @@ function TrackStatus({ trackData, onBack, onViewDetails, onViewDeliveryInstructi
             ),
             options: (
                 <div className="claim-options">
-                    <ButtonLink to="/user/delivery" placeholder="Pick up at Registrar" className="claim-button pickup-button" />
+                    <ButtonLink onClick={onViewPickupInstructions} placeholder="Pick up at Registrar" className="claim-button pickup-button" />
                     <ButtonLink onClick={onViewDeliveryInstructions} placeholder="Delivery" className="claim-button delivery-button" />
                 </div>
             )
@@ -103,7 +103,7 @@ function TrackStatus({ trackData, onBack, onViewDetails, onViewDeliveryInstructi
     // get the specific configuration for the current status
     // convert status to uppercase for case-insensitive matching
     let statusKey = trackData.status ? trackData.status.toUpperCase() : '';
-    if (statusKey === 'DOC-READY' && !trackData.paymentStatus) {
+    if (statusKey === 'DOC-READY' && trackData.paymentStatus === false) {
         statusKey = 'Payment Pending';
     }
 

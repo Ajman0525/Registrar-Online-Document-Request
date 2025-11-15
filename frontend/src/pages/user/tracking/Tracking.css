@@ -213,6 +213,7 @@
     gap: 20px;
     width: 100%;
     max-width: 600px;
+    margin-top: 10px
 }
 
 .details-card {
@@ -220,6 +221,7 @@
     align-items: flex-start;
     gap: 10px;
     flex: 1;
+    flex-direction: row;
 }
 
 .details-icon {
@@ -237,7 +239,6 @@
 }
 
 .instructions-list {
-    list-style: none;
     counter-reset: item;
     padding-left: 30px;
     margin: 0;
@@ -251,7 +252,7 @@
     font-size: 14px;
     color: var(--color-tertiary);
     line-height: 1;
-    padding-left: 20px;
+    padding-left: 10px;
     position: relative;
 }
 
