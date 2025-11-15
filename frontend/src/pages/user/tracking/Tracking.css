@@ -105,6 +105,7 @@
     box-sizing: border-box;
     display: block;
     padding: 10px;
+    border-color: var(--color-input-border);
 }
 
 .id-input, .otp-input{

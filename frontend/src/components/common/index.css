@@ -21,6 +21,9 @@
     /* Shadow Colors when active */
     --color-when-active: #e0e0e0;
 
+    /* Input Border Color */
+    --color-input-border: #6E6E73;
+
     /* Text Colors */
     --color-white: #FFFFFF;
     --color-black: #1D1D1F;
