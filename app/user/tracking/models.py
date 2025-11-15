@@ -35,7 +35,6 @@ class Tracking:
                 "status": record[0],
                 "amountDue": float(record[1]) if record[1] is not None else 0.0,
                 "contact_number": record[2],
-                "paymentStatus": record[3],
                 "trackingNumber": tracking_number,
                 "studentId": student_id,
             }
