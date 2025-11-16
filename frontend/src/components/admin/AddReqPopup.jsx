@@ -1,19 +1,30 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ButtonLink from "../common/ButtonLink";
 import "./AddReqPopup.css";
 
 function AddReqPopup({ onClose, onSave }) {
   const [name, setName] = useState("");
+  const [error, setError] = useState("");
+  const [shake, setShake] = useState(false);
 
   const handleSave = async () => {
     if (!name.trim()) {
-      alert("Requirement name cannot be empty");
+      setError("Requirement name cannot be empty");
+      setShake(true);
       return;
     }
 
-    // Call parent save handler
     if (onSave) onSave(name);
+    setName(""); // clear input after save
   };
+
+  // Reset shake after animation
+  useEffect(() => {
+    if (shake) {
+      const timer = setTimeout(() => setShake(false), 400);
+      return () => clearTimeout(timer);
+    }
+  }, [shake]);
 
   return (
     <div className="add-req-overlay">
@@ -25,9 +36,17 @@ function AddReqPopup({ onClose, onSave }) {
             type="text"
             placeholder="Requirement name..."
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => {
+              setName(e.target.value);
+              if (error) setError(""); // clear error while typing
+            }}
             className="box-input"
           />
+          {error && (
+            <div className={`popup-error-section ${shake ? "shake" : ""}`}>
+              <p className="error-text">{error}</p>
+            </div>
+          )}
         </div>
 
         <div className="action-section">

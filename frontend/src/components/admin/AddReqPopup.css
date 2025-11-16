@@ -38,6 +38,11 @@
   text-align: center;
 }
 
+.add-req-popup .input-section {
+  margin-top: 0px;
+  height: 42px;
+}
+
 .add-req-popup .box-input {
     text-align: left;
 }
