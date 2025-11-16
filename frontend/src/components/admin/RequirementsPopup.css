@@ -30,8 +30,11 @@
     flex-grow: 0;
     z-index: 1000;
 }
+.requirements-popup .requirement-action-section{
+    margin-top: 8px;
+}
 
-.requirement-item-wrapper{
+.requirements-popup .requirement-item-wrapper{
     display: flex;
     flex-direction: column;
     height: 400px;
