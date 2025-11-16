@@ -241,7 +241,7 @@ const handleRemoveRequirement = (index) => {
                     onChange={(e) => handleRequirementChange(index, e.target.value)}
                   />
                   <img
-                    src="/assets/Trash.svg"
+                    src="/assets/XIcon.svg"
                     alt="Remove Icon"
                     style={{ cursor: "pointer" }}
                     className="remove-icon"

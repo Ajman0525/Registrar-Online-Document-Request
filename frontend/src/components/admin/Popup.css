@@ -82,16 +82,17 @@ hr{
     align-items: center;
     justify-content: space-between;
     cursor: pointer;
+    gap: 8px;
 }
 
-.requirement-item .remove-icon {
+.requirement-item .remove-icon, .requirement-item .edit-icon{
   opacity: 0;
   cursor: pointer;
   width: 20px;
   height: 20px;
 }
 
-.requirement-item:hover .remove-icon {
+.requirement-item:hover .remove-icon, .requirement-item:hover .edit-icon{
   opacity: 1;
 }
 
