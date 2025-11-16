@@ -28,7 +28,7 @@ Students can submit requests for academic documents, track their status, and rec
 | Component | Technology |
 |------------|-------------|
 | **Backend** | Python (Flask) |
-| **Frontend** | HTML, CSS, JavaScript |
+| **Frontend** | HTML, CSS, Tailwind CSS, JavaScript |
 | **Database** | PostgreSQL (PSQL) |
 | **Environment Management** | Pipenv |
 

@@ -2,7 +2,7 @@ import React from "react";
 import "./Tracking.css";
 import ButtonLink from "../../../components/common/ButtonLink";
 
-function DeliveryInstructions({ onBack }) {
+function DeliveryInstructions({ onBack, onProceedWithLBC }) {
     return (
         <>
             <div className="text-section">
@@ -27,7 +27,7 @@ function DeliveryInstructions({ onBack }) {
             <div className="action-section">
                 <div className="button-section">
                     <ButtonLink onClick={onBack} placeholder="Return" variant="secondary" />
-                    <ButtonLink onClick={onBack} placeholder="Proceed" variant="primary" />
+                    <ButtonLink onClick={onProceedWithLBC} placeholder="Proceed" variant="primary" />
                 </div>
             </div>
             <div className="support-section">

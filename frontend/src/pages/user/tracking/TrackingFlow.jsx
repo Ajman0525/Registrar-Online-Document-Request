@@ -7,8 +7,10 @@ import PaymentOptions from "./PaymentOptions";
 import PaymentInstructions from "./PaymentInstructions";
 import PaymentSuccess from "./PaymentSuccess";
 import DeliveryInstructions from "./DeliveryInstructions";
+import PickupInstructions from "./PickupInstructions";
 import ContentBox from "../../../components/user/ContentBox";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
+import { getCSRFToken } from "../../../utils/csrf";
 import "./Tracking.css";
 
 function TrackFlow() {
@@ -34,15 +36,16 @@ function TrackFlow() {
 			setTrackData(null); // clear data when going back to initial screen
 		} else if (currentView === "otp") {
             setCurrentView("enter-id");
-        } else if (currentView === "details" || currentView === "payment-options" || currentView === "payment-instructions" || currentView === "delivery-instructions") {
+        } else if (currentView === "details" || currentView === "payment-options" || currentView === "payment-instructions" || currentView === "delivery-instructions" || currentView === "pickup-instructions") {
 			setCurrentView("status"); // go back to main status view
 		}
-  	};
+    };
 
 	const handleViewDetails = () => setCurrentView("details");
 	const handleTrackAnother = () => setCurrentView("enter-id");
 	const handleViewPaymentOptions = () => setCurrentView("payment-options");
 	const handleViewPaymentInstructions = () => setCurrentView("payment-instructions");	
+    const handleViewPickupInstructions = () => setCurrentView("pickup-instructions");
 	const handleOtpSuccess = (data) => {
 		setCurrentView("status");
         setLoading(false);
@@ -63,7 +66,7 @@ function TrackFlow() {
         try {
             const response = await fetch('/api/track/payment-complete', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': getCSRFToken() },
                 credentials: 'include',
                 body: JSON.stringify({ tracking_number: trackData.trackingNumber }),
             });
@@ -90,6 +93,39 @@ function TrackFlow() {
         }
     };
 
+    const handleProceedWithLBC = async () => {
+        setLoading(true);
+        try {
+            console.log("Track data:", trackData);
+            console.log("Sending:", { 
+                tracking_number: trackData.trackingNumber, 
+                order_type: 'LBC' 
+            });
+            
+            const csrfToken = getCSRFToken();
+            const response = await fetch('/api/set-order-type', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+                credentials: 'include',
+                body: JSON.stringify({ tracking_number: trackData.trackingNumber, order_type: 'LBC' }),
+            });
+
+            console.log("Received response:", response);
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || 'Failed to set order type.');
+            }
+            
+            setCurrentView("status");
+
+        } catch (error) {
+            console.error("Error setting order type:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="Track-page">
             {loading && <LoadingSpinner message="Processing..." />}
@@ -111,6 +147,7 @@ function TrackFlow() {
                             onViewDetails={handleViewDetails}
                             onViewPaymentOptions={handleViewPaymentOptions}
                             onViewDeliveryInstructions={handleViewDeliveryInstructions}
+                            onViewPickupInstructions={handleViewPickupInstructions}
                             onBack={handleBack} // pass handleBack for the "Track Another" button
                         />
                     )}
@@ -137,7 +174,13 @@ function TrackFlow() {
                     )}
 
                     {currentView === "delivery-instructions" && (
-                        <DeliveryInstructions onBack={handleBack} />
+                        <DeliveryInstructions 
+                        onBack={handleBack}
+                        onProceedWithLBC={handleProceedWithLBC}
+                        />
+                    )}
+                    {currentView === "pickup-instructions" && (
+                        <PickupInstructions onBack={handleBack} />
                     )}
                 </ContentBox>
             )}

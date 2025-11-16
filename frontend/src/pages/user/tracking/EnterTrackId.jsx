@@ -95,7 +95,7 @@ function EnterTrackId({ onNext }) {
                         <input
                             type="text"
                             className={`box-input ${error && !trackingNumber ? "input-error" : ""} ${shake ? "shake" : ""}`}
-                            placeholder="e.g., DOC-2021-2134"
+                            placeholder="e.g., R2134000"
                             value={trackingNumber}
                             onChange={(e) => setTrackingNumber(e.target.value)}
                             disabled={loading}
