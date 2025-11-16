@@ -2,11 +2,16 @@ import ButtonLink from "../common/ButtonLink";
 import "./RequirementsPopup.css";
 import { useState, useEffect } from "react";
 import ReqSearchbar from "./ReqSearchbar";
+import AddReqPopup from "./AddReqPopup";
+import DeleteReqPopup from "./DeleteReqPopup";
 
 function RequirementsPopup({ onClose, selected, setSelected, onAddRequirement }) {
   const [requirements, setRequirements] = useState([]);
   const [searchTerm, setSearchTerm] = useState(""); // track search input
   const [filteredRequirements, setFilteredRequirements] = useState([]);
+  const [showAddPopup, setShowAddPopup] = useState(false);
+  const [showDeletePopup, setShowDeletePopup] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
 
   useEffect(() => {
     fetch("/admin/get-requirements")
@@ -29,6 +34,7 @@ function RequirementsPopup({ onClose, selected, setSelected, onAddRequirement })
     }
   }, [searchTerm, requirements]);
 
+  
   const handleToggle = (req_id) => {
     if (selected.includes(req_id)) {
       setSelected(selected.filter((id) => id !== req_id));
@@ -37,48 +43,61 @@ function RequirementsPopup({ onClose, selected, setSelected, onAddRequirement })
     }
   };
 
-  const handleAddNewRequirement = async () => {
-    const name = prompt("Enter requirement name:");
-    if (!name || !name.trim()) return;
-
-    try {
-      const res = await fetch("/admin/add-requirement", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ requirement_name: name }),
-      });
-      if (!res.ok) throw new Error("Failed to add requirement");
-
-      const result = await res.json();
-      const newReq = {
-        req_id: result.req_id,
-        requirement_name: name,
-      };
-
-      setRequirements([newReq, ...requirements]);
-      setSelected([...selected, newReq.req_id]);
-
-      // update outer allRequirements in parent
-      if (onAddRequirement) onAddRequirement(newReq);
-    } catch (err) {
-      console.error(err);
-      alert("Failed to add requirement. Try again.");
-    }
+  const handleAddNewRequirement = () => {
+  setShowAddPopup(true);
   };
 
-  const handleDeleteRequirement = async (req_id) => {
-    if (!window.confirm("Are you sure you want to delete this requirement?")) return;
+  const handleSaveNewRequirement = async (name) => {
+  try {
+    const res = await fetch("/admin/add-requirement", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ requirement_name: name }),
+    });
+    if (!res.ok) throw new Error("Failed to add requirement");
 
-    try {
-      const res = await fetch(`/admin/delete-requirement/${req_id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed to delete requirement");
-      setRequirements(requirements.filter((r) => r.req_id !== req_id));
-      setSelected(selected.filter((id) => id !== req_id));
-    } catch (err) {
-      console.error(err);
-      alert("Failed to delete requirement. Try again.");
+    const result = await res.json();
+    const newReq = {
+      req_id: result.req_id,
+      requirement_name: name,
+    };
+
+    setRequirements([newReq, ...requirements]);
+    setSelected([...selected, newReq.req_id]);
+    if (onAddRequirement) onAddRequirement(newReq);
+
+    setShowAddPopup(false); // close the add popup
+  } catch (err) {
+    console.error(err);
+    alert("Failed to add requirement. Try again.");
+  }
+};
+
+  const confirmDeleteRequirement = async () => {
+  try {
+    const res = await fetch(`/admin/delete-requirement/${deleteId}`, { method: "DELETE" });
+    const data = await res.json();
+
+    if (!res.ok) {
+      // If backend returns 400 because requirement is in use
+      alert(data.error || "Cannot delete this requirement because it is in use in one or more requests.");
+      return;
     }
-  };
+
+    // Successfully deleted
+    setRequirements(requirements.filter((r) => r.req_id !== deleteId));
+    setSelected(selected.filter((id) => id !== deleteId));
+    setShowDeletePopup(false);
+    setDeleteId(null);
+
+  } catch (err) {
+    console.error(err);
+    alert("Failed to delete requirement. Try again.");
+  }
+};
+
+
+
 
   return (
     <div className="requirements-overlay">
@@ -128,7 +147,10 @@ function RequirementsPopup({ onClose, selected, setSelected, onAddRequirement })
                     alt="Remove Icon"
                     className="remove-icon"
                     style={{ cursor: "pointer" }}
-                    onClick={() => handleDeleteRequirement(req.req_id)}
+                    onClick={() => {
+                      setDeleteId(req.req_id);
+                      setShowDeletePopup(true);
+                    }}
                   />
                 </div>
                 <hr />
@@ -150,6 +172,21 @@ function RequirementsPopup({ onClose, selected, setSelected, onAddRequirement })
             </div>
           </div>
         </div>
+
+        {showAddPopup && (
+          <AddReqPopup
+            onClose={() => setShowAddPopup(false)}
+            onSave={handleSaveNewRequirement}
+          />
+        )}
+
+        {showDeletePopup && (
+          <DeleteReqPopup
+            onClose={() => setShowDeletePopup(false)}
+            onConfirm={confirmDeleteRequirement}
+          />
+        )}
+
       </div>
     </div>
   );
