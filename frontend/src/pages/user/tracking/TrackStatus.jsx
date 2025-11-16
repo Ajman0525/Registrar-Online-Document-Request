@@ -22,6 +22,15 @@ function TrackStatus({ trackData, onBack, onViewDetails, onViewDeliveryInstructi
                 </div>
             )
         },
+        "OUT-FOR-DELIVERY": {
+            className: "status-out-for-delivery",
+            title: "Out for Delivery",
+            description: (  
+                <div className="status-body">
+                    <p className="subtext">Your document has been picked up by the courier. Please expect it to arrive soon at your provided address.</p>
+                </div>
+            )
+        },
         "IN-PROGRESS": {
             className: "status-processing",
             title: "In Progress",
@@ -49,7 +58,7 @@ function TrackStatus({ trackData, onBack, onViewDetails, onViewDeliveryInstructi
                 </div>
             )
         },
-        "Payment Pending": {
+        "PAYMENT-PENDING": {
             className: "status-payment",
             title: "Payment Pending",
             description: (  
@@ -104,7 +113,10 @@ function TrackStatus({ trackData, onBack, onViewDetails, onViewDeliveryInstructi
     // convert status to uppercase for case-insensitive matching
     let statusKey = trackData.status ? trackData.status.toUpperCase() : '';
     if (statusKey === 'DOC-READY' && trackData.paymentStatus === false) {
-        statusKey = 'Payment Pending';
+        statusKey = 'PAYMENT-PENDING';
+    } else if (statusKey === 'DOC-READY' && trackData.orderType === 'LBC') {
+        // [TEMP] show 'Out for Delivery' if order type is LBC and document is ready
+        statusKey = 'OUT-FOR-DELIVERY';
     }
 
     const config = statusConfig[statusKey];
