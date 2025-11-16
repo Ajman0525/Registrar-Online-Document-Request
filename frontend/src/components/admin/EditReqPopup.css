@@ -30,6 +30,11 @@
     z-index: 1000;
 }
 
+.edit-popup .input-section {
+  margin-top: 0px;
+  height: 42px;
+}
+
 .edit-popup .box-input {
     text-align: left;
     width: 100%;
