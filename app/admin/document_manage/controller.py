@@ -238,3 +238,73 @@ def delete_document(doc_id):
     finally:
         cursor.close()
 
+@document_management_bp.route('/get-requirements', methods=['GET'])
+def get_requirements():
+    try:
+        conn = g.db_conn
+        cursor = conn.cursor()
+        cursor.execute("SELECT req_id, requirement_name FROM requirements;")
+        requirements = cursor.fetchall()
+        cursor.close()
+
+        requirements_list = [
+            {"req_id": req[0], "requirement_name": req[1]}
+            for req in requirements
+        ]
+        return jsonify(requirements_list)
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@document_management_bp.route('/delete-requirement/<string:req_id>', methods=['DELETE'])
+def delete_requirement(req_id):
+    print("REQ_ID:", req_id)
+    print("METHOD:", request.method)
+    try:
+        conn = g.db_conn
+        cursor = conn.cursor()
+
+        # First, remove any references in document_requirements
+        cursor.execute("DELETE FROM document_requirements WHERE req_id = %s;", (req_id,))
+
+        # Then remove the requirement itself
+        cursor.execute("DELETE FROM requirements WHERE req_id = %s;", (req_id,))
+
+        conn.commit()
+        return jsonify({"message": f"Requirement {req_id} deleted successfully"}), 200
+
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
+
+@document_management_bp.route('/add-requirement', methods=['POST'])
+def add_requirement():
+    try:
+        conn = g.db_conn
+        cursor = conn.cursor()
+        data = request.get_json()
+        name = data.get("requirement_name")
+
+        if not name or not name.strip():
+            return jsonify({"error": "Requirement name cannot be empty"}), 400
+
+        # Generate new req_id
+        cursor.execute("SELECT req_id FROM requirements ORDER BY req_id DESC LIMIT 1;")
+        last_req = cursor.fetchone()
+        new_req_id = f"REQ{int(last_req[0].replace('REQ', '')) + 1:04d}" if last_req else "REQ0001"
+
+        cursor.execute("""
+            INSERT INTO requirements (req_id, requirement_name)
+            VALUES (%s, %s);
+        """, (new_req_id, name))
+
+        conn.commit()
+        return jsonify({"message": "Requirement added", "req_id": new_req_id}), 201
+
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
