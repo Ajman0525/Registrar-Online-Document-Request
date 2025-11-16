@@ -16,8 +16,8 @@ function AddReqPopup({ onClose, onSave }) {
   };
 
   return (
-    <div className="requirements-overlay">
-      <div className="requirements-popup">
+    <div className="add-req-overlay">
+      <div className="add-req-popup">
         <h3 className="title">Add Requirement</h3>
 
         <div className="input-section">
@@ -26,7 +26,7 @@ function AddReqPopup({ onClose, onSave }) {
             placeholder="Requirement name..."
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="requirement-input"
+            className="box-input"
           />
         </div>
 
