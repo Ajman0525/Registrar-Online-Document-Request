@@ -16,6 +16,7 @@ Flask-JWT-Extended==4.7.1
 Flask-Session==0.8.0
 google-auth==2.43.0
 google-oauth==1.0.1
+gunicorn==23.0.0
 h11==0.16.0
 h2==4.3.0
 hpack==4.1.0
