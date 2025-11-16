@@ -8,9 +8,7 @@ function DeleteReqPopup({ onClose, onConfirm }) {
         <div className="text-section">
           <h3 className="title">Confirm Delete</h3>
           <p className="delete-text">
-            Warning: This requirement is currently used in one or more requests.
-            Deleting it will remove it from all associated documents and cannot be undone.
-            If it is linked to any requests, deletion will not be allowed.
+            Deleting this requirement will remove it from every document that uses it. This change cannot be undone.
           </p>
         </div>
 
