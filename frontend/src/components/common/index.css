@@ -8,6 +8,8 @@
 
     /* Button Colors */
     --color-button-primary-default: #0070E2;
+    --color-button-red: #B81D23;
+    --color-button-gray: #EAEAEA;
     --color-button-primary-hover: #80A2FF;
     --color-button-destructive-default: #EA3D2F;
     --color-button-destructive-hover: #FEE4E3;
@@ -18,6 +20,9 @@
 
     /* Shadow Colors when active */
     --color-when-active: #e0e0e0;
+
+    /* Input Border Color */
+    --color-input-border: #6E6E73;
 
     /* Text Colors */
     --color-white: #FFFFFF;
