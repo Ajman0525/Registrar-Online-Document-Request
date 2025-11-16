@@ -258,8 +258,6 @@ def get_requirements():
 
 @document_management_bp.route('/delete-requirement/<string:req_id>', methods=['DELETE'])
 def delete_requirement(req_id):
-    print("REQ_ID:", req_id)
-    print("METHOD:", request.method)
     try:
         conn = g.db_conn
         cursor = conn.cursor()
