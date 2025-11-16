@@ -306,3 +306,62 @@ def add_requirement():
         return jsonify({"error": str(e)}), 500
     finally:
         cursor.close()
+
+@document_management_bp.route('/check-req-exist/<string:req_id>', methods=['GET'])
+def check_req_exist(req_id):
+    """
+    Check if a requirement is linked to any requests.
+    Returns {"exists": true, "count": N} if linked, else {"exists": false, "count": 0}.
+    """
+    try:
+        conn = g.db_conn
+        cursor = conn.cursor()
+
+        cursor.execute(
+            "SELECT COUNT(*) FROM request_requirements_links WHERE requirement_id = %s;",
+            (req_id,)
+        )
+        count = cursor.fetchone()[0]
+
+        return jsonify({"exists": count > 0, "count": count}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
+
+@document_management_bp.route('/edit-requirement/<string:req_id>', methods=['PUT'])
+def edit_requirement(req_id):
+    """
+    Edit a requirement's name. Returns the updated requirement.
+    """
+    try:
+        data = request.get_json()
+        new_name = data.get("requirement_name")
+
+        if not new_name or not new_name.strip():
+            return jsonify({"error": "Requirement name cannot be empty"}), 400
+
+        conn = g.db_conn
+        cursor = conn.cursor()
+
+        # Check if requirement exists
+        cursor.execute("SELECT req_id FROM requirements WHERE req_id = %s;", (req_id,))
+        existing = cursor.fetchone()
+        if not existing:
+            return jsonify({"error": f"Requirement {req_id} not found"}), 404
+
+        # Update requirement name
+        cursor.execute(
+            "UPDATE requirements SET requirement_name = %s WHERE req_id = %s;",
+            (new_name.strip(), req_id)
+        )
+        conn.commit()
+
+        return jsonify({"message": f"Requirement {req_id} updated successfully", "req_id": req_id, "requirement_name": new_name.strip()}), 200
+
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
