@@ -1,0 +1,388 @@
+/* status body */
+
+.status-body {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    max-width: 450px;
+    text-align: center;
+}
+
+/* text and input sections */
+.text-section{
+    display: flex;
+    flex-direction: column;
+    gap: 8p}
+
+.text-section .status-title{
+   color: var(--color-black);
+}
+
+.text-section .status-title-red{
+    color: var(--color-destructive);    
+}
+
+.text-section .subtext{
+    color: var(--color-text-subtext);
+    font-size: 14px;
+    margin: 0px;
+    max-width: 450px;
+    align-self: center;
+}
+
+.text-section .subtext-long{
+    color: var(--color-text-subtext);
+    font-size: 14px;
+    margin: 0px;
+    max-width: 550px;
+    align-self: center;
+}
+
+.text-section .tracking-number-section{
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    color: var(--color-text-black);
+    font-size: 17px;
+}
+
+.text-section .tracking-number-section .number{
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    color: var(--color-secondary);
+}
+
+.text-section .amount-due{
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    color: var(--color-text-black);
+    font-size: 17px;
+}
+
+.text-section .amount-due .number{
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    color: var(--color-secondary);
+    font-size: 25px;
+}
+
+.text-section p{
+    text-align: center;    
+    max-width: 450px;
+}
+
+.input-section{
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.inputs-container {
+    display: flex;
+    flex-direction: column;
+    margin-top: 5px;
+    gap: 20px;
+}
+
+.input-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    gap: 4px;
+}
+
+.box-input {
+    width: 100%;
+    height: 100px;
+    box-sizing: border-box;
+    display: block;
+    padding: 10px;
+    border-color: var(--color-input-border);
+}
+
+.id-input, .otp-input{
+    text-align: center;
+}
+
+/* Documents list styling */
+.documents-list {
+    width: 100%;
+    min-width: 300px;
+    display: flex;
+    flex-direction: column;
+    margin-top: 20px;
+    background-color: var(--color-primary);
+    border-radius: 10px;
+    padding: 10px;
+    gap: 10px;
+    max-height: 150px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-tertiary) var(--color-primary);
+}
+
+/* webkit (Chrome, Safari, Edge) scrollbar styling */
+.documents-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.documents-list::-webkit-scrollbar-track {
+    background: var(--color-tertiary);
+}   
+
+.documents-list::-webkit-scrollbar-thumb {
+    background-color: var(--color-primary);
+    border-radius: 10px;
+}
+
+.documents-list .document-item {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 5px;
+    border-top: 1px solid #e0e0e0;
+    gap: 10px;
+}
+
+.documents-list .document-header {
+    border-top: none;
+    font-weight: bold;
+    padding: 0px;
+}
+
+.document-header .document-name,
+.document-header .quantity-number {
+    font-size: 14px;
+}
+
+.document-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-black);
+    margin: 0;
+    text-align: left;
+    flex: 1;
+}
+
+.quantity-number {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-black);
+    min-width: 60px;
+    text-align: left;
+}
+
+/* instructions styling */
+.instructions-section {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    text-align: center;
+    align-items: flex-start;
+}
+
+.instructions-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--color-black);
+    margin-top: 10px;
+    text-align: left;
+    align-items: flex-start !important;
+}
+
+.instructions-body {
+    width: 100%;
+    max-width: 600px;
+    text-align: left;
+    margin-top: 0px;
+}
+
+.details-container {
+    display: flex;
+    gap: 20px;
+    width: 100%;
+    max-width: 600px;
+    margin-top: 10px
+}
+
+.details-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    flex: 1;
+    flex-direction: row;
+}
+
+.details-icon {
+    width: 24px;
+    height: 24px;
+    color: var(--color-tertiary);
+    flex-shrink: 0;
+}
+
+.instructions-intro {
+    font-size: 15px;
+    color: var(--color-tertiary);
+    margin-bottom: 5px;
+    text-align: left;
+}
+
+.instructions-list {
+    counter-reset: item;
+    padding-left: 30px;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.instructions-list li {
+    counter-increment: item;
+    font-size: 14px;
+    color: var(--color-tertiary);
+    line-height: 1;
+    padding-left: 10px;
+    position: relative;
+}
+
+.instructions-list li strong {
+    font-weight: 600;
+    color: var(--color-tertiary);   
+}
+
+/* alpha list */
+.alpha-list {
+    list-style: none; 
+    counter-reset: item;
+    padding-left: 30px;
+}
+
+.alpha-list li {
+    counter-increment: item;
+    position: relative;
+    padding-left: 20px;
+}
+
+.alpha-list li::before {
+    content: counter(item, lower-alpha) ".";
+    position: absolute;
+    left: 0;
+    font-weight: 600;
+    color: var(--color-tertiary);
+}
+
+/* bullet list */
+.bullet-list {
+    list-style-type: disc;
+    padding-left: 20px;
+}
+
+.bullet-list li {
+    padding-left: 0;
+}
+
+/* error section */
+.error-section{
+    display: flex;
+    justify-content: center;
+    min-height: 20px;
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.error-text{
+    color: var(--color-destructive);
+    font-size: 10px;
+    text-align: center;
+    margin: 0px;
+}
+
+/* support section */
+.support-section{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+/* btn sections */
+.action-section{
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 24px;
+}
+
+.button-section{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.button-section > * {
+    min-width: 140px;
+    text-align: center;
+}
+
+/* claim option buttons */
+
+.claim-options {
+    display: flex;
+    gap: 1rem;
+    width: 100%;
+    justify-content: center;
+}
+
+.claim-button {
+    width: 150px;
+    height: 150px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: flex-start;
+    text-align: left;
+    padding: 1rem;
+    font-weight: bold;
+    line-height: 1.2;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+/* "pick up at Registrar" button style */
+.claim-button.pickup-button {
+    background-color: var(--color-button-gray);
+    color: var(--color-black);
+}
+
+.claim-button.pickup-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    background-color: var(--color-button-gray);
+    color: var(--color-black);
+}
+
+/* "delivery" button style */
+.claim-button.delivery-button {
+    background-color: var(--color-button-red);
+    color: var(--color-white);
+}
+
+.claim-button.delivery-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    background-color: var(--color-button-red);
+    color: var(--color-white);
+}
