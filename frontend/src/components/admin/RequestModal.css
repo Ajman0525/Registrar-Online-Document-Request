@@ -113,6 +113,7 @@
 .request-modal-action-section {
   display: flex;
   justify-content: flex-end;
+  gap: 10px;
   margin-top: 2rem;
   padding-top: 1.5rem;
   border-top: 1px solid #e2e8f0;
@@ -127,6 +128,21 @@
   cursor: pointer;
   font-weight: 600;
   font-size: 0.95rem;
+}
+
+.request-modal-delete-button {
+  padding: 0.75rem 1.5rem;
+  background: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.request-modal-delete-button:hover {
+  background: #b91c1c;
 }
 
 .request-modal-activity-item {

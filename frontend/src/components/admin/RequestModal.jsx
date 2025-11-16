@@ -147,6 +147,11 @@ const RequestModal = ({ request, onClose }) => {
         {/* Action Buttons */}
         <div className="request-modal-action-section">
           <button onClick={onClose} className="request-modal-close-button">Close</button>
+          <button onClick={() => {
+            if (window.confirm(`Are you sure you want to delete request ${request.request_id}? This action cannot be undone.`)) {
+              onDelete(request.request_id);
+            }
+          }} className="request-modal-delete-button">Delete Request</button>
         </div>
       </div>
     </div>

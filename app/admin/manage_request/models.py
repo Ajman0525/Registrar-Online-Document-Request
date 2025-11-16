@@ -123,3 +123,70 @@ class ManageRequestModel:
             ]
         finally:
             cur.close()
+
+    @staticmethod
+    def delete_request(request_id, admin_id):
+        """Delete a request and all associated data, and log the deletion."""
+        from supabase import create_client, Client
+        from config import SUPABASE_URL, SUPABASE_ANON_KEY
+
+        conn = g.db_conn
+        cur = conn.cursor()
+        try:
+            # First, get all uploaded files for this request to delete from Supabase
+            cur.execute("""
+                SELECT file_path
+                FROM request_requirements_links
+                WHERE request_id = %s
+            """, (request_id,))
+            files = cur.fetchall()
+
+            # Delete files from Supabase
+            if files:
+                supabase: Client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
+                file_paths_to_delete = []
+                for file_row in files:
+                    file_path = file_row[0]
+                    if 'requirements-odr/' in file_path:
+                        file_path_in_bucket = file_path.split('requirements-odr/')[1]
+                        file_paths_to_delete.append(file_path_in_bucket)
+
+                if file_paths_to_delete:
+                    try:
+                        supabase.storage.from_('requirements-odr').remove(file_paths_to_delete)
+                    except Exception as e:
+                        print(f"Error deleting files from Supabase: {e}")
+                        # Continue with DB deletion even if Supabase fails
+
+            # Log the deletion
+            cur.execute("""
+                INSERT INTO logs (admin_id, action, details)
+                VALUES (%s, %s, %s)
+            """, (admin_id, 'Request Deletion', f'Deleted request {request_id} and all associated data'))
+
+            # Delete request_requirements_links (cascades to request_documents and requests due to FK constraints)
+            cur.execute("""
+                DELETE FROM request_requirements_links
+                WHERE request_id = %s
+            """, (request_id,))
+
+            # Delete request_documents
+            cur.execute("""
+                DELETE FROM request_documents
+                WHERE request_id = %s
+            """, (request_id,))
+
+            # Finally, delete the request itself
+            cur.execute("""
+                DELETE FROM requests
+                WHERE request_id = %s
+            """, (request_id,))
+
+            conn.commit()
+            return cur.rowcount > 0  # Return True if at least one row was deleted
+        except Exception as e:
+            conn.rollback()
+            print(f"Error deleting request {request_id}: {e}")
+            return False
+        finally:
+            cur.close()

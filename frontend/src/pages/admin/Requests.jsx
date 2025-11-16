@@ -211,6 +211,28 @@ export default function AdminRequestsDashboard() {
     setSelectedRequest(null);
   };
 
+  const handleDeleteRequest = async (requestId) => {
+    console.log(`Deleting request ${requestId}`);
+    try {
+      const response = await fetch(`/api/admin/requests/${requestId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': getCSRFToken(),
+        },
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        throw new Error('Failed to delete request');
+      }
+      // Refresh requests list
+      await fetchRequests();
+      setSelectedRequest(null); // Close modal
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
   if (loading) {
     return <LoadingSpinner message="Loading requests..." />;
   }
@@ -241,7 +263,7 @@ export default function AdminRequestsDashboard() {
         </div>
       </div>
       {selectedRequest && (
-        <RequestModal request={selectedRequest} onClose={closeModal} onStatusChange={handleStatusChange} />
+        <RequestModal request={selectedRequest} onClose={closeModal} onStatusChange={handleStatusChange} onDelete={handleDeleteRequest} />
       )}
       {statusChangeRequest && (
         <StatusChangeConfirmModal
