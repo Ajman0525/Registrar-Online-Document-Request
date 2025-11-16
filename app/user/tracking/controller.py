@@ -1,7 +1,8 @@
 from . import tracking_bp
 from flask import jsonify, request, current_app, session
-from flask_jwt_extended import create_access_token, set_access_cookies
+from flask_jwt_extended import create_access_token, set_access_cookies, get_jwt_identity
 from .models import Tracking
+from app.utils.decorator import jwt_required_with_role
 from app.user.authentication.models import AuthenticationUser
 
 
@@ -67,12 +68,18 @@ def get_tracking_data():
         send_sms(phone, f"Your verification code is: {otp}")
 
         # Build response
-        response = jsonify({
+        response_data = {
             "message": "Tracking data retrieved successfully",
             "role": role,
             "track_data": record,
             "masked_phone": masked_phone
-        })
+        }
+        response = jsonify(response_data)
+
+        # Create and set JWT in http-only cookie
+        access_token = create_access_token(identity=student_id, additional_claims={"role": role})
+        set_access_cookies(response, access_token)
+
         return response, 200
 
     except Exception as e:
@@ -83,12 +90,12 @@ def get_tracking_data():
         }), 500
     
 @tracking_bp.route('/api/track/payment-complete', methods=['POST'], strict_slashes=False)
+@jwt_required_with_role(role)
 def mark_payment_complete():
     """
     API endpoint to mark a request's payment as complete.
     """
-    print("[DEBUG] Payment complete endpoint hit")
-    student_id = session.get('student_id')
+    student_id = get_jwt_identity()
     if not student_id:
         return jsonify({"message": "User session not found or invalid."}), 401
 
@@ -107,8 +114,46 @@ def mark_payment_complete():
     except Exception as e:
         current_app.logger.error(f"Error in /api/track/payment-complete: {e}")
         return jsonify({"status": "error", "message": f"An unexpected error occurred: {str(e)}"}), 500
+    
+@tracking_bp.route("/api/set-order-type", methods=["POST"], strict_slashes=False)
+@jwt_required_with_role(role)
+def set_order_type():
+    """
+    Sets the order_type for the current request.
+    """
+    student_id = get_jwt_identity()
+    if not student_id:
+        return jsonify({"message": "User session not found or invalid."}), 401
+    data = request.get_json()
+
+    print(f"[DEBUG] Raw request data: {data}")
+    print(f"[DEBUG] Request headers: {request.headers}")
+    print(f"[DEBUG] Request data type: {type(data)}")
+
+    tracking_number = data.get("tracking_number")
+    order_type = data.get("order_type")
+
+    if not tracking_number or not order_type:
+        return jsonify({
+            "success": False,
+            "notification": "Missing tracking_number or order_type."
+        }), 400
+
+    success = Tracking.set_order_type(tracking_number, order_type)
+
+    if success:
+        return jsonify({
+            "success": True,
+            "notification": f"Order type set to {order_type} successfully."
+        }), 200
+    else:
+        return jsonify({
+            "success": False,
+            "notification": "Failed to set order type."
+        }), 500
 
 @tracking_bp.route('/api/track/document/<tracking_number>', methods=['GET'])
+@jwt_required_with_role(role)
 def get_requested_documents(tracking_number):
     """
     API endpoint to fetch requested documents for a given tracking number and student ID.

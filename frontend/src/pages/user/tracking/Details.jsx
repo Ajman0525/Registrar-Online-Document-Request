@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import "./Tracking.css";
 import ButtonLink from "../../../components/common/ButtonLink";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
+import { getCSRFToken } from "../../../utils/csrf";
 
 
 // request details
@@ -19,7 +20,11 @@ function Details({ trackData, onTrackAnoter, onBack }) {
 
     const fetchDocuments = async () => {
         try {
-            const response = await fetch(`/api/track/document/${trackData.trackingNumber}`);
+            const response = await fetch(`/api/track/document/${trackData.trackingNumber}`, {
+                method: 'GET',
+                headers: { 'X-CSRF-TOKEN': getCSRFToken() },
+                credentials: 'include',
+            });
             const data = await response.json();
             
             if (!response.ok) {

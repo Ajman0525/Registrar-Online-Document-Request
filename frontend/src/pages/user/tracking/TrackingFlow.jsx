@@ -10,6 +10,7 @@ import DeliveryInstructions from "./DeliveryInstructions";
 import PickupInstructions from "./PickupInstructions";
 import ContentBox from "../../../components/user/ContentBox";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
+import { getCSRFToken } from "../../../utils/csrf";
 import "./Tracking.css";
 
 function TrackFlow() {
@@ -65,7 +66,7 @@ function TrackFlow() {
         try {
             const response = await fetch('/api/track/payment-complete', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': getCSRFToken() },
                 credentials: 'include',
                 body: JSON.stringify({ tracking_number: trackData.trackingNumber }),
             });
@@ -87,6 +88,39 @@ function TrackFlow() {
         } catch (error) {
             console.error("Payment completion error:", error);
             // Optionally, show an error message to the user
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleProceedWithLBC = async () => {
+        setLoading(true);
+        try {
+            console.log("Track data:", trackData);
+            console.log("Sending:", { 
+                tracking_number: trackData.trackingNumber, 
+                order_type: 'LBC' 
+            });
+            
+            const csrfToken = getCSRFToken();
+            const response = await fetch('/api/set-order-type', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+                credentials: 'include',
+                body: JSON.stringify({ tracking_number: trackData.trackingNumber, order_type: 'LBC' }),
+            });
+
+            console.log("Received response:", response);
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || 'Failed to set order type.');
+            }
+            
+            setCurrentView("status");
+
+        } catch (error) {
+            console.error("Error setting order type:", error);
         } finally {
             setLoading(false);
         }
@@ -140,7 +174,10 @@ function TrackFlow() {
                     )}
 
                     {currentView === "delivery-instructions" && (
-                        <DeliveryInstructions onBack={handleBack} />
+                        <DeliveryInstructions 
+                        onBack={handleBack}
+                        onProceedWithLBC={handleProceedWithLBC}
+                        />
                     )}
                     {currentView === "pickup-instructions" && (
                         <PickupInstructions onBack={handleBack} />
