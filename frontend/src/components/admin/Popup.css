@@ -57,7 +57,13 @@ hr{
 .requirements-wrapper{
     height: 100%;
 }
-
+.popup .requirement-item-wrapper{
+    display: flex;
+    flex-direction: column;
+    height: 200px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
 .price-wrapper{
     display: flex;
     flex-direction: row;
@@ -67,8 +73,7 @@ hr{
     width: 100%;
 }
 
-.name-section, .description-section, 
-.requirements-section, .price-section, 
+.name-section, .description-section, .price-section, 
 .requirement-item, .add-requirement-section{
     display: flex;
     flex-direction: column;
@@ -149,7 +154,6 @@ hr{
 .popup-error-section{
     display: flex;
     justify-content: left;
-    height: 8px;
     width: 100%;
 }
 

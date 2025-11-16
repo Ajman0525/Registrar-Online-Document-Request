@@ -219,7 +219,7 @@ const handleRemoveRequirement = (index) => {
                 onClick={() => setShowRequirementsPopup(true)}
                 style={{ cursor: "pointer" }}
               >
-                <p className="subtext">Add Requirement</p>
+                <p className="subtext">Select Requirement</p>
                 <img src="/assets/AddIcon.svg" alt="Add Icon" />
               </div>
               <hr />
@@ -229,33 +229,34 @@ const handleRemoveRequirement = (index) => {
                 )}
               </div>
             </div>
-
-            {requirements.map((req, index) => (
-              <div className="requirement-item" key={index}>
-                <div className="requirement-action-section">
-                  <input
-                    className="requirement-name-field"
-                    type="text"
-                    placeholder="Untitled Requirement"
-                    value={req}
-                    onChange={(e) => handleRequirementChange(index, e.target.value)}
-                  />
-                  <img
-                    src="/assets/XIcon.svg"
-                    alt="Remove Icon"
-                    style={{ cursor: "pointer" }}
-                    className="remove-icon"
-                    onClick={() => handleRemoveRequirement(index)}
-                  />
-                </div>
-                <hr />
-                <div className={`popup-error-section ${shake ? "shake" : ""}`}>
-                  {errors.requirementsItem[index] && (
-                      <p className="error-text">{errors.requirementsItem[index]}</p>
-                  )}
-                </div>
+              <div className="requirement-item-wrapper">
+                {requirements.map((req, index) => (
+                  <div className="requirement-item" key={index}>
+                    <div className="requirement-action-section">
+                      <input
+                        className="requirement-name-field"
+                        type="text"
+                        placeholder="Untitled Requirement"
+                        value={req}
+                        onChange={(e) => handleRequirementChange(index, e.target.value)}
+                      />
+                      <img
+                        src="/assets/XIcon.svg"
+                        alt="Remove Icon"
+                        style={{ cursor: "pointer" }}
+                        className="remove-icon"
+                        onClick={() => handleRemoveRequirement(index)}
+                      />
+                    </div>
+                    <hr />
+                    <div className={`popup-error-section ${shake ? "shake" : ""}`}>
+                      {errors.requirementsItem[index] && (
+                          <p className="error-text">{errors.requirementsItem[index]}</p>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
           </div>
         </div>
 
