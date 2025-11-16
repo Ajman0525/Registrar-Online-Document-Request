@@ -31,14 +31,13 @@
     z-index: 1000;
 }
 
-.add-requirement-section:hover{
-    background-color: var(--color-button-primary-hover);
-}
-
 .requirement-item-wrapper{
-    height: 450px;
+    display: flex;
+    flex-direction: column;
+    height: 400px;
     overflow-y: auto;
     overflow-x: hidden;
+    gap: 8px;
 }
 
 .search-section {
