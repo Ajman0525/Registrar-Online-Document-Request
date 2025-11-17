@@ -9,7 +9,7 @@ import { getCSRFToken } from "../../../utils/csrf";
 
 function RequestFlow() {
   const [step, setStep] = useState("documents");
-  const [selectedDocs, setSelectedDocs] = useState([]);
+  const [selectedDocs, setSelectedDocs] = useState([]); // Initialize as empty, will be populated on mount in RequestList
   const [trackingId, setTrackingId] = useState("");
 
   // Progress indicator steps
@@ -30,6 +30,7 @@ function RequestFlow() {
   const [uploadedFiles, setUploadedFiles] = useState({}); // e.g. { req_id: File | string (server path) | null }
   const [preferredContactInfo, setPreferredContactInfo] = useState({});
   const [contactInfo, setContactInfo] = useState({ email: "", contact_number: "" });
+  const [quantities, setQuantities] = useState({}); // e.g. { doc_id: quantity }
 
   // Step navigation handlers
   const goNextStep = () => {
@@ -83,7 +84,7 @@ function RequestFlow() {
   };
 
   // Handle Next from RequestList with updated docs (including quantity)
-  const handleRequestListProceed = (updatedDocs) => {
+  const handleRequestListProceed = (updatedDocs, updatedQuantities) => {
     // Compute deselected requirements based on previous selectedDocs
     const prevReqIds = new Set();
     selectedDocs.forEach(doc => {
@@ -95,8 +96,9 @@ function RequestFlow() {
       }
     });
     // Actually, better to compute deselected in UploadRequirements based on current requirementsList vs uploadedFiles
-    // So no need to compute here, just update selectedDocs
+    // So no need to compute here, just update selectedDocs and quantities
     setSelectedDocs(updatedDocs);
+    setQuantities(updatedQuantities);
     goNextStep();
   };
 
@@ -132,6 +134,9 @@ function RequestFlow() {
       {step === "requestList" && (
         <RequestList
           selectedDocs={selectedDocs}
+          setSelectedDocs={setSelectedDocs}
+          quantities={quantities}
+          setQuantities={setQuantities}
           onBack={goBackStep}
           onProceed={handleRequestListProceed}
         />

@@ -20,28 +20,52 @@ function PreferredContact({ preferredContactInfo = {}, setPreferredContactInfo, 
   const [loadingContact, setLoadingContact] = useState(true);
   const [savingContact, setSavingContact] = useState(false);
 
-  // Fetch contact info on component mount
+  // Fetch contact info and preferred contact on component mount
   useEffect(() => {
-    fetch("/api/get-contact", {
-      method: "GET",
-      headers: {
-        "X-CSRF-TOKEN": getCSRFToken(),
-      },
-      credentials: "include",
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.success) {
-          setContactInfo(data.contact_info);
+    let mounted = true;
+    const fetchData = async () => {
+      setLoadingContact(true);
+      try {
+        // Fetch contact info
+        const contactRes = await fetch("/api/get-contact", {
+          method: "GET",
+          headers: {
+            "X-CSRF-TOKEN": getCSRFToken(),
+          },
+          credentials: "include",
+        });
+        const contactData = await contactRes.json();
+        if (!mounted) return;
+        if (contactData.success) {
+          setContactInfo(contactData.contact_info);
         } else {
-          console.error("Failed to fetch contact info:", data.notification);
+          console.error("Failed to fetch contact info:", contactData.notification);
         }
-        setLoadingContact(false);
-      })
-      .catch((error) => {
-        console.error("Error fetching contact info:", error);
-        setLoadingContact(false);
-      });
+
+        // Fetch preferred contact
+        const prefRes = await fetch("/api/get-saved-preferred-contact", {
+          method: "GET",
+          headers: {
+            "X-CSRF-TOKEN": getCSRFToken(),
+          },
+          credentials: "include",
+        });
+        const prefData = await prefRes.json();
+        if (!mounted) return;
+        if (prefData.success && prefData.preferred_contact) {
+          setSelectedMethod(prefData.preferred_contact);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        if (mounted) setLoadingContact(false);
+      }
+    };
+
+    fetchData();
+    return () => {
+      mounted = false;
+    };
   }, [setContactInfo]);
 
   // Update parent state on selection change
