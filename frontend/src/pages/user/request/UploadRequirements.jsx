@@ -213,7 +213,7 @@ function UploadRequirements({ selectedDocs = [], uploadedFiles = {}, setUploaded
                               : uploadedFiles[req_id].split("/").pop()}
                           </span>
                           <img
-                            src="/Assets/Trash.svg"
+                            src="/assets/Trash.svg"
                             alt="Remove Icon"
                             style={{ cursor: "pointer" }}
                             className="remove-icon"
