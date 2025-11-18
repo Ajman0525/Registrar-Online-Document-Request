@@ -287,6 +287,12 @@ def add_requirement():
 
         if not name or not name.strip():
             return jsonify({"error": "Requirement name cannot be empty"}), 400
+        
+        cursor.execute("SELECT req_id FROM requirements WHERE LOWER(requirement_name) = LOWER(%s);", (name.strip(),))
+        existing = cursor.fetchone()
+        if existing:
+            return jsonify({"error": "Requirement name already exists"}), 400
+
 
         # Generate new req_id
         cursor.execute("SELECT req_id FROM requirements ORDER BY req_id DESC LIMIT 1;")
@@ -329,7 +335,7 @@ def check_req_exist(req_id):
         return jsonify({"error": str(e)}), 500
     finally:
         cursor.close()
-
+        
 @document_management_bp.route('/edit-requirement/<string:req_id>', methods=['PUT'])
 def edit_requirement(req_id):
     """
@@ -345,23 +351,37 @@ def edit_requirement(req_id):
         conn = g.db_conn
         cursor = conn.cursor()
 
-        # Check if requirement exists
+        # Check for duplicate name in other requirements
+        cursor.execute(
+            "SELECT req_id FROM requirements WHERE LOWER(requirement_name) = LOWER(%s) AND req_id != %s;",
+            (new_name.strip(), req_id)
+        )
+        duplicate = cursor.fetchone()
+        if duplicate:
+            return jsonify({"error": "Requirement name already exists"}), 400
+
+        # Check if the requirement exists
         cursor.execute("SELECT req_id FROM requirements WHERE req_id = %s;", (req_id,))
         existing = cursor.fetchone()
         if not existing:
             return jsonify({"error": f"Requirement {req_id} not found"}), 404
 
-        # Update requirement name
+        # Update the requirement name
         cursor.execute(
             "UPDATE requirements SET requirement_name = %s WHERE req_id = %s;",
             (new_name.strip(), req_id)
         )
         conn.commit()
 
-        return jsonify({"message": f"Requirement {req_id} updated successfully", "req_id": req_id, "requirement_name": new_name.strip()}), 200
+        return jsonify({
+            "message": f"Requirement {req_id} updated successfully",
+            "req_id": req_id,
+            "requirement_name": new_name.strip()
+        }), 200
 
     except Exception as e:
         conn.rollback()
         return jsonify({"error": str(e)}), 500
+
     finally:
         cursor.close()
