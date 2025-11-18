@@ -1,21 +1,27 @@
-import "../../components/common/index.css";
-import ContentBox from "../../components/user/ContentBox";
-import "./Landing.css";
+import { useNavigate } from "react-router-dom";
 import ButtonLink from "../../components/common/ButtonLink";
+import ContentBox from "../../components/user/ContentBox";
+import "../../components/common/index.css";
+import "./Landing.css";
 
 function Landing() {
+  const navigate = useNavigate();
+
   return (
     <div className="landing-container">
       <div className="page-label">MSU-IIT</div>
       <h1 className="page-title">Online Document Request</h1>
 
       <div className="cards-wrapper">
-        <ContentBox className="card">
-          <div className="title-section">
-            <h3 className="cards-title">Track</h3>
-            <h3 className="cards-title">Request</h3>
+        <ContentBox className="card" onClick={() => navigate("/user/track")}>
+          <img src="/assets/TruckIcon.svg" alt="" />
+          <div className="text-section">
+            <div className="title-section">
+              <h3 className="cards-title">Track</h3>
+              <h3 className="cards-title">Request</h3>
+            </div>
+            <p className="subtext">Track your document’s progress with your tracking number and ID.</p>
           </div>
-          <p className="subtext">Track the progress of your document request using your tracking number and student ID. Payment and pickup options are provided once the requested document is ready.</p>
           <ButtonLink 
             to="/user/track" 
             placeholder="Track"
@@ -23,12 +29,15 @@ function Landing() {
           />
         </ContentBox>
 
-        <ContentBox className="card">
-          <div className="title-section">
-            <h3 className="cards-title">Request</h3>
-            <h3 className="cards-title">Document</h3>
+        <ContentBox className="card" onClick={() => navigate("/user/login")}>
+          <img src="/assets/FolderPlusIcon.svg" alt="" />
+          <div className="text-section">
+            <div className="title-section">
+              <h3 className="cards-title">Request</h3>
+              <h3 className="cards-title">Document</h3>
+            </div>
+            <p className="subtext">Request your transcript or other official documents.</p>  
           </div>
-          <p className="subtext">Need your transcript, certificate of enrollment, or other official documents? Start your request here and follow the guided process.</p>
           <ButtonLink 
             to="/user/login" 
             placeholder="Request"
@@ -36,13 +45,16 @@ function Landing() {
           />
         </ContentBox>
 
-        <ContentBox className="card">
-          <div className="title-section">
-            <h3 className="cards-title">View</h3>
-            <h3 className="cards-title">Documents</h3>
+        <ContentBox className="card" onClick={() => navigate("/user/documents")}>
+          <img src="/assets/FileTextIcon.svg" alt="" />
+          <div className="text-section">
+            <div className="title-section">
+              <h3 className="cards-title">View</h3>
+              <h3 className="cards-title">Documents</h3>
+            </div>
+            <p className="subtext">See available documents and their requirements before making a request.</p>
           </div>
-          <p className="subtext">Explore all available documents you can request and see what requirements are needed for each. Make sure you have the required materials ready before starting your request.</p>
-          <ButtonLink 
+            <ButtonLink 
             to="/user/documents" 
             placeholder="View"
             className="btn"

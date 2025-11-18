@@ -20,11 +20,14 @@
 }
 
 .card {
+  display: flex;
+  align-items: flex-start;
   transition: all 0.3s ease-in-out;
-  width: 260px;
-  height: 300px;
-  padding: 20px;
-  gap: 24px;
+  width: 300px;
+  height: 400px;
+  padding: 40px;
+  gap: 16px;
+  box-sizing: border-box;
 }
 
 .card:hover {
@@ -55,6 +58,19 @@
   align-items: flex-start;
   text-align: left;
   width: 100%;
+}
+
+.card .text-section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  flex: 1;
+  gap: 8px;
+}
+
+.card .text-section .subtext{
+  text-align: left;
 }
 
 .cards-wrapper .subtext{
