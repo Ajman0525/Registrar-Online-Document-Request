@@ -300,19 +300,16 @@ const handleRemoveRequirement = (index) => {
           </div>
         </div>
         {showRequirementsPopup && (
-  <RequirementsPopup
-  onClose={() => setShowRequirementsPopup(false)}
-  selected={selectedRequirements}
-  setSelected={setSelectedRequirements}
-  onAddRequirement={(newReq) => setAllRequirements(prev => [newReq, ...prev])}
-/>
-)}
-
+          <RequirementsPopup
+            onClose={() => setShowRequirementsPopup(false)}
+            selected={selectedRequirements}
+            setSelected={setSelectedRequirements}
+            onAddRequirement={(newReq) => setAllRequirements(prev => [newReq, ...prev])}
+          />
+        )}
       </div>
     </div>
-    
   );
-  
 }
 
 export default Popup;
