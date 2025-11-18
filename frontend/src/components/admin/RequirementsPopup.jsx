@@ -86,6 +86,7 @@ function RequirementsPopup({ onClose, selected, setSelected, onAddRequirement, s
   };
 
   const confirmDeleteRequirement = async () => {
+
     try {
       const res = await fetch(`/admin/delete-requirement/${deleteId}`, { method: "DELETE" });
       const data = await res.json();
@@ -102,6 +103,21 @@ function RequirementsPopup({ onClose, selected, setSelected, onAddRequirement, s
 
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const checkRequirement = async (req_id) => {
+    try {
+      const res = await fetch(`/admin/check-req/${req_id}`);
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || "Error checking requirement");
+
+      // return true if it exists in either requests or documents
+      return data.in_requests.exists || data.in_documents.exists;
+    } catch (err) {
+      console.error(err);
+      return true; // safe fallback: assume it exists
     }
   };
 
@@ -131,9 +147,8 @@ function RequirementsPopup({ onClose, selected, setSelected, onAddRequirement, s
       if (!res.ok) throw new Error(data.error || "Failed to update requirement");
 
       setRequirements(requirements.map(r => r.req_id === req_id ? { ...r, requirement_name: newName } : r));
-      setEditRequirement(null);
     } catch (err) {
-      throw err; // propagate error to popup
+      throw err; 
     }
   };
 
@@ -203,7 +218,7 @@ function RequirementsPopup({ onClose, selected, setSelected, onAddRequirement, s
                     style={{ cursor: "pointer" }}
                     onClick={async () => {
                       try {
-                        const exists = await checkRequirementExists(req.req_id);
+                        const exists = await checkRequirement(req.req_id);
                       if (exists) {
                         setShowCantDeletePopup(true);
                       } else {
@@ -267,12 +282,6 @@ function RequirementsPopup({ onClose, selected, setSelected, onAddRequirement, s
             onClose={() => setEditRequirement(null)}
             onSave={handleSaveEdit}
             requirement={editRequirement}
-          />
-        )}
-
-        {showCantEditPopup && (
-          <CantEditPopup
-            onClose={() => setShowCantEditPopup(false)}
           />
         )}
 
