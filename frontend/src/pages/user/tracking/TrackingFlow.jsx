@@ -127,7 +127,7 @@ function TrackFlow() {
     };
 
     return (
-        <div className="Track-page">
+        <div className="track-page-container">
             {loading && <LoadingSpinner message="Processing..." />}
             {currentView === "otp" ? (
                 <OtpVerification
