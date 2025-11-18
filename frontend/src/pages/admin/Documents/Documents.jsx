@@ -88,13 +88,17 @@ function Documents() {
   };
 
   const handleClosePopup = async () => {
-    setShowPopup(false);
-    setSelectedDoc(null);
-    await fetchDocuments(); // refresh so doc_id is correct
-  };
+  setShowPopup(false);
+  setSelectedDoc(null);  // <-- already here, good
+  await fetchDocuments();
+};
 
 
-  const handleOpen = () => setShowPopup(true);
+  const handleOpen = () => {
+  setSelectedDoc(null);   // <-- fix
+  setShowPopup(true);
+};
+
 
   const handleOpenHide = (doc) => {
     setSelectedDoc(doc);
