@@ -132,9 +132,7 @@ function OtpVerification({ onNext, onBack, studentId, maskedPhone, setMaskedPhon
             maxLength={6}
           />
           </div>
-          <div className="error-section">
             {error && <p className={`error-text ${shake ? "shake" : ""}`}>{error}</p>}
-          </div>
         </div>
 
         <div className="action-section">

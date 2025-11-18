@@ -111,7 +111,9 @@ function RequestFlow() {
                 key={stepInfo.key}
                 className={`progress-step ${index <= currentStepIndex ? 'active' : ''} ${index < currentStepIndex ? 'completed' : ''}`}
               >
-                <div className="step-circle">{index + 1}</div>
+                <div className="step-circle">
+                  {index < currentStepIndex ? '✓' : index + 1}
+                </div>
                 <div className="step-label">{stepInfo.label}</div>
               </div>
             ))}
