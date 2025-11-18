@@ -141,7 +141,7 @@ function RequirementsPopup({ onClose, selected, setSelected, onAddRequirement, s
     <div className="requirements-overlay">
       {loading && <LoadingSpinner message="Loading Requirements..." />}
       <div className="requirements-popup">
-        {selectionMode ? <h3 className="title">Select Requirements</h3> : <h3 className="title">Manage Requirements</h3>}
+        {selectionMode ? <h3 className="title">Select Requirements</h3> : <h2 className="title">Manage Requirements</h2>}
 
         <div className="search-section">
           <ReqSearchbar

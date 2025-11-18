@@ -15,6 +15,11 @@
 
 }
 
+
+.requirements-popup .button-section{
+    justify-content: flex-end;
+}
+
 .toolbar-actions{
     display: flex;
     flex-direction: row;
