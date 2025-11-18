@@ -9,13 +9,10 @@ function Popup({ onClose, onSuccess, document }) {
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
 
-// Keep both states:
-const [requirements, setRequirements] = useState([]); // names for the document
-const [selectedRequirements, setSelectedRequirements] = useState([]); // IDs from popup
-const [allRequirements, setAllRequirements] = useState([]); // fetched from DB
-
-
-
+  // Keep both states:
+  const [requirements, setRequirements] = useState([]); // names for the document
+  const [selectedRequirements, setSelectedRequirements] = useState([]); // IDs from popup
+  const [allRequirements, setAllRequirements] = useState([]); // fetched from DB
   const [showRequirementsPopup, setShowRequirementsPopup] = useState(false);
   const [shake, setShake] = useState(false);
   const [errors, setErrors] = useState({
@@ -25,6 +22,24 @@ const [allRequirements, setAllRequirements] = useState([]); // fetched from DB
     addRequirements: "",
     requirementsItem: [],
   });
+
+  const refreshRequirements = async () => {
+  try {
+    const res = await fetch("/admin/get-requirements");
+    if (!res.ok) throw new Error("Failed to fetch requirements");
+    const data = await res.json();
+    setAllRequirements(data);
+
+    // Update selected requirement names after refresh
+    const selectedNames = data
+      .filter((r) => selectedRequirements.includes(r.req_id))
+      .map((r) => r.requirement_name);
+    setRequirements(selectedNames);
+
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   useEffect(() => {
   fetch("/admin/get-requirements")
@@ -40,7 +55,6 @@ const [allRequirements, setAllRequirements] = useState([]); // fetched from DB
       }
     });
 }, [isEditMode, document]);
-
 
   useEffect(() => {
   const selectedNames = allRequirements
@@ -65,10 +79,6 @@ const [allRequirements, setAllRequirements] = useState([]); // fetched from DB
       setRequirements(document.requirements || []);
     }
   }, [document, isEditMode]);
-
-  const handleAddRequirement = () => {
-    setRequirements([...requirements, ""]);
-  };
 
   const handleRequirementChange = (index, value) => {
     const updated = [...requirements];
@@ -299,9 +309,12 @@ const handleRemoveRequirement = (index) => {
             </div>
           </div>
         </div>
-        {showRequirementsPopup && (
+       {showRequirementsPopup && (
           <RequirementsPopup
-            onClose={() => setShowRequirementsPopup(false)}
+            onClose={() => {
+              setShowRequirementsPopup(false);
+              refreshRequirements(); // Refresh parent after closing popup
+            }}
             selected={selectedRequirements}
             setSelected={setSelectedRequirements}
             onAddRequirement={(newReq) => setAllRequirements(prev => [newReq, ...prev])}
