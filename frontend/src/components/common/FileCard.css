@@ -52,6 +52,7 @@
     justify-content: center;
     align-items: center;
 }
+
 .name-and-description-section {
     display: flex;
     flex-direction: column;
@@ -63,6 +64,7 @@
 .document-name {
     width: 80%;
     font-family: var(--font-family-base);
+    font-size: 20px;
     color: var(--color-black);
     margin: 0;
 }

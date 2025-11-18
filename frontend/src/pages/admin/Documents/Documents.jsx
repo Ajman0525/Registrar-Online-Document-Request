@@ -6,6 +6,7 @@ import Popup from "../../../components/admin/Popup";
 import DeletePopup from "../../../components/admin/DeletePopup";
 import SearchBar from "../../../components/common/SearchBar";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
+import RequirementsPopup from "../../../components/admin/RequirementsPopup";
 
 function Documents() {
   const [documents, setDocuments] = useState([]);
@@ -16,6 +17,7 @@ function Documents() {
   const [showPopup, setShowPopup] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showRequirementsPopup, setShowRequirementsPopup] = useState(false);
 
   const handleOpenDelete = (doc) => {
     setSelectedDoc(doc);
@@ -33,7 +35,7 @@ function Documents() {
       const res = await fetch(`/admin/delete-document/${docId}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Failed to delete document");
 
-      await fetchDocuments();  // refresh list
+      await fetchDocuments();
 
     } catch (err) {
       console.error(err);
@@ -42,8 +44,6 @@ function Documents() {
     }
   };
 
-
-  // Open the add/edit popup
   const handleEdit = (doc) => {
     setSelectedDoc(doc);
     setShowPopup(true);
@@ -56,7 +56,6 @@ function Documents() {
 
   const handleOpen = () => setShowPopup(true);
 
-  // Fetch documents, requirements, and joined data
   const fetchDocuments = async () => {
   try {
     setLoading(true);
@@ -109,7 +108,15 @@ function Documents() {
       {loading && <LoadingSpinner message="Loading documents..." />}
       <div className="toolbar">
         <h1 className="title">Manage Documents</h1>
-        <SearchBar onChange={setSearchTerm} />
+        <div className="toolbar-actions">
+          <SearchBar onChange={setSearchTerm} />
+          <button 
+            className="manage-requirements-button" 
+            onClick={() => setShowRequirementsPopup(true)}
+            >
+              Requirements
+            </button>
+        </div>
       </div>
       
       <div className="file-cards-container">
@@ -125,7 +132,6 @@ function Documents() {
           />
         ))}
       </div>
-
 
       {showPopup && (
         <Popup
@@ -143,6 +149,13 @@ function Documents() {
           onDelete={handleDelete}
         />
       )}
+
+      {showRequirementsPopup && (
+          <RequirementsPopup
+            onClose={() => setShowRequirementsPopup(false)}
+            selectionMode={false}
+          />
+        )}
     </div>
   );
 }

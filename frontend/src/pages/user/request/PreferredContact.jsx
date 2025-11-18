@@ -116,9 +116,9 @@ function PreferredContact({ preferredContactInfo = {}, setPreferredContactInfo, 
       )}
 
       <ContentBox className="preferred-contact-box">
-        <h2>Preferred Contact</h2>
+        <h2 className="title">Preferred Contact</h2>
 
-        <form>
+        <form className="contact-options">
           <div className="radio-group">
             <label className="radio-label">
               <input

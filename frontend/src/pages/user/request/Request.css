@@ -2,7 +2,6 @@
 .request-progress-container {
   width: 100%;
   margin-bottom: 2rem;
-  padding: 0 1rem;
 }
 
 .request-progress-bar {
@@ -26,6 +25,7 @@
 }
 
 .progress-step {
+    min-height: 90px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -57,11 +57,6 @@
 .progress-step.completed .step-circle {
   background: #28a745;
   color: white;
-}
-
-.progress-step.completed::after {
-  content: '✓';
-  font-size: 16px;
 }
 
 .step-label {
@@ -416,12 +411,6 @@ html {
   align-items: center;
 }
 
-.upload-requirements-page h2 {
-  font-weight: 700;
-  font-size: 24px;
-  margin-bottom: 6px;
-}
-
 .upload-requirements-page p {
   font-weight: 400;
   font-size: 14px;
@@ -498,8 +487,14 @@ html {
   gap: 16px;
 }
 
+.contact-options{
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
 .radio-group {
-  margin-bottom: 20px;
   text-align: left;
 }
 
@@ -529,9 +524,7 @@ html {
 
 .contact-row {
   display: flex;
-  justify-content: center;
-  gap: 48px;
-  margin-bottom: 36px;
+  justify-content: space-between;
   text-align: left;
 }
 
