@@ -15,6 +15,8 @@ function Popup({ onClose, onSuccess, document }) {
   const [allRequirements, setAllRequirements] = useState([]); // fetched from DB
   const [showRequirementsPopup, setShowRequirementsPopup] = useState(false);
   const [shake, setShake] = useState(false);
+  const [initialState, setInitialState] = useState(null);
+
   const [errors, setErrors] = useState({
     docName: "",
     description: "",
@@ -24,22 +26,37 @@ function Popup({ onClose, onSuccess, document }) {
   });
 
   const refreshRequirements = async () => {
-  try {
-    const res = await fetch("/admin/get-requirements");
-    if (!res.ok) throw new Error("Failed to fetch requirements");
-    const data = await res.json();
-    setAllRequirements(data);
+    try {
+      const res = await fetch("/admin/get-requirements");
+      if (!res.ok) throw new Error("Failed to fetch requirements");
+      const data = await res.json();
+      setAllRequirements(data);
 
-    // Update selected requirement names after refresh
-    const selectedNames = data
-      .filter((r) => selectedRequirements.includes(r.req_id))
-      .map((r) => r.requirement_name);
-    setRequirements(selectedNames);
+      // Update selected requirement names after refresh
+      const selectedNames = data
+        .filter((r) => selectedRequirements.includes(r.req_id))
+        .map((r) => r.requirement_name);
+      setRequirements(selectedNames);
 
-  } catch (err) {
-    console.error(err);
-  }
-};
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    setInitialState({
+      docName: document?.doc_name || "",
+      description: document?.description || "",
+      price: document?.cost?.toString() || "",
+      requirements: document?.requirements || [],
+      selectedRequirements: isEditMode
+        ? allRequirements
+            .filter((r) => document.requirements.includes(r.requirement_name))
+            .map((r) => r.req_id)
+        : [],
+    });
+  }, [isEditMode, document, allRequirements]);
+
 
   useEffect(() => {
   fetch("/admin/get-requirements")
@@ -293,7 +310,16 @@ const handleRemoveRequirement = (index) => {
           <div className="button-section">
             <div className="cancel-button-wrapper">
               <ButtonLink
-                onClick={onClose}
+                onClick={() => {
+                  if (initialState) {
+                    setDocName(initialState.docName);
+                    setDescription(initialState.description);
+                    setPrice(initialState.price);
+                    setRequirements(initialState.requirements);
+                    setSelectedRequirements(initialState.selectedRequirements);
+                  }
+                  onClose();
+                }}
                 placeholder="Cancel"
                 className="cancel-button"
                 variant="secondary"
