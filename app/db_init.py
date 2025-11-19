@@ -97,20 +97,18 @@ def ready_requirements_table():
    """
    execute_query(query)
 
-
-
-
 def ready_documents_table():
-   query = """
-   CREATE TABLE IF NOT EXISTS documents (
-       doc_id VARCHAR(10) PRIMARY KEY,
-       doc_name VARCHAR(255) NOT NULL,
-       description VARCHAR(255),
-       logo_link VARCHAR(255),
-       cost NUMERIC(10,2) DEFAULT 0.00 
-   )
-   """
-   execute_query(query)
+    query = """
+    CREATE TABLE IF NOT EXISTS documents (
+        doc_id VARCHAR(10) PRIMARY KEY,
+        doc_name VARCHAR(255) NOT NULL,
+        description VARCHAR(255),
+        logo_link VARCHAR(255),
+        cost NUMERIC(10,2) DEFAULT 0.00,
+        hidden BOOLEAN DEFAULT FALSE
+    )
+    """
+    execute_query(query)
 
 
 #mapping table between documents and requirements
