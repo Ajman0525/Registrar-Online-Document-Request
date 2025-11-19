@@ -9,6 +9,7 @@ import EditReqPopup from "./EditReqPopup";
 import CantEditPopup from "./CantEditPopup";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 
+
 function RequirementsPopup({ onClose, selected, setSelected, onAddRequirement, selectionMode = true}) {
   const [requirements, setRequirements] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -20,6 +21,12 @@ function RequirementsPopup({ onClose, selected, setSelected, onAddRequirement, s
   const [editRequirement, setEditRequirement] = useState(null);
   const [showCantEditPopup, setShowCantEditPopup] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [initialSelected, setInitialSelected] = useState([]);
+
+  useEffect(() => {
+    setInitialSelected([...selected]);
+  }, []);
+
 
   useEffect(() => {
     const fetchRequirements = async () => {
@@ -243,7 +250,15 @@ function RequirementsPopup({ onClose, selected, setSelected, onAddRequirement, s
         <div className="action-section">
           <div className="button-section">
             <div className="cancel-button-wrapper">
-              <ButtonLink onClick={onClose} placeholder="Cancel" className="cancel-button" variant="secondary" />
+              <ButtonLink
+                onClick={() => {
+                  setSelected(initialSelected); // restore original selection
+                  onClose();
+                }}
+                placeholder="Cancel"
+                className="cancel-button"
+                variant="secondary"
+              />
             </div>
             <div className="proceed-button-wrapper">
               <ButtonLink onClick={onClose} placeholder="Done" className="proceed-button" variant="primary" />
