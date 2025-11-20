@@ -10,7 +10,7 @@ import CantEditPopup from "./CantEditPopup";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 
 
-function RequirementsPopup({ onClose, selected, setSelected, onAddRequirement, selectionMode = true}) {
+function RequirementsPopup({ onClose, selected = [], setSelected, onAddRequirement, selectionMode = true}) {
   const [requirements, setRequirements] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredRequirements, setFilteredRequirements] = useState([]);
