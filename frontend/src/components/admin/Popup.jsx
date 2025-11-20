@@ -341,7 +341,7 @@ const handleRemoveRequirement = (index) => {
               setShowRequirementsPopup(false);
               refreshRequirements(); // Refresh parent after closing popup
             }}
-            selected={selectedRequirements}
+            selected={Array.isArray(selectedRequirements) ? selectedRequirements : []}
             setSelected={setSelectedRequirements}
             onAddRequirement={(newReq) => setAllRequirements(prev => [newReq, ...prev])}
           />
