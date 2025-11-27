@@ -35,7 +35,7 @@ function ViewDocuments() {
       {loading && <LoadingSpinner message="Loading documents..." />}
       {!loading && (
         <div className="select-documents-page">
-          <div className="hero-section">
+          {/* <div className="hero-section">
             <img src="/assets/HeroImage.png" alt="Request" className="hero-image" />
             <div className="welcome-text">
               <h1>Welcome to the Online Document Request System</h1>
@@ -48,7 +48,7 @@ function ViewDocuments() {
             <a href="#documents-section" className="view-documents-btn">
               View Documents
             </a>
-          </div>
+          </div> */}
 
           <div className="bottom-section" id="documents-section">
             <h1 className="title">Available Documents</h1>

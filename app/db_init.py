@@ -170,7 +170,20 @@ def ready_request_requirements_links_table():
    execute_query(query)
 
 
-
+def ready_logs_table():
+   query = """
+create table public.logs (
+  log_id serial not null,
+  admin_id character varying(100) not null,
+  action character varying(255) not null,
+  details text null,
+  timestamp timestamp without time zone null default now(),
+  constraint logs_pkey primary key (log_id)
+) TABLESPACE pg_default;
+"""
+   execute_query(query)
+    
+ 
 
 # ==========================
 # SAMPLE DATA (OPTIONAL)
@@ -333,7 +346,8 @@ def initialize_db():
    ready_requests_table()
    ready_request_documents_table()
    ready_request_requirements_links_table()
-   insert_sample_data()
+   ready_logs_table()
+   #insert_sample_data()
    print("Database and tables initialized successfully.")
 
 
