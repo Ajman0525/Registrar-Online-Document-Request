@@ -70,3 +70,19 @@ def delete_request(request_id):
             return jsonify({"error": "Request not found or deletion failed"}), 404
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@manage_request_bp.route("/api/admin/my-requests", methods=["GET"])
+@jwt_required_with_role(role)
+def get_my_requests():
+    """
+    Get paginated requests assigned to the logged-in admin.
+    """
+    try:
+        page = int(request.args.get('page', 1))
+        limit = int(request.args.get('limit', 20))
+        admin_id = get_jwt_identity()
+        result = ManageRequestModel.get_assigned_requests(admin_id, page=page, limit=limit)
+        return jsonify({"requests": result["requests"], "total": result["total"]}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

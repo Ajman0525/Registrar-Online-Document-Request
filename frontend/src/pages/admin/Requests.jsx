@@ -110,16 +110,18 @@ export default function AdminRequestsDashboard() {
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRequests, setTotalRequests] = useState(0);
+  const [viewMode, setViewMode] = useState('all'); // 'all' or 'my'
   const limit = 20;
 
   useEffect(() => {
     fetchRequests();
-  }, [currentPage]);
+  }, [currentPage, viewMode]);
 
   const fetchRequests = async () => {
-    console.log('Fetching requests from /api/admin/requests');
+    const endpoint = viewMode === 'my' ? '/api/admin/my-requests' : '/api/admin/requests';
+    console.log(`Fetching requests from ${endpoint}`);
     try {
-      const response = await fetch(`/api/admin/requests?page=${currentPage}&limit=${limit}`, {
+      const response = await fetch(`${endpoint}?page=${currentPage}&limit=${limit}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -241,6 +243,12 @@ export default function AdminRequestsDashboard() {
     setCurrentPage(newPage);
   };
 
+  const handleViewModeChange = (mode) => {
+    setViewMode(mode);
+    setCurrentPage(1); // Reset to first page when switching modes
+    setLoading(true);
+  };
+
   const totalPages = Math.ceil(totalRequests / limit);
 
   if (loading) {
@@ -255,9 +263,25 @@ export default function AdminRequestsDashboard() {
     <DndProvider backend={HTML5Backend}>
       <div className="p-8 bg-gray-50 min-h-screen">
         <div className="max-w-7xl mx-auto bg-white rounded-2xl shadow-lg p-6">
-          <h1 className="requests-header text-3xl font-semibold mb-6 text-gray-800">
-            Request Management - ACTION
-          </h1>
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="requests-header text-3xl font-semibold text-gray-800">
+              Request Management - ACTION
+            </h1>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => handleViewModeChange('all')}
+                className={`px-4 py-2 rounded ${viewMode === 'all' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+              >
+                All Requests
+              </button>
+              <button
+                onClick={() => handleViewModeChange('my')}
+                className={`px-4 py-2 rounded ${viewMode === 'my' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+              >
+                My Tasks
+              </button>
+            </div>
+          </div>
 
           <div className="flex gap-4 overflow-x-auto">
             {statuses.map((status) => (
