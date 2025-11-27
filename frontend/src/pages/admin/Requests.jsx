@@ -8,7 +8,6 @@ import LoadingSpinner from "../../components/common/LoadingSpinner";
 //import "./RequestsDashboard.css";
 
 const statuses = [
-  "UNCONFIRMED",
   "SUBMITTED",
   "PENDING",
   "IN-PROGRESS",
@@ -109,15 +108,18 @@ export default function AdminRequestsDashboard() {
   const [statusChangeRequest, setStatusChangeRequest] = useState(null);
   const [newStatus, setNewStatus] = useState(null);
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalRequests, setTotalRequests] = useState(0);
+  const limit = 20;
 
   useEffect(() => {
     fetchRequests();
-  }, []);
+  }, [currentPage]);
 
   const fetchRequests = async () => {
     console.log('Fetching requests from /api/admin/requests');
     try {
-      const response = await fetch('/api/admin/requests', {
+      const response = await fetch(`/api/admin/requests?page=${currentPage}&limit=${limit}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -130,6 +132,7 @@ export default function AdminRequestsDashboard() {
       }
       const data = await response.json();
       setRequests(data.requests);
+      setTotalRequests(data.total);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -233,6 +236,13 @@ export default function AdminRequestsDashboard() {
     }
   };
 
+  const handlePageChange = (newPage) => {
+    setLoading(true);
+    setCurrentPage(newPage);
+  };
+
+  const totalPages = Math.ceil(totalRequests / limit);
+
   if (loading) {
     return <LoadingSpinner message="Loading requests..." />;
   }
@@ -259,6 +269,27 @@ export default function AdminRequestsDashboard() {
                 onCardClick={handleCardClick}
               />
             ))}
+          </div>
+
+          {/* Pagination */}
+          <div className="flex justify-center items-center mt-6 space-x-4">
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300"
+            >
+              Previous
+            </button>
+            <span className="text-gray-700">
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300"
+            >
+              Next
+            </button>
           </div>
         </div>
       </div>

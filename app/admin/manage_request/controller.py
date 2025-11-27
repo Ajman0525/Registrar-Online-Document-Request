@@ -13,11 +13,13 @@ role = "admin"
 @jwt_required_with_role(role)
 def get_requests():
     """
-    Get all requests for admin management.
+    Get paginated requests for admin management.
     """
     try:
-        requests = ManageRequestModel.get_all_requests()
-        return jsonify({"requests": requests}), 200
+        page = int(request.args.get('page', 1))
+        limit = int(request.args.get('limit', 20))
+        result = ManageRequestModel.get_all_requests(page=page, limit=limit)
+        return jsonify({"requests": result["requests"], "total": result["total"]}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

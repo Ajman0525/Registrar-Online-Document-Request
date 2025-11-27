@@ -3,17 +3,24 @@ from flask import g
 
 class ManageRequestModel:
     @staticmethod
-    def get_all_requests():
-        """Fetch all requests with their details."""
+    def get_all_requests(page=1, limit=20):
+        """Fetch paginated requests with their details."""
         conn = g.db_conn
         cur = conn.cursor()
         try:
+            offset = (page - 1) * limit
             cur.execute("""
                 SELECT request_id, student_id, full_name, contact_number, email, preferred_contact, status, requested_at, completed_at, remarks, total_cost, payment_status
                 FROM requests
                 ORDER BY requested_at DESC
-            """)
+                LIMIT %s OFFSET %s
+            """, (limit, offset))
             requests = cur.fetchall()
+
+            # Get total count
+            cur.execute("SELECT COUNT(*) FROM requests")
+            total_count = cur.fetchone()[0]
+
             detailed_requests = []
             for req in requests:
                 request_id = req[0]
@@ -67,7 +74,7 @@ class ManageRequestModel:
                 request_data["recent_log"] = recent_logs[0] if recent_logs else None
 
                 detailed_requests.append(request_data)
-            return detailed_requests
+            return {"requests": detailed_requests, "total": total_count}
         finally:
             cur.close()
 
