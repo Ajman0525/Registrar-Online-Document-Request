@@ -132,7 +132,7 @@ def ready_requests_table():
        contact_number VARCHAR(20),
        email VARCHAR(100),
        preferred_contact VARCHAR(50),
-       status VARCHAR(50) DEFAULT 'UNCONFIRMED' CHECK (status IN ('UNCONFIRMED', 'SUBMITTED', 'PENDING', 'IN-PROGRESS', 'DOC-READY', 'RELEASED', 'REJECTED')),
+       status VARCHAR(50) DEFAULT 'PENDING' CHECK (status IN ('UNCONFIRMED', 'SUBMITTED', 'PENDING', 'IN-PROGRESS', 'DOC-READY', 'RELEASED', 'REJECTED')),
        payment_status BOOLEAN DEFAULT FALSE,
        total_cost NUMERIC(10,2) DEFAULT 0.00,
        requested_at TIMESTAMP DEFAULT NOW(),
@@ -172,15 +172,14 @@ def ready_request_requirements_links_table():
 
 def ready_logs_table():
    query = """
-create table public.logs (
-  log_id serial not null,
-  admin_id character varying(100) not null,
-  action character varying(255) not null,
-  details text null,
-  timestamp timestamp without time zone null default now(),
-  constraint logs_pkey primary key (log_id)
-) TABLESPACE pg_default;
-"""
+   CREATE TABLE IF NOT EXISTS logs (
+       log_id SERIAL PRIMARY KEY,
+       admin_id VARCHAR(100) NOT NULL,
+       action VARCHAR(255) NOT NULL,
+       details TEXT,
+       timestamp TIMESTAMP DEFAULT NOW()
+   )
+   """
    execute_query(query)
     
  

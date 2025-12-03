@@ -33,6 +33,7 @@ def update_request_status(request_id):
     try:
         data = request.get_json()
         new_status = data.get("status")
+        payment_status = data.get("payment_status")
         if not new_status:
             return jsonify({"error": "Status is required"}), 400
 
@@ -44,7 +45,7 @@ def update_request_status(request_id):
         # Get admin ID from JWT token
         admin_id = get_jwt_identity()
 
-        success = ManageRequestModel.update_request_status(request_id, new_status, admin_id)
+        success = ManageRequestModel.update_request_status(request_id, new_status, admin_id, payment_status)
         if success:
             return jsonify({"message": "Status updated successfully"}), 200
         else:

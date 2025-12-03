@@ -79,16 +79,23 @@ class ManageRequestModel:
             cur.close()
 
     @staticmethod
-    def update_request_status(request_id, new_status, admin_id=None):
+    def update_request_status(request_id, new_status, admin_id=None, payment_status=None):
         """Update the status of a specific request and log the change."""
         conn = g.db_conn
         cur = conn.cursor()
         try:
-            cur.execute("""
-                UPDATE requests
-                SET status = %s, completed_at = CASE WHEN %s IN ('RELEASED', 'REJECTED') THEN NOW() ELSE completed_at END
-                WHERE request_id = %s
-            """, (new_status, new_status, request_id))
+            if payment_status is not None:
+                cur.execute("""
+                    UPDATE requests
+                    SET status = %s, payment_status = %s, completed_at = CASE WHEN %s IN ('RELEASED', 'REJECTED') THEN NOW() ELSE completed_at END
+                    WHERE request_id = %s
+                """, (new_status, payment_status, new_status, request_id))
+            else:
+                cur.execute("""
+                    UPDATE requests
+                    SET status = %s, completed_at = CASE WHEN %s IN ('RELEASED', 'REJECTED') THEN NOW() ELSE completed_at END
+                    WHERE request_id = %s
+                """, (new_status, new_status, request_id))
 
             if cur.rowcount > 0 and admin_id:
                 # Log the status change
