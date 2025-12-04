@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './Settings.css';
 import { getCSRFToken } from "../../utils/csrf";
+import RoleChangeConfirmModal from '../../components/admin/RoleChangeConfirmModal';
 
 
 const Settings = () => {
@@ -9,6 +10,8 @@ const Settings = () => {
     const [newRole, setNewRole] = useState('admin');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [filterRole, setFilterRole] = useState('admin');
+    const [roleChangeRequest, setRoleChangeRequest] = useState(null);
 
     useEffect(() => {
         fetchAdmins();
@@ -61,25 +64,40 @@ const Settings = () => {
         }
     };
 
-    const updateAdmin = async (email, newRole) => {
+    const updateAdmin = (email, newRole) => {
+        const admin = admins.find(a => a.email === email);
+        if (admin && admin.role !== newRole) {
+            setRoleChangeRequest({ admin, newRole });
+        }
+    };
+
+    const confirmRoleChange = async () => {
+        if (!roleChangeRequest) return;
+
+        setLoading(true);
+        setError('');
+
         try {
-            const response = await fetch(`/api/admin/admins/${email}`, {
+            const response = await fetch(`/api/admin/admins/${roleChangeRequest.admin.email}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                     "X-CSRF-TOKEN": getCSRFToken(),
                 },
                 credentials: 'include',
-                body: JSON.stringify({ role: newRole }),
+                body: JSON.stringify({ role: roleChangeRequest.newRole }),
             });
 
             if (response.ok) {
                 fetchAdmins();
+                setRoleChangeRequest(null);
             } else {
                 setError('Failed to update admin');
             }
         } catch (err) {
             setError('Error updating admin');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -89,7 +107,7 @@ const Settings = () => {
         try {
             const response = await fetch(`/api/admin/admins/${email}`, {
                 method: 'DELETE',
-                header: {
+                headers: {
                     "X-CSRF-TOKEN": getCSRFToken(),
                 },
                 credentials: 'include',
@@ -135,6 +153,7 @@ const Settings = () => {
                             <option value="Manager">Manager</option>
                             <option value="Staff">Staff</option>
                             <option value="Auditor">Auditor</option>
+                            <option value="none">None</option>
                         </select>
                     </div>
                     <button type="submit" disabled={loading}>
@@ -145,6 +164,13 @@ const Settings = () => {
 
             <div className="admins-table-section">
                 <h2>Current Admins</h2>
+                <div className="filter-buttons">
+                    <button onClick={() => setFilterRole('admin')} className={filterRole === 'admin' ? 'active' : ''}>Admin</button>
+                    <button onClick={() => setFilterRole('Manager')} className={filterRole === 'Manager' ? 'active' : ''}>Manager</button>
+                    <button onClick={() => setFilterRole('Staff')} className={filterRole === 'Staff' ? 'active' : ''}>Staff</button>
+                    <button onClick={() => setFilterRole('Auditor')} className={filterRole === 'Auditor' ? 'active' : ''}>Auditor</button>
+                    <button onClick={() => setFilterRole('none')} className={filterRole === 'none' ? 'active' : ''}>Unassigned</button>
+                </div>
                 <table className="admins-table">
                     <thead>
                         <tr>
@@ -154,7 +180,7 @@ const Settings = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {admins.map((admin) => (
+                        {admins.filter(admin => admin.role === filterRole).map((admin) => (
                             <tr key={admin.email}>
                                 <td>{admin.email}</td>
                                 <td>
@@ -166,6 +192,7 @@ const Settings = () => {
                                         <option value="Manager">Manager</option>
                                         <option value="Staff">Staff</option>
                                         <option value="Auditor">Auditor</option>
+                                        <option value="none">None</option>
                                     </select>
                                 </td>
                                 <td>
@@ -181,6 +208,16 @@ const Settings = () => {
                     </tbody>
                 </table>
             </div>
+
+            {roleChangeRequest && (
+                <RoleChangeConfirmModal
+                    admin={roleChangeRequest.admin}
+                    newRole={roleChangeRequest.newRole}
+                    onConfirm={confirmRoleChange}
+                    onCancel={() => setRoleChangeRequest(null)}
+                    isLoading={loading}
+                />
+            )}
         </div>
     );
 };

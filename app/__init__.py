@@ -107,6 +107,8 @@ def create_app(test_config=None):
     app.register_blueprint(logging_blueprint)
     from .admin.manage_request import manage_request_bp as manage_request_blueprint
     app.register_blueprint(manage_request_blueprint)
+    from .admin.settings import settings_bp as settings_blueprint
+    app.register_blueprint(settings_blueprint)
 
     
     #USER BLUEPRINTS

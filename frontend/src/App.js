@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import AdminLogin from "./pages/admin/AdminLogin";
+import AdminWaiting from "./pages/admin/AdminWaiting";
 import Index from "./pages/Index";
 import Landing from "./pages/user/Landing";
 import UserMasterLayout from "./pages/layouts/UserMasterLayout";
@@ -30,6 +31,7 @@ function App() {
         </Route>
         
         <Route path="/admin/login" element={< AdminLogin />} />
+        <Route path="/admin/waiting" element={< AdminWaiting />} />
         <Route path="/admin" element={<RegistrarMasterLayout />}>
           <Route path="Dashboard" element={<Dashboard />} />
           <Route path="Requests" element={<Requests />} />

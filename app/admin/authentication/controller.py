@@ -5,7 +5,7 @@ from authlib.integrations.flask_client import OAuth
 from config import GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
-from .models import Admin
+from ..settings.models import Admin
 
 
 oauth = OAuth(current_app)
@@ -41,10 +41,22 @@ def google_login():
 
        email = id_info['email']
 
+    # Check if email is authorized (e.g., domain check)
+       if not email.endswith('@g.msuiit.edu.ph'):
+           return jsonify({"error": "Unauthorized email, Please use MyIIT Account"}), 403
+
        # Check if email is in admins table
        admin = Admin.get_by_email(email)
        if not admin:
-           return jsonify({"error": "Unauthorized email"}), 403
+           # Add email with role "none"
+           Admin.add(email, "none")
+           current_app.logger.info(f"New admin {email} added with role 'none'")
+           return jsonify({"message": "Account created. Waiting for admin approval.", "redirect": "/admin/waiting"}), 201
+
+       # Check if role is "none"
+       if admin['role'] == "none":
+           current_app.logger.info(f"Admin {email} has role 'none', redirecting to waiting page.")
+           return jsonify({"message": "Account pending approval.", "redirect": "/admin/waiting"}), 200
 
        # Create JWT with role from database
        access_token = create_access_token(
