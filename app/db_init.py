@@ -181,6 +181,17 @@ def ready_logs_table():
    )
    """
    execute_query(query)
+
+
+def ready_admins_table():
+   query = """
+   CREATE TABLE IF NOT EXISTS admins (
+       email VARCHAR(100) PRIMARY KEY,
+       role VARCHAR(50) NOT NULL
+   )
+   """
+   execute_query(query)
+
     
  
 
@@ -346,6 +357,7 @@ def initialize_db():
    ready_request_documents_table()
    ready_request_requirements_links_table()
    ready_logs_table()
+   ready_admins_table()
    #insert_sample_data()
    print("Database and tables initialized successfully.")
 
