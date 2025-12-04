@@ -266,6 +266,133 @@ class ManageRequestModel:
             cur.close()
 
     @staticmethod
+    def assign_request_to_admin(request_id, admin_id):
+        """Assign a request to an admin."""
+        conn = g.db_conn
+        cur = conn.cursor()
+        try:
+            cur.execute("""
+                INSERT INTO request_assignments (request_id, admin_id)
+                VALUES (%s, %s)
+                ON CONFLICT (request_id) DO UPDATE SET admin_id = EXCLUDED.admin_id, assigned_at = NOW()
+            """, (request_id, admin_id))
+            conn.commit()
+            return True
+        except Exception as e:
+            conn.rollback()
+            print(f"Error assigning request {request_id} to admin {admin_id}: {e}")
+            return False
+        finally:
+            cur.close()
+
+    @staticmethod
+    def auto_assign_requests(admin_id, n):
+        """Auto-assign the next N unassigned PENDING requests to the admin."""
+        conn = g.db_conn
+        cur = conn.cursor()
+        try:
+            # Get the next N unassigned PENDING requests
+            cur.execute("""
+                SELECT request_id
+                FROM requests
+                WHERE status = 'PENDING'
+                AND request_id NOT IN (SELECT request_id FROM request_assignments)
+                ORDER BY requested_at ASC
+                LIMIT %s
+            """, (n,))
+            unassigned_requests = cur.fetchall()
+
+            if not unassigned_requests:
+                return 0  # No requests to assign
+
+            # Assign them
+            for req in unassigned_requests:
+                cur.execute("""
+                    INSERT INTO request_assignments (request_id, admin_id)
+                    VALUES (%s, %s)
+                """, (req[0], admin_id))
+
+            conn.commit()
+            return len(unassigned_requests)
+        except Exception as e:
+            conn.rollback()
+            print(f"Error auto-assigning requests to admin {admin_id}: {e}")
+            return 0
+        finally:
+            cur.close()
+
+    @staticmethod
+    def get_assigned_requests_for_admin(admin_id):
+        """Get all requests assigned to an admin with completion status."""
+        conn = g.db_conn
+        cur = conn.cursor()
+        try:
+            cur.execute("""
+                SELECT r.request_id, r.full_name, r.status, ra.assigned_at
+                FROM requests r
+                JOIN request_assignments ra ON r.request_id = ra.request_id
+                WHERE ra.admin_id = %s
+                ORDER BY ra.assigned_at DESC
+            """, (admin_id,))
+            assigned_requests = cur.fetchall()
+
+            result = []
+            for req in assigned_requests:
+                result.append({
+                    "request_id": req[0],
+                    "full_name": req[1],
+                    "status": req[2],
+                    "assigned_at": req[3].strftime("%Y-%m-%d %H:%M:%S") if req[3] else None
+                })
+
+            return result
+        finally:
+            cur.close()
+
+    @staticmethod
+    def get_assignment_progress(admin_id):
+        """Get progress: completed (DOC-READY) vs total assigned."""
+        conn = g.db_conn
+        cur = conn.cursor()
+        try:
+            # Total assigned
+            cur.execute("""
+                SELECT COUNT(*)
+                FROM request_assignments
+                WHERE admin_id = %s
+            """, (admin_id,))
+            total_assigned = cur.fetchone()[0]
+
+            # Completed (DOC-READY)
+            cur.execute("""
+                SELECT COUNT(*)
+                FROM requests r
+                JOIN request_assignments ra ON r.request_id = ra.request_id
+                WHERE ra.admin_id = %s AND r.status = 'DOC-READY'
+            """, (admin_id,))
+            completed = cur.fetchone()[0]
+
+            return {"completed": completed, "total": total_assigned}
+        finally:
+            cur.close()
+
+    @staticmethod
+    def is_assigned(request_id):
+        """Check if a request is assigned."""
+        conn = g.db_conn
+        cur = conn.cursor()
+        try:
+            cur.execute("""
+                SELECT COUNT(*)
+                FROM request_assignments
+                WHERE request_id = %s
+            """, (request_id,))
+            count = cur.fetchone()[0]
+            return count > 0
+        finally:
+            cur.close()
+
+    @staticmethod
     def delete_request(request_id, admin_id):
         """Delete a request and all associated data, and log the deletion."""
         from supabase import create_client, Client

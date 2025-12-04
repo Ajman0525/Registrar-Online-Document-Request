@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { getCSRFToken } from "../../../utils/csrf";
@@ -95,6 +96,7 @@ const StatusColumn = ({ title, requests, onDropRequest, uiLabel, onCardClick }) 
 // MAIN COMPONENT
 // =======================================
 export default function AdminRequestsDashboard() {
+  const navigate = useNavigate();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -227,6 +229,12 @@ export default function AdminRequestsDashboard() {
             className={`px-4 py-2 rounded ${viewMode === 'my' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
           >
             My Task
+          </button>
+          <button
+            onClick={() => navigate('/admin/AssignRequests')}
+            className="px-4 py-2 rounded bg-green-500 text-white hover:bg-green-600"
+          >
+            Assign Requests
           </button>
         </div>
 

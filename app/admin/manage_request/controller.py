@@ -1,5 +1,5 @@
 from . import manage_request_bp
-from flask import jsonify, request
+from flask import jsonify, request, g
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.utils.decorator import jwt_required_with_role
 from .models import ManageRequestModel
@@ -86,5 +86,125 @@ def get_my_requests():
         admin_id = get_jwt_identity()
         result = ManageRequestModel.get_assigned_requests(admin_id, page=page, limit=limit)
         return jsonify({"requests": result["requests"], "total": result["total"]}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@manage_request_bp.route("/api/admin/auto-assign", methods=["POST"])
+@jwt_required_with_role(role)
+def auto_assign_requests():
+    """
+    Auto-assign a number of requests to the logged-in admin.
+    """
+    try:
+        data = request.get_json()
+        number = data.get("number", 1)
+        admin_id = get_jwt_identity()
+        assigned_count = ManageRequestModel.auto_assign_requests(admin_id, number)
+        return jsonify({"message": f"Auto-assigned {assigned_count} requests"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@manage_request_bp.route("/api/admin/manual-assign", methods=["POST"])
+@jwt_required_with_role(role)
+def manual_assign_requests():
+    """
+    Manually assign specific requests to the logged-in admin.
+    """
+    try:
+        data = request.get_json()
+        request_ids = data.get("request_ids", [])
+        admin_id = get_jwt_identity()
+        assigned_count = 0
+        for req_id in request_ids:
+            if ManageRequestModel.assign_request_to_admin(req_id, admin_id):
+                assigned_count += 1
+        return jsonify({"message": f"Manually assigned {assigned_count} requests"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@manage_request_bp.route("/api/admin/unassigned-requests", methods=["GET"])
+@jwt_required_with_role(role)
+def get_unassigned_requests():
+    """
+    Get unassigned requests for manual assignment.
+    """
+    try:
+        conn = g.db_conn
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT request_id, full_name, requested_at
+            FROM requests
+            WHERE status = 'PENDING'
+            AND request_id NOT IN (SELECT request_id FROM request_assignments)
+            ORDER BY requested_at ASC
+            LIMIT 50
+        """)
+        unassigned = cur.fetchall()
+        requests = [
+            {
+                "request_id": req[0],
+                "full_name": req[1],
+                "requested_at": req[2].strftime("%Y-%m-%d %H:%M:%S") if req[2] else None
+            }
+            for req in unassigned
+        ]
+        cur.close()
+        return jsonify({"requests": requests}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@manage_request_bp.route("/api/admin/assignment-progress", methods=["GET"])
+@jwt_required_with_role(role)
+def get_assignment_progress():
+    """
+    Get assignment progress for the logged-in admin.
+    """
+    try:
+        admin_id = get_jwt_identity()
+        progress = ManageRequestModel.get_assignment_progress(admin_id)
+        return jsonify(progress), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@manage_request_bp.route("/api/admin/admins-progress", methods=["GET"])
+@jwt_required_with_role(role)
+def get_admins_progress():
+    """
+    Get assignment progress for all admins.
+    """
+    try:
+        conn = g.db_conn
+        cur = conn.cursor()
+        cur.execute("SELECT email FROM admins ORDER BY email")
+        admins = cur.fetchall()
+        admins_progress = []
+        for admin in admins:
+            admin_id = admin[0]
+            progress = ManageRequestModel.get_assignment_progress(admin_id)
+            admins_progress.append({
+                "admin_id": admin_id,
+                "completed": progress["completed"],
+                "total": progress["total"]
+            })
+        cur.close()
+        return jsonify({"admins": admins_progress}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@manage_request_bp.route("/api/admin/admin-requests/<admin_id>", methods=["GET"])
+@jwt_required_with_role(role)
+def get_admin_requests(admin_id):
+    """
+    Get all requests assigned to a specific admin.
+    """
+    try:
+        requests = ManageRequestModel.get_assigned_requests_for_admin(admin_id)
+        return jsonify({"requests": requests}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
