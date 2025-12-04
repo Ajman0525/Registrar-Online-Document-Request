@@ -3,22 +3,34 @@ from flask import g
 
 class ManageRequestModel:
     @staticmethod
-    def get_all_requests(page=1, limit=20):
+    def get_all_requests(page=1, limit=20, search=None):
         """Fetch paginated requests with their details."""
         conn = g.db_conn
         cur = conn.cursor()
         try:
             offset = (page - 1) * limit
-            cur.execute("""
+            where_clause = ""
+            params = []
+            if search:
+                where_clause = """
+                WHERE full_name ILIKE %s OR student_id ILIKE %s OR email ILIKE %s OR contact_number ILIKE %s
+                """
+                search_param = f"%{search}%"
+                params = [search_param] * 4
+
+            query = f"""
                 SELECT request_id, student_id, full_name, contact_number, email, preferred_contact, status, requested_at, completed_at, remarks, total_cost, payment_status
                 FROM requests
+                {where_clause}
                 ORDER BY requested_at DESC
                 LIMIT %s OFFSET %s
-            """, (limit, offset))
+            """
+            cur.execute(query, params + [limit, offset])
             requests = cur.fetchall()
 
             # Get total count
-            cur.execute("SELECT COUNT(*) FROM requests")
+            count_query = f"SELECT COUNT(*) FROM requests {where_clause}"
+            cur.execute(count_query, params)
             total_count = cur.fetchone()[0]
 
             detailed_requests = []
@@ -113,7 +125,7 @@ class ManageRequestModel:
             cur.close()
 
     @staticmethod
-    def get_assigned_requests(admin_id, page=1, limit=20):
+    def get_assigned_requests(admin_id, page=1, limit=20, search=None):
         """Fetch paginated requests assigned to a specific admin based on logs."""
         conn = g.db_conn
         cur = conn.cursor()
@@ -139,25 +151,35 @@ class ManageRequestModel:
             if not request_ids:
                 return {"requests": [], "total": 0}
 
-            # Now, fetch requests for these ids, paginated
+            # Now, fetch requests for these ids, paginated, with optional search
             request_ids_list = list(request_ids)
             placeholders = ','.join(['%s'] * len(request_ids_list))
             offset = (page - 1) * limit
 
+            where_clause = f"WHERE request_id IN ({placeholders})"
+            params = request_ids_list.copy()
+            if search:
+                where_clause += """
+                AND (full_name ILIKE %s OR student_id ILIKE %s OR email ILIKE %s OR contact_number ILIKE %s)
+                """
+                search_param = f"%{search}%"
+                params.extend([search_param] * 4)
+
             query = f"""
                 SELECT request_id, student_id, full_name, contact_number, email, preferred_contact, status, requested_at, completed_at, remarks, total_cost, payment_status
                 FROM requests
-                WHERE request_id IN ({placeholders})
+                {where_clause}
                 ORDER BY requested_at DESC
                 LIMIT %s OFFSET %s
             """
-            params = request_ids_list + [limit, offset]
+            params.extend([limit, offset])
             cur.execute(query, params)
             requests = cur.fetchall()
 
-            # Get total count of assigned requests
-            total_query = f"SELECT COUNT(*) FROM requests WHERE request_id IN ({placeholders})"
-            cur.execute(total_query, request_ids_list)
+            # Get total count of assigned requests with search filter
+            total_query = f"SELECT COUNT(*) FROM requests {where_clause}"
+            total_params = params[:-2]  # Remove limit and offset
+            cur.execute(total_query, total_params)
             total_count = cur.fetchone()[0]
 
             detailed_requests = []

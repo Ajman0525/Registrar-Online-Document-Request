@@ -5,6 +5,7 @@ import { getCSRFToken } from "../../../utils/csrf";
 import RequestModal from "../../../components/admin/RequestModal";
 import StatusChangeConfirmModal from "../../../components/admin/StatusChangeConfirmModal";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
+import ReqSearchbar from "../../../components/admin/ReqSearchbar";
 
 // =======================================
 // STATUS MAPPING 
@@ -103,16 +104,20 @@ export default function AdminRequestsDashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRequests, setTotalRequests] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState('all'); // 'all' or 'my'
   const limit = 20;
 
   useEffect(() => {
-    fetchRequests(currentPage);
-  }, [currentPage]);
+    fetchRequests(1, '', 'all');
+  }, []);
 
-  const fetchRequests = async (page = 1) => {
+  const fetchRequests = async (page, search, mode) => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/requests?page=${page}&limit=${limit}`, {
+      const searchParam = search ? `&search=${encodeURIComponent(search)}` : '';
+      const endpoint = mode === 'my' ? '/api/admin/my-requests' : '/api/admin/requests';
+      const res = await fetch(`${endpoint}?page=${page}&limit=${limit}${searchParam}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -121,6 +126,10 @@ export default function AdminRequestsDashboard() {
         credentials: "include",
       });
 
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
       const data = await res.json();
       console.log('Fetched data:', data);
       setRequests(data.requests.map(req => ({ ...req, paymentStatus: req.payment_status })));
@@ -128,6 +137,7 @@ export default function AdminRequestsDashboard() {
       setTotalPages(Math.ceil(data.total / limit));
       console.log('Total pages:', Math.ceil(data.total / limit));
     } catch (err) {
+      console.error('Error fetching requests:', err);
       setError("Failed to load requests");
     } finally {
       setLoading(false);
@@ -161,7 +171,7 @@ export default function AdminRequestsDashboard() {
       body: JSON.stringify(newStatus),
     });
 
-    fetchRequests(currentPage);
+    fetchRequests(currentPage, searchQuery, viewMode);
     setStatusChangeRequest(null);
     setNewStatus(null);
   };
@@ -194,12 +204,38 @@ export default function AdminRequestsDashboard() {
         {/* Top title + search */}
         <h1 className="text-3xl font-bold mb-6 text-gray-900">Manage Request</h1>
 
+        {/* Filter buttons */}
+        <div className="mb-4 flex gap-2">
+          <button
+            onClick={() => {
+              setViewMode('all');
+              setSearchQuery('');
+              setCurrentPage(1);
+              fetchRequests(1, '', 'all');
+            }}
+            className={`px-4 py-2 rounded ${viewMode === 'all' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+          >
+            All View
+          </button>
+          <button
+            onClick={() => {
+              setViewMode('my');
+              setSearchQuery('');
+              setCurrentPage(1);
+              fetchRequests(1, '', 'my');
+            }}
+            className={`px-4 py-2 rounded ${viewMode === 'my' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+          >
+            My Task
+          </button>
+        </div>
+
         <div className="mb-8">
-          <input
-            type="text"
-            placeholder="Search Request"
-            className="w-full p-4 rounded-full shadow-sm border border-gray-200 bg-white text-gray-700"
-          />
+          <ReqSearchbar onSearch={(value) => {
+            setSearchQuery(value);
+            setCurrentPage(1);
+            fetchRequests(1, value, viewMode);
+          }} />
         </div>
 
         {/* Columns */}
@@ -220,7 +256,11 @@ export default function AdminRequestsDashboard() {
         {totalPages > 1 && (
           <div className="flex justify-center items-center mt-8 gap-4">
             <button
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              onClick={() => {
+                const newPage = Math.max(currentPage - 1, 1);
+                setCurrentPage(newPage);
+                fetchRequests(newPage, searchQuery, viewMode);
+              }}
               disabled={currentPage === 1}
               className="px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300 disabled:cursor-not-allowed"
             >
@@ -230,7 +270,11 @@ export default function AdminRequestsDashboard() {
               Page {currentPage} of {totalPages} ({totalRequests} total requests)
             </span>
             <button
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              onClick={() => {
+                const newPage = Math.min(currentPage + 1, totalPages);
+                setCurrentPage(newPage);
+                fetchRequests(newPage, searchQuery, viewMode);
+              }}
               disabled={currentPage === totalPages}
               className="px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300 disabled:cursor-not-allowed"
             >

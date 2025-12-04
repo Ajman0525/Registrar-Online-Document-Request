@@ -18,7 +18,8 @@ def get_requests():
     try:
         page = int(request.args.get('page', 1))
         limit = int(request.args.get('limit', 20))
-        result = ManageRequestModel.get_all_requests(page=page, limit=limit)
+        search = request.args.get('search')
+        result = ManageRequestModel.get_all_requests(page=page, limit=limit, search=search)
         return jsonify({"requests": result["requests"], "total": result["total"]}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
