@@ -458,3 +458,57 @@ class ManageRequestModel:
             return False
         finally:
             cur.close()
+
+    @staticmethod
+    def get_global_max_assign():
+        """Get the global max assign per account."""
+        conn = g.db_conn
+        cur = conn.cursor()
+        try:
+            cur.execute("SELECT value FROM settings WHERE key = 'global_max_assign'")
+            row = cur.fetchone()
+            return int(row[0]) if row else 10
+        finally:
+            cur.close()
+
+    @staticmethod
+    def set_global_max_assign(max_assign):
+        """Set the global max assign per account."""
+        conn = g.db_conn
+        cur = conn.cursor()
+        try:
+            cur.execute("""
+                INSERT INTO settings (key, value)
+                VALUES ('global_max_assign', %s)
+                ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
+            """, (str(max_assign),))
+            conn.commit()
+        finally:
+            cur.close()
+
+    @staticmethod
+    def get_admin_max_requests(admin_id):
+        """Get the max requests for a specific admin."""
+        conn = g.db_conn
+        cur = conn.cursor()
+        try:
+            cur.execute("SELECT value FROM admin_settings WHERE admin_id = %s AND key = 'max_requests'", (admin_id,))
+            row = cur.fetchone()
+            return int(row[0]) if row else 10
+        finally:
+            cur.close()
+
+    @staticmethod
+    def set_admin_max_requests(admin_id, max_requests):
+        """Set the max requests for a specific admin."""
+        conn = g.db_conn
+        cur = conn.cursor()
+        try:
+            cur.execute("""
+                INSERT INTO admin_settings (admin_id, key, value)
+                VALUES (%s, 'max_requests', %s)
+                ON CONFLICT (admin_id, key) DO UPDATE SET value = EXCLUDED.value
+            """, (admin_id, str(max_requests)))
+            conn.commit()
+        finally:
+            cur.close()

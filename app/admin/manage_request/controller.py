@@ -186,10 +186,12 @@ def get_admins_progress():
         for admin in admins:
             admin_id = admin[0]
             progress = ManageRequestModel.get_assignment_progress(admin_id)
+            max_requests = ManageRequestModel.get_admin_max_requests(admin_id)
             admins_progress.append({
                 "admin_id": admin_id,
                 "completed": progress["completed"],
-                "total": progress["total"]
+                "total": progress["total"],
+                "max_requests": max_requests
             })
         cur.close()
         return jsonify({"admins": admins_progress}), 200
@@ -206,5 +208,61 @@ def get_admin_requests(admin_id):
     try:
         requests = ManageRequestModel.get_assigned_requests_for_admin(admin_id)
         return jsonify({"requests": requests}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@manage_request_bp.route("/api/admin/global-max-assign", methods=["GET"])
+@jwt_required_with_role(role)
+def get_global_max_assign():
+    """
+    Get the global max assign per account.
+    """
+    try:
+        max_assign = ManageRequestModel.get_global_max_assign()
+        return jsonify({"max": max_assign}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@manage_request_bp.route("/api/admin/global-max-assign", methods=["PUT"])
+@jwt_required_with_role(role)
+def set_global_max_assign():
+    """
+    Set the global max assign per account.
+    """
+    try:
+        data = request.get_json()
+        max_assign = data.get("max", 10)
+        ManageRequestModel.set_global_max_assign(max_assign)
+        return jsonify({"message": "Global max assign updated"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@manage_request_bp.route("/api/admin/admin-max-requests/<admin_id>", methods=["GET"])
+@jwt_required_with_role(role)
+def get_admin_max_requests(admin_id):
+    """
+    Get the max requests for a specific admin.
+    """
+    try:
+        max_requests = ManageRequestModel.get_admin_max_requests(admin_id)
+        return jsonify({"max": max_requests}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@manage_request_bp.route("/api/admin/admin-max-requests/<admin_id>", methods=["PUT"])
+@jwt_required_with_role(role)
+def set_admin_max_requests(admin_id):
+    """
+    Set the max requests for a specific admin.
+    """
+    try:
+        data = request.get_json()
+        max_requests = data.get("max", 10)
+        ManageRequestModel.set_admin_max_requests(admin_id, max_requests)
+        return jsonify({"message": "Admin max requests updated"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500

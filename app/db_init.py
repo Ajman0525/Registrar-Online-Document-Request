@@ -205,6 +205,29 @@ def ready_admins_table():
    """
    execute_query(query)
 
+
+def ready_settings_table():
+   query = """
+   CREATE TABLE IF NOT EXISTS settings (
+       key VARCHAR(100) PRIMARY KEY,
+       value TEXT NOT NULL
+   )
+   """
+   execute_query(query)
+
+
+def ready_admin_settings_table():
+   query = """
+   CREATE TABLE IF NOT EXISTS admin_settings (
+       admin_id VARCHAR(100) NOT NULL,
+       key VARCHAR(100) NOT NULL,
+       value TEXT NOT NULL,
+       PRIMARY KEY (admin_id, key)
+   )
+   """
+   execute_query(query)
+
+
     
  
 
@@ -372,6 +395,8 @@ def initialize_db():
    ready_logs_table()
    ready_request_assignments_table()
    ready_admins_table()
+   ready_settings_table()
+   ready_admin_settings_table()
    #insert_sample_data()
    print("Database and tables initialized successfully.")
 
