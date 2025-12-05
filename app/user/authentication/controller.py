@@ -1,17 +1,35 @@
 from . import authentication_user_bp
+from ...whatsapp.controller import send_whatsapp_message 
 from flask import jsonify, request, session, current_app
 from .models import AuthenticationUser
 from flask_jwt_extended import create_access_token, set_access_cookies
 import random
 import hashlib
 
-# Mock SMS sender (in production you replace this with an actual SMS API)
-# For now, it prints OTP in console for debugging/dev testing
-def send_sms(phone, message):
-    print("=========== DEV OTP ===========")
-    print(f"To: {phone}")
-    print(f"Message: {message}")
-    print("================================")
+def send_whatsapp_otp(phone, otp_code):
+    template_name = "hello_world"
+    components = None
+    
+    if template_name != "hello_world":
+        # Passing the OTP for dynamic variables such as {{1}}.
+        components = [
+            {
+                "type": "body",
+                "parameters": [
+                    {"type": "text", "text": str(otp_code)}
+                ]
+            }
+        ]
+    
+    print(f"[OTP Verification] Attempting to send WhatsApp OTP {otp_code} to {phone}")
+    
+    result = send_whatsapp_message(phone, template_name, components)
+    
+    if "error" in result:
+        current_app.logger.error(f"WhatsApp send failed for OTP to {phone}: {result['error']}")
+        return {"status": "failed", "message": "Failed to send OTP via WhatsApp"}
+    
+    return {"status": "success"}
 
 @authentication_user_bp.route('/check-id', methods=['POST'])
 def check_id():
@@ -37,23 +55,26 @@ def check_id():
 
     # Generate OTP + hash it
     otp, otp_hash = AuthenticationUser.generate_otp()
+    phone = result["phone_number"] 
 
-    # Save OTP hash in session (temporary)
+    # Save OTP hash and student ID in session
     AuthenticationUser.save_otp(student_id, otp_hash, session)
-    session["phone_number"] = result["phone_number"]
+    session["phone_number"] = phone
     
-    # DEBUG: Print session data
-    print(f"[DEBUG] Session after saving OTP: {dict(session)}")
-
-    # Send OTP to registered phone (printed in dev)
-    phone = result["phone_number"]
-    send_sms(phone, f"Your verification code is: {otp}")
+    # Send OTP via WhatsApp
+    whatsapp_result = send_whatsapp_otp(phone, otp)
+    
+    if whatsapp_result["status"] == "failed":
+        return jsonify({
+            "status": "error",
+            "message": whatsapp_result["message"]
+        }), 500
 
     # Return masked number to frontend
     return jsonify({
         "status": "valid",
         "message": "Student OK, continue",
-        "masked_phone": phone[-2:]
+        "masked_phone": phone[-4:] 
     }), 200
 
 @authentication_user_bp.route('/resend-otp', methods=['POST'])
@@ -74,25 +95,24 @@ def resend_otp():
     otp, otp_hash = AuthenticationUser.generate_otp()
     session["otp"] = otp_hash  # replace old OTP
 
-    send_sms(phone, f"Your new verification code is: {otp}")
-
+    # Send OTP via WhatsApp
+    whatsapp_result = send_whatsapp_otp(phone, otp)
+    
+    if whatsapp_result["status"] == "failed":
+        return jsonify({
+            "status": "error",
+            "message": whatsapp_result["message"]
+        }), 500
+        
+    # Success response
     return jsonify({
         "status": "resent",
         "message": "New OTP sent successfully",
-        "masked_phone": phone[-2:]
+        "masked_phone": phone[-4:] 
     }), 200
-
-# Mock SMS sender (in production you replace this with an actual SMS API)
-# For now, it prints OTP in console for debugging/dev testing
-def send_sms(phone, message):
-    print("=========== DEV OTP ===========")
-    print(f"To: {phone}")
-    print(f"Message: {message}")
-    print("================================")
 
 @authentication_user_bp.route('/verify-otp', methods=['POST'])
 def verify_otp():
-    # DEBUG: Print everything
     print("=" * 50)
     print("[DEBUG] Received payload:", request.json)
     print("[DEBUG] Session contents:", dict(session))
@@ -130,7 +150,7 @@ def verify_otp():
     response = jsonify({
         "message": "User login successful",
         "role": user["role"],
-        "valid": True  # ADD THIS!
+        "valid": True
     })
     set_access_cookies(response, access_token)
 
