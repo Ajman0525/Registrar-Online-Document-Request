@@ -26,7 +26,7 @@ def send_whatsapp_message(recipient_number, template_name, components=None):
             "language":{
                 "code": "en_US"
             },
-            "components": components if components else []
+            **({"components": components} if components is not None else {})
         }
     }
 
