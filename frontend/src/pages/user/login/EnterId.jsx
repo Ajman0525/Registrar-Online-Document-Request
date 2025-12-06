@@ -5,7 +5,7 @@ import ContentBox from "../../../components/user/ContentBox";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
 
 
-function EnterId({ onNext, onBack, maskedPhone, setMaskedPhone}) {
+function EnterId({ onNext, onBack, maskedPhone, setMaskedPhone, goBackToOptions}) {
     const [studentId, setStudentId] = useState("");
     const [error, setError] = useState("");
     const [shake, setShake] = useState(false);
@@ -144,8 +144,8 @@ function EnterId({ onNext, onBack, maskedPhone, setMaskedPhone}) {
                         </div>
 
                         <div className="support-section">
-                            <p className="subtext">Forgot ID Number? Contact the </p>
-                            <a href="mailto:support@example.com" className="forgot-id-link">support.</a>
+                            <p className="subtext">Forgot ID Number?</p>
+                            <a onClick={goBackToOptions} className="forgot-id-link">Try Another Way</a>
                         </div>
                         </div>
                 </ContentBox>
