@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './Settings.css';
 import { getCSRFToken } from "../../utils/csrf";
 import RoleChangeConfirmModal from '../../components/admin/RoleChangeConfirmModal';
+import AddAdminPopup from '../../components/admin/AddAdminPopup';
 
 const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -14,6 +15,7 @@ const Settings = () => {
     const [error, setError] = useState('');
     const [filterRole, setFilterRole] = useState('admin');
     const [roleChangeRequest, setRoleChangeRequest] = useState(null);
+    const [showAddAdminPopup, setShowAddAdminPopup] = useState(false);
     const [startHour, setStartHour] = useState('9');
     const [startMinute, setStartMinute] = useState('00');
     const [startAmpm, setStartAmpm] = useState('AM');
@@ -207,153 +209,132 @@ const Settings = () => {
 
     return (
         <div className="settings-page">
-            <h1>Admin Settings</h1>
 
             {error && <div className="error-message">{error}</div>}
 
-            <div className="add-admin-section">
-                <h2>Add New Admin</h2>
-                <form onSubmit={addAdmin}>
-                    <div className="form-group">
-                        <label htmlFor="email">Email:</label>
-                        <input
-                            type="email"
-                            id="email"
-                            value={newEmail}
-                            onChange={(e) => setNewEmail(e.target.value)}
-                            required
-                        />
-                    </div>
-                    <div className="form-group">
-                        <label htmlFor="role">Role:</label>
-                        <select
-                            id="role"
-                            value={newRole}
-                            onChange={(e) => setNewRole(e.target.value)}
-                        >
-                            <option value="admin">Admin</option>
-                            <option value="Manager">Manager</option>
-                            <option value="Staff">Staff</option>
-                            <option value="Auditor">Auditor</option>
-                            <option value="none">None</option>
-                        </select>
-                    </div>
-                    <button type="submit" disabled={loading}>
-                        {loading ? 'Adding...' : 'Add Admin'}
-                    </button>
-                </form>
-            </div>
 
-            <div className="admins-table-section">
-                <h2>Current Admins</h2>
-                <div className="filter-buttons">
+
+            <div className="admin-management-card">
+                <div className="admin-management-header">
+                    <h2>Current Admins</h2>
+                    <button onClick={() => setShowAddAdminPopup(true)} className="add-admin-btn">
+                        Add Admin
+                    </button>
+                </div>
+                <div className="filter-role-buttons">
                     <button onClick={() => setFilterRole('admin')} className={filterRole === 'admin' ? 'active' : ''}>Admin</button>
                     <button onClick={() => setFilterRole('Manager')} className={filterRole === 'Manager' ? 'active' : ''}>Manager</button>
                     <button onClick={() => setFilterRole('Staff')} className={filterRole === 'Staff' ? 'active' : ''}>Staff</button>
                     <button onClick={() => setFilterRole('Auditor')} className={filterRole === 'Auditor' ? 'active' : ''}>Auditor</button>
                     <button onClick={() => setFilterRole('none')} className={filterRole === 'none' ? 'active' : ''}>Unassigned</button>
                 </div>
-                <table className="admins-table">
-                    <thead>
-                        <tr>
-                            <th>Email</th>
-                            <th>Role</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {admins.filter(admin => admin.role === filterRole).map((admin) => (
-                            <tr key={admin.email}>
-                                <td>{admin.email}</td>
-                                <td>
-                                    <select
-                                        value={admin.role}
-                                        onChange={(e) => updateAdmin(admin.email, e.target.value)}
-                                    >
-                                        <option value="admin">Admin</option>
-                                        <option value="Manager">Manager</option>
-                                        <option value="Staff">Staff</option>
-                                        <option value="Auditor">Auditor</option>
-                                        <option value="none">None</option>
-                                    </select>
-                                </td>
-                                <td>
-                                    <button
-                                        className="delete-btn"
-                                        onClick={() => deleteAdmin(admin.email)}
-                                    >
-                                        Delete
-                                    </button>
-                                </td>
+                <div className="admins-table-wrapper">
+                    <table className="admins-table">
+                        <thead>
+                            <tr>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th className="actions-col">Actions</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {admins.filter(admin => admin.role === filterRole).map((admin) => (
+                                <tr key={admin.email}>
+                                    <td>{admin.email}</td>
+                                    <td>
+                                        <select
+                                            value={admin.role}
+                                            onChange={(e) => updateAdmin(admin.email, e.target.value)}
+                                        >
+                                            <option value="admin">Admin</option>
+                                            <option value="Manager">Manager</option>
+                                            <option value="Staff">Staff</option>
+                                            <option value="Auditor">Auditor</option>
+                                            <option value="none">None</option>
+                                        </select>
+                                    </td>
+                                    <td className="actions-col">
+                                        <button
+                                            className="delete-btn"
+                                            onClick={() => deleteAdmin(admin.email)}
+                                        >
+                                            Delete
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
-            <div className="request-settings-section">
-                <h2>Request Settings</h2>
-                <form onSubmit={updateSettings}>
-                    <div className="form-group">
-                        <label>Start Time:</label>
-                        <div className="time-input-group">
-                            <select value={startHour} onChange={(e) => setStartHour(e.target.value)}>
-                                {Array.from({length: 12}, (_, i) => i + 1).map(h => (
-                                    <option key={h} value={h.toString()}>{h}</option>
-                                ))}
-                            </select>
-                            <span>:</span>
-                            <select value={startMinute} onChange={(e) => setStartMinute(e.target.value)}>
-                                <option value="00">00</option>
-                                <option value="15">15</option>
-                                <option value="30">30</option>
-                                <option value="45">45</option>
-                            </select>
-                            <select value={startAmpm} onChange={(e) => setStartAmpm(e.target.value)}>
-                                <option value="AM">AM</option>
-                                <option value="PM">PM</option>
-                            </select>
+            <div className="availability-settings">
+                <h2>Availability Settings</h2>
+                <p>Configure the operating hours and available days for request processing.</p>
+                <form className="availability-form" onSubmit={updateSettings}>
+                    <div className="time-config-row">
+                        <div className="form-group">
+                            <label>Start Time:</label>
+                            <div className="time-input-group">
+                                <select value={startHour} onChange={(e) => setStartHour(e.target.value)}>
+                                    {Array.from({length: 12}, (_, i) => i + 1).map(h => (
+                                        <option key={h} value={h.toString()}>{h}</option>
+                                    ))}
+                                </select>
+                                <span>:</span>
+                                <select value={startMinute} onChange={(e) => setStartMinute(e.target.value)}>
+                                    <option value="00">00</option>
+                                    <option value="15">15</option>
+                                    <option value="30">30</option>
+                                    <option value="45">45</option>
+                                </select>
+                                <select value={startAmpm} onChange={(e) => setStartAmpm(e.target.value)}>
+                                    <option value="AM">AM</option>
+                                    <option value="PM">PM</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div className="form-group">
+                            <label>End Time:</label>
+                            <div className="time-input-group">
+                                <select value={endHour} onChange={(e) => setEndHour(e.target.value)}>
+                                    {Array.from({length: 12}, (_, i) => i + 1).map(h => (
+                                        <option key={h} value={h.toString()}>{h}</option>
+                                    ))}
+                                </select>
+                                <span>:</span>
+                                <select value={endMinute} onChange={(e) => setEndMinute(e.target.value)}>
+                                    <option value="00">00</option>
+                                    <option value="15">15</option>
+                                    <option value="30">30</option>
+                                    <option value="45">45</option>
+                                </select>
+                                <select value={endAmpm} onChange={(e) => setEndAmpm(e.target.value)}>
+                                    <option value="AM">AM</option>
+                                    <option value="PM">PM</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
-                    <div className="form-group">
-                        <label>End Time:</label>
-                        <div className="time-input-group">
-                            <select value={endHour} onChange={(e) => setEndHour(e.target.value)}>
-                                {Array.from({length: 12}, (_, i) => i + 1).map(h => (
-                                    <option key={h} value={h.toString()}>{h}</option>
-                                ))}
-                            </select>
-                            <span>:</span>
-                            <select value={endMinute} onChange={(e) => setEndMinute(e.target.value)}>
-                                <option value="00">00</option>
-                                <option value="15">15</option>
-                                <option value="30">30</option>
-                                <option value="45">45</option>
-                            </select>
-                            <select value={endAmpm} onChange={(e) => setEndAmpm(e.target.value)}>
-                                <option value="AM">AM</option>
-                                <option value="PM">PM</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div className="form-group">
+                    <div className="days-group">
                         <label>Available Days:</label>
                         <div className="days-checkboxes">
                             {DAYS_OF_WEEK.map(day => (
-                                <label key={day} className="day-checkbox">
-                                    <input
-                                        type="checkbox"
-                                        checked={availableDays.includes(day)}
-                                        onChange={() => toggleDay(day)}
-                                    />
+                                <div
+                                    key={day}
+                                    className={`day-checkbox ${availableDays.includes(day) ? 'active' : ''}`}
+                                    onClick={() => toggleDay(day)}
+                                >
                                     {day}
-                                </label>
+                                </div>
                             ))}
                         </div>
                     </div>
-                    <button type="submit" disabled={loading}>
-                        {loading ? 'Updating...' : 'Update Settings'}
-                    </button>
+                    <div className="update-button-wrapper">
+                        <button type="submit" className="update-settings-btn" disabled={loading}>
+                            {loading ? 'Updating...' : 'Update Settings'}
+                        </button>
+                    </div>
                 </form>
             </div>
 
@@ -364,6 +345,13 @@ const Settings = () => {
                     onConfirm={confirmRoleChange}
                     onCancel={() => setRoleChangeRequest(null)}
                     isLoading={loading}
+                />
+            )}
+
+            {showAddAdminPopup && (
+                <AddAdminPopup
+                    onClose={() => setShowAddAdminPopup(false)}
+                    onSave={addAdmin}
                 />
             )}
         </div>
