@@ -1,5 +1,48 @@
 from flask import g
 from app import db_pool
+import json
+
+class Settings:
+    @staticmethod
+    def get_settings():
+        """Fetch current settings."""
+        conn = g.db_conn
+        cur = conn.cursor()
+        try:
+            cur.execute("SELECT start_time, end_time, available_days FROM settings WHERE id = 1")
+            row = cur.fetchone()
+            if row:
+                return {
+                    "start_time": str(row[0]),
+                    "end_time": str(row[1]),
+                    "available_days": row[2]
+                }
+            return None
+        finally:
+            cur.close()
+
+    @staticmethod
+    def update_settings(start_time, end_time, available_days):
+        """Update settings."""
+        conn = g.db_conn
+        cur = conn.cursor()
+        try:
+            cur.execute("""
+                INSERT INTO settings (id, start_time, end_time, available_days)
+                VALUES (1, %s, %s, %s)
+                ON CONFLICT (id) DO UPDATE SET
+                    start_time = EXCLUDED.start_time,
+                    end_time = EXCLUDED.end_time,
+                    available_days = EXCLUDED.available_days
+            """, (start_time, end_time, json.dumps(available_days)))
+            conn.commit()
+            return True
+        except Exception as e:
+            conn.rollback()
+            print(f"Error updating settings: {e}")
+            return False
+        finally:
+            cur.close()
 
 class Admin:
     @staticmethod

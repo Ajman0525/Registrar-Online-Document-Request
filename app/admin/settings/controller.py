@@ -1,7 +1,7 @@
 from . import settings_bp
 from flask import jsonify, request, current_app
 from app.utils.decorator import jwt_required_with_role
-from .models import Admin
+from .models import Admin, Settings
 
 role = "admin"
 
@@ -61,3 +61,34 @@ def delete_admin(email):
         return jsonify({"message": "Admin deleted successfully"}), 200
     else:
         return jsonify({"error": "Admin not found"}), 404
+
+@settings_bp.route("/api/admin/settings", methods=["GET"])
+def get_settings():
+    """Get current settings."""
+    try:
+        settings = Settings.get_settings()
+        if settings:
+            return jsonify(settings), 200
+        else:
+            return jsonify({"start_time": "09:00", "end_time": "17:00", "available_days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]}), 200
+    except Exception as e:
+        current_app.logger.error(f"Error fetching settings: {e}")
+        return jsonify({"error": "Failed to fetch settings"}), 500
+
+@settings_bp.route("/api/admin/settings", methods=["PUT"])
+@jwt_required_with_role(role)
+def update_settings():
+    """Update settings."""
+    data = request.get_json(silent=True) or {}
+    start_time = data.get("start_time")
+    end_time = data.get("end_time")
+    available_days = data.get("available_days")
+
+    if not start_time or not end_time or not available_days:
+        return jsonify({"error": "start_time, end_time, and available_days are required"}), 400
+
+    if Settings.update_settings(start_time, end_time, available_days):
+        current_app.logger.info("Settings updated")
+        return jsonify({"message": "Settings updated successfully"}), 200
+    else:
+        return jsonify({"error": "Failed to update settings"}), 500

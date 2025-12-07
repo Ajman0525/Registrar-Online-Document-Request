@@ -192,6 +192,18 @@ def ready_admins_table():
    """
    execute_query(query)
 
+
+def ready_settings_table():
+   query = """
+   CREATE TABLE IF NOT EXISTS settings (
+       id SERIAL PRIMARY KEY,
+       start_time TIME NOT NULL,
+       end_time TIME NOT NULL,
+       available_days JSONB NOT NULL
+   )
+   """
+   execute_query(query)
+
     
  
 
@@ -358,6 +370,7 @@ def initialize_db():
    ready_request_requirements_links_table()
    ready_logs_table()
    ready_admins_table()
+   ready_settings_table()
    #insert_sample_data()
    print("Database and tables initialized successfully.")
 
