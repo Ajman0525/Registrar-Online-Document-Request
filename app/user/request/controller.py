@@ -25,7 +25,7 @@ def send_whatsapp_tracking(phone, full_name, request_id):
         }
     ]
     
-    print(f"[OTP Verification] Attempting to send WhatsApp Tracking Number {request_id} to {phone}")
+    print(f"[Tracking Number] Attempting to send WhatsApp Tracking Number {request_id} to {phone}")
     
     result = send_whatsapp_message(phone, template_name, components)
     
