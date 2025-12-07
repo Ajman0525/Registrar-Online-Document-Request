@@ -67,7 +67,7 @@ def get_tracking_data():
             }),404
         
         phone_number = result.get("phone_number") if result else None
-        masked_phone = phone_number[-2:] if phone_number else ""
+        masked_phone = phone_number[-4:] if phone_number else ""
 
         # Generate OTP + hash
         otp, otp_hash = AuthenticationUser.generate_otp()
