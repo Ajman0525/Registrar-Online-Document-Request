@@ -19,7 +19,7 @@ def get_requests():
         page = int(request.args.get('page', 1))
         limit = int(request.args.get('limit', 20))
         search = request.args.get('search')
-        result = ManageRequestModel.get_all_requests(page=page, limit=limit, search=search)
+        result = ManageRequestModel.fetch_requests(page=page, limit=limit, search=search)
         return jsonify({"requests": result["requests"], "total": result["total"]}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -83,8 +83,9 @@ def get_my_requests():
     try:
         page = int(request.args.get('page', 1))
         limit = int(request.args.get('limit', 20))
+        search = request.args.get('search')
         admin_id = get_jwt_identity()
-        result = ManageRequestModel.get_assigned_requests(admin_id, page=page, limit=limit)
+        result = ManageRequestModel.fetch_requests(page=page, limit=limit, search=search, admin_id=admin_id)
         return jsonify({"requests": result["requests"], "total": result["total"]}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500

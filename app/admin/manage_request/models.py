@@ -3,127 +3,130 @@ from collections import defaultdict
 
 class ManageRequestModel:
     @staticmethod
-    def get_all_requests(page=1, limit=20, search=None):
+    def fetch_requests(page=1, limit=20, search=None, admin_id=None):
+        """
+        Fetch paginated requests with full details.
+        If admin_id is provided, only fetch requests assigned to that admin.
+        """
         conn = g.db_conn
         cur = conn.cursor()
         try:
             offset = (page - 1) * limit
 
             # --------------------------
-            # 1. BASE QUERY + SEARCH
+            # 1. Base query
             # --------------------------
-            where = ""
             params = []
+            where_clauses = []
+
+            if admin_id:
+                where_clauses.append("ra.admin_id = %s")
+                params.append(admin_id)
 
             if search:
-                where = """
-                    WHERE full_name ILIKE %s 
-                    OR student_id ILIKE %s 
-                    OR email ILIKE %s 
-                    OR contact_number ILIKE %s
-                """
-                p = f"%{search}%"
-                params = [p, p, p, p]
+                where_clauses.append("(r.full_name ILIKE %s OR r.student_id ILIKE %s OR r.email ILIKE %s OR r.contact_number ILIKE %s)")
+                search_param = f"%{search}%"
+                params.extend([search_param] * 4)
 
-            query = f"""
-                SELECT request_id, student_id, full_name, contact_number,
-                       email, preferred_contact, status, requested_at,
-                       completed_at, remarks, total_cost, payment_status
-                FROM requests
-                {where}
-                ORDER BY requested_at DESC
+            where_sql = f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
+
+            # --------------------------
+            # 2. Fetch paginated requests
+            # --------------------------
+            if admin_id:
+                join_assignments = "JOIN request_assignments ra ON r.request_id = ra.request_id"
+            else:
+                join_assignments = ""
+
+            cur.execute(f"""
+                SELECT r.request_id, r.student_id, r.full_name, r.contact_number, r.email,
+                       r.preferred_contact, r.status, r.requested_at, r.completed_at, r.remarks,
+                       r.total_cost, r.payment_status
+                FROM requests r
+                {join_assignments}
+                {where_sql}
+                ORDER BY r.requested_at DESC
                 LIMIT %s OFFSET %s
-            """
-
-            cur.execute(query, params + [limit, offset])
+            """, params + [limit, offset])
             rows = cur.fetchall()
 
             if not rows:
                 return {"requests": [], "total": 0}
 
-            # Extract IDs
             request_ids = [r[0] for r in rows]
+            placeholders = ','.join(['%s'] * len(request_ids))
 
             # --------------------------
-            # 2. TOTAL COUNT
+            # 3. Total count
             # --------------------------
-            count_query = f"SELECT COUNT(*) FROM requests {where}"
-            cur.execute(count_query, params)
-            total = cur.fetchone()[0]
+            cur.execute(f"""
+                SELECT COUNT(*)
+                FROM requests r
+                {join_assignments}
+                {where_sql}
+            """, params)
+            total_count = cur.fetchone()[0]
 
             # --------------------------
-            # 3. BULK FETCH DOCUMENTS
+            # 4. Bulk fetch documents
             # --------------------------
-            cur.execute("""
+            cur.execute(f"""
                 SELECT rd.request_id, d.doc_name, rd.quantity, d.cost
                 FROM request_documents rd
                 JOIN documents d ON rd.doc_id = d.doc_id
-                WHERE rd.request_id IN %s
-            """, (tuple(request_ids),))
-
+                WHERE rd.request_id IN ({placeholders})
+            """, request_ids)
             docs_map = defaultdict(list)
             for rid, name, qty, cost in cur.fetchall():
                 docs_map[rid].append({"name": name, "quantity": qty, "cost": cost})
 
             # --------------------------
-            # 4. BULK FETCH REQUIREMENTS
+            # 5. Bulk fetch requirements
             # --------------------------
-            cur.execute("""
+            cur.execute(f"""
                 SELECT rd.request_id, r.requirement_name
                 FROM request_documents rd
                 JOIN document_requirements dr ON rd.doc_id = dr.doc_id
-                JOIN requirements r ON r.req_id = dr.req_id
-                WHERE rd.request_id IN %s
-            """, (tuple(request_ids),))
-
+                JOIN requirements r ON dr.req_id = r.req_id
+                WHERE rd.request_id IN ({placeholders})
+            """, request_ids)
             reqs_map = defaultdict(list)
             for rid, req_name in cur.fetchall():
                 reqs_map[rid].append(req_name)
 
             # --------------------------
-            # 5. BULK FETCH UPLOADED FILES
+            # 6. Bulk fetch uploaded files
             # --------------------------
-            cur.execute("""
+            cur.execute(f"""
                 SELECT rrl.request_id, r.requirement_name, rrl.file_path
                 FROM request_requirements_links rrl
-                JOIN requirements r ON r.req_id = rrl.requirement_id
-                WHERE rrl.request_id IN %s
-            """, (tuple(request_ids),))
-
+                JOIN requirements r ON rrl.requirement_id = r.req_id
+                WHERE rrl.request_id IN ({placeholders})
+            """, request_ids)
             files_map = defaultdict(list)
             for rid, req_name, path in cur.fetchall():
                 files_map[rid].append({"requirement": req_name, "file_path": path})
 
             # --------------------------
-            # 6. BULK FETCH RECENT LOGS
+            # 7. Bulk fetch recent logs
             # --------------------------
-            cur.execute("""
-                SELECT DISTINCT ON (request_id)
-                    request_id, admin_id, action, details, timestamp
-                FROM (
-                    SELECT
-                        request_id,
-                        admin_id,
-                        action,
-                        details,
-                        timestamp
-                    FROM logs
-                ) AS logs_parsed
-                WHERE request_id IN %s
+            cur.execute(f"""
+                SELECT DISTINCT ON (request_id) request_id, admin_id, action, details, timestamp
+                FROM logs
+                WHERE request_id IN ({placeholders})
                 ORDER BY request_id, timestamp DESC
-            """, (tuple(request_ids),))
-
+            """, request_ids)
             logs_map = {}
-            for rid, admin_id, action, details, ts in cur.fetchall():
+            for rid, log_admin, action, details, ts in cur.fetchall():
                 logs_map[rid] = {
-                    "admin_id": admin_id,
+                    "admin_id": log_admin,
                     "action": action,
                     "details": details,
-                    "timestamp": ts.strftime("%Y-%m-%d %H:%M:%S") if ts else None,
+                    "timestamp": ts.strftime("%Y-%m-%d %H:%M:%S") if ts else None
                 }
 
             # --------------------------
-            # 7. Assemble Final Output
+            # 8. Assemble results
             # --------------------------
             results = []
             for r in rows:
@@ -147,8 +150,7 @@ class ManageRequestModel:
                     "recent_log": logs_map.get(rid)
                 })
 
-            return {"requests": results, "total": total}
-
+            return {"requests": results, "total": total_count}
         finally:
             cur.close()
 
@@ -183,121 +185,6 @@ class ManageRequestModel:
                 conn.commit()
                 return True
             return False
-        finally:
-            cur.close()
-
-    @staticmethod
-    def get_assigned_requests(admin_id, page=1, limit=20, search=None):
-        """Fetch paginated requests assigned to a specific admin based on logs."""
-        conn = g.db_conn
-        cur = conn.cursor()
-        try:
-            # First, get unique request_ids from logs where admin has performed actions
-            cur.execute("""
-                SELECT DISTINCT details
-                FROM logs
-                WHERE admin_id = %s
-            """, (admin_id,))
-            log_details = cur.fetchall()
-
-            # Extract request_ids from details (assuming format like 'Changed status of request REQ001 to ...')
-            request_ids = set()
-            for detail in log_details:
-                detail_str = detail[0]
-                if 'request ' in detail_str:
-                    parts = detail_str.split('request ')
-                    if len(parts) > 1:
-                        req_id = parts[1].split()[0]  # Take the first word after 'request '
-                        request_ids.add(req_id)
-
-            if not request_ids:
-                return {"requests": [], "total": 0}
-
-            # Now, fetch requests for these ids, paginated, with optional search
-            request_ids_list = list(request_ids)
-            placeholders = ','.join(['%s'] * len(request_ids_list))
-            offset = (page - 1) * limit
-
-            where_clause = f"WHERE request_id IN ({placeholders})"
-            params = request_ids_list.copy()
-            if search:
-                where_clause += """
-                AND (full_name ILIKE %s OR student_id ILIKE %s OR email ILIKE %s OR contact_number ILIKE %s)
-                """
-                search_param = f"%{search}%"
-                params.extend([search_param] * 4)
-
-            query = f"""
-                SELECT request_id, student_id, full_name, contact_number, email, preferred_contact, status, requested_at, completed_at, remarks, total_cost, payment_status
-                FROM requests
-                {where_clause}
-                ORDER BY requested_at DESC
-                LIMIT %s OFFSET %s
-            """
-            params.extend([limit, offset])
-            cur.execute(query, params)
-            requests = cur.fetchall()
-
-            # Get total count of assigned requests with search filter
-            total_query = f"SELECT COUNT(*) FROM requests {where_clause}"
-            total_params = params[:-2]  # Remove limit and offset
-            cur.execute(total_query, total_params)
-            total_count = cur.fetchone()[0]
-
-            detailed_requests = []
-            for req in requests:
-                request_id = req[0]
-                request_data = {
-                    "request_id": request_id,
-                    "student_id": req[1],
-                    "full_name": req[2],
-                    "contact_number": req[3],
-                    "email": req[4],
-                    "preferred_contact": req[5],
-                    "status": req[6],
-                    "requested_at": req[7].strftime("%Y-%m-%d %H:%M:%S") if req[7] else None,
-                    "completed_at": req[8].strftime("%Y-%m-%d %H:%M:%S") if req[8] else None,
-                    "remarks": req[9],
-                    "total_cost": req[10],
-                    "payment_status": req[11]
-                }
-                # Fetch requested documents with cost
-                cur.execute("""
-                    SELECT d.doc_name, rd.quantity, d.cost
-                    FROM request_documents rd
-                    JOIN documents d ON rd.doc_id = d.doc_id
-                    WHERE rd.request_id = %s
-                """, (request_id,))
-                docs = cur.fetchall()
-                request_data["documents"] = [{"name": doc[0], "quantity": doc[1], "cost": doc[2]} for doc in docs]
-
-                # Fetch requirements
-                cur.execute("""
-                    SELECT DISTINCT r.requirement_name
-                    FROM request_documents rd
-                    JOIN document_requirements dr ON rd.doc_id = dr.doc_id
-                    JOIN requirements r ON dr.req_id = r.req_id
-                    WHERE rd.request_id = %s
-                """, (request_id,))
-                reqs = cur.fetchall()
-                request_data["requirements"] = [req[0] for req in reqs]
-
-                # Fetch uploaded files
-                cur.execute("""
-                    SELECT r.requirement_name, rrl.file_path
-                    FROM request_requirements_links rrl
-                    JOIN requirements r ON rrl.requirement_id = r.req_id
-                    WHERE rrl.request_id = %s
-                """, (request_id,))
-                files = cur.fetchall()
-                request_data["uploaded_files"] = [{"requirement": file[0], "file_path": file[1]} for file in files]
-
-                # Fetch recent logs
-                recent_logs = ManageRequestModel.get_recent_logs_for_request(request_id, limit=1)
-                request_data["recent_log"] = recent_logs[0] if recent_logs else None
-
-                detailed_requests.append(request_data)
-            return {"requests": detailed_requests, "total": total_count}
         finally:
             cur.close()
 
