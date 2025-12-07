@@ -524,6 +524,76 @@ class ManageRequestModel:
             cur.close()
 
     @staticmethod
+    def get_request_by_id(request_id):
+        """Fetch a single request by ID with all details."""
+        conn = g.db_conn
+        cur = conn.cursor()
+        try:
+            cur.execute("""
+                SELECT request_id, student_id, full_name, contact_number, email, preferred_contact, status, requested_at, completed_at, remarks, total_cost, payment_status
+                FROM requests
+                WHERE request_id = %s
+            """, (request_id,))
+            req = cur.fetchone()
+
+            if not req:
+                return None
+
+            request_data = {
+                "request_id": req[0],
+                "student_id": req[1],
+                "full_name": req[2],
+                "contact_number": req[3],
+                "email": req[4],
+                "preferred_contact": req[5],
+                "status": req[6],
+                "requested_at": req[7].strftime("%Y-%m-%d %H:%M:%S") if req[7] else None,
+                "completed_at": req[8].strftime("%Y-%m-%d %H:%M:%S") if req[8] else None,
+                "remarks": req[9],
+                "total_cost": req[10],
+                "payment_status": req[11]
+            }
+
+            # Fetch requested documents with cost
+            cur.execute("""
+                SELECT d.doc_name, rd.quantity, d.cost
+                FROM request_documents rd
+                JOIN documents d ON rd.doc_id = d.doc_id
+                WHERE rd.request_id = %s
+            """, (request_id,))
+            docs = cur.fetchall()
+            request_data["documents"] = [{"name": doc[0], "quantity": doc[1], "cost": doc[2]} for doc in docs]
+
+            # Fetch requirements
+            cur.execute("""
+                SELECT DISTINCT r.requirement_name
+                FROM request_documents rd
+                JOIN document_requirements dr ON rd.doc_id = dr.doc_id
+                JOIN requirements r ON dr.req_id = r.req_id
+                WHERE rd.request_id = %s
+            """, (request_id,))
+            reqs = cur.fetchall()
+            request_data["requirements"] = [req[0] for req in reqs]
+
+            # Fetch uploaded files
+            cur.execute("""
+                SELECT r.requirement_name, rrl.file_path
+                FROM request_requirements_links rrl
+                JOIN requirements r ON rrl.requirement_id = r.req_id
+                WHERE rrl.request_id = %s
+            """, (request_id,))
+            files = cur.fetchall()
+            request_data["uploaded_files"] = [{"requirement": file[0], "file_path": file[1]} for file in files]
+
+            # Fetch recent logs
+            recent_logs = ManageRequestModel.get_recent_logs_for_request(request_id, limit=1)
+            request_data["recent_log"] = recent_logs[0] if recent_logs else None
+
+            return request_data
+        finally:
+            cur.close()
+
+    @staticmethod
     def unassign_request_from_admin(request_id, admin_id):
         """Unassign a request from an admin."""
         conn = g.db_conn

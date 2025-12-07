@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { getCSRFToken } from "../../../utils/csrf";
-import RequestModal from "../../../components/admin/RequestModal";
+
 import StatusChangeConfirmModal from "../../../components/admin/StatusChangeConfirmModal";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
 import ReqSearchbar from "../../../components/admin/ReqSearchbar";
@@ -102,7 +102,7 @@ export default function AdminRequestsDashboard() {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedRequest, setSelectedRequest] = useState(null);
+
   const [statusChangeRequest, setStatusChangeRequest] = useState(null);
   const [newStatus, setNewStatus] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -178,6 +178,10 @@ export default function AdminRequestsDashboard() {
     fetchRequests(currentPage, searchQuery, viewMode);
     setStatusChangeRequest(null);
     setNewStatus(null);
+  };
+
+  const handleCardClick = (request) => {
+    navigate(`/admin/Requests/${request.request_id}`);
   };
 
   const handleAssignRequest = async (requestId, adminId) => {
@@ -281,7 +285,7 @@ export default function AdminRequestsDashboard() {
               requests={grouped[label]}
               uiLabel={label}
               onDropRequest={handleDropRequest}
-              onCardClick={setSelectedRequest}
+              onCardClick={handleCardClick}
               onAssign={handleAssignRequest}
             />
           ))}
@@ -319,13 +323,7 @@ export default function AdminRequestsDashboard() {
         )}
       </div>
 
-      {selectedRequest && (
-        <RequestModal
-          request={selectedRequest}
-          onClose={() => setSelectedRequest(null)}
-          onStatusChange={handleDropRequest}
-        />
-      )}
+
 
       {statusChangeRequest && (
         <StatusChangeConfirmModal

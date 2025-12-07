@@ -290,3 +290,19 @@ def unassign_request():
             return jsonify({"error": "Request not found or not assigned to this admin"}), 404
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@manage_request_bp.route("/api/admin/requests/<request_id>", methods=["GET"])
+@jwt_required_with_role(role)
+def get_single_request(request_id):
+    """
+    Get a single request by ID with all details.
+    """
+    try:
+        request_data = ManageRequestModel.get_request_by_id(request_id)
+        if request_data:
+            return jsonify(request_data), 200
+        else:
+            return jsonify({"error": "Request not found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

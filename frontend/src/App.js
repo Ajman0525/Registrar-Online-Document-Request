@@ -15,7 +15,7 @@ import AssignRequests from "./pages/admin/manage_request/AssignRequests";
 import Logs from "./pages/admin/Logs";
 import Settings from "./pages/admin/Settings";
 import RequestFlow from "./pages/user/request/RequestFlow";
-
+import RequestViewPage from "./pages/admin/manage_request/RequestViewPage"
 
 function App() {
   return (
@@ -36,6 +36,7 @@ function App() {
         <Route path="/admin" element={<RegistrarMasterLayout />}>
           <Route path="Dashboard" element={<Dashboard />} />
           <Route path="Requests" element={<Requests />} />
+          <Route path="Requests/:requestId" element={<RequestViewPage />} />
           <Route path ="Document" element = {<Documents />} />
           <Route path ="Logs" element = {<Logs />} />
           <Route path="settings" element={<Settings />} />
