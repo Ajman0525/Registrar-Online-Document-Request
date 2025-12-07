@@ -219,9 +219,9 @@ def ready_admins_table():
    execute_query(query)
 
 
-def ready_settings_table():
+def ready_max_request_settings_table():
    query = """
-   CREATE TABLE IF NOT EXISTS settings (
+   CREATE TABLE IF NOT EXISTS max_request_settings (
        key VARCHAR(100) PRIMARY KEY,
        value TEXT NOT NULL
    )
@@ -434,7 +434,7 @@ def initialize_db():
    ready_logs_table()
    ready_request_assignments_table()
    ready_admins_table()
-   ready_settings_table()
+   ready_max_request_settings_table()
    ready_admin_settings_table()
    #insert_sample_data()
    print("Database and tables initialized successfully.")

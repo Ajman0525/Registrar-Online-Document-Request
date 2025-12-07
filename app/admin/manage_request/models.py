@@ -501,7 +501,7 @@ class ManageRequestModel:
         cur = conn.cursor()
         try:
             cur.execute("""
-                INSERT INTO settings (key, value)
+                INSERT INTO max_request_settings (key, value)
                 VALUES ('global_max_assign', %s)
                 ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
             """, (str(max_assign),))
