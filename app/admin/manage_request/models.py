@@ -512,3 +512,22 @@ class ManageRequestModel:
             conn.commit()
         finally:
             cur.close()
+
+    @staticmethod
+    def unassign_request_from_admin(request_id, admin_id):
+        """Unassign a request from an admin."""
+        conn = g.db_conn
+        cur = conn.cursor()
+        try:
+            cur.execute("""
+                DELETE FROM request_assignments
+                WHERE request_id = %s AND admin_id = %s
+            """, (request_id, admin_id))
+            conn.commit()
+            return cur.rowcount > 0  # Return True if a row was deleted
+        except Exception as e:
+            conn.rollback()
+            print(f"Error unassigning request {request_id} from admin {admin_id}: {e}")
+            return False
+        finally:
+            cur.close()

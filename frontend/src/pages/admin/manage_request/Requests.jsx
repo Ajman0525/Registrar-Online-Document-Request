@@ -7,6 +7,7 @@ import RequestModal from "../../../components/admin/RequestModal";
 import StatusChangeConfirmModal from "../../../components/admin/StatusChangeConfirmModal";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
 import ReqSearchbar from "../../../components/admin/ReqSearchbar";
+import AssignDropdown from "../../../components/admin/AssignDropdown";
 
 // =======================================
 // STATUS MAPPING 
@@ -23,9 +24,9 @@ const STATUS_MAP = {
 const UI_STATUSES = Object.keys(STATUS_MAP);
 
 // =======================================
-// Card Component 
+// Card Component
 // =======================================
-const RequestCard = ({ request, onClick }) => {
+const RequestCard = ({ request, onClick, onAssign }) => {
   const [{ isDragging }, drag] = useDrag(() => ({
     type: "REQUEST",
     item: { id: request.request_id },
@@ -40,7 +41,7 @@ const RequestCard = ({ request, onClick }) => {
     <div
       ref={drag}
       onClick={() => onClick(request)}
-      className={`bg-white rounded-xl p-4 mb-4 shadow-sm border border-gray-200 cursor-pointer transition 
+      className={`bg-white rounded-xl p-4 mb-4 shadow-sm border border-gray-200 cursor-pointer transition
       ${isDragging ? "opacity-50" : "opacity-100"}`}
     >
       <div className="text-gray-900 font-medium">
@@ -50,16 +51,16 @@ const RequestCard = ({ request, onClick }) => {
       <div className="text-gray-400 text-sm">{date}</div>
 
       <div className="flex justify-end mt-2">
-        <div className="w-6 h-6 bg-gray-300 rounded-full"></div>
+        <AssignDropdown requestId={request.request_id} onAssign={onAssign} />
       </div>
     </div>
   );
 };
 
 // =======================================
-// Column Component 
+// Column Component
 // =======================================
-const StatusColumn = ({ title, requests, onDropRequest, uiLabel, onCardClick }) => {
+const StatusColumn = ({ title, requests, onDropRequest, uiLabel, onCardClick, onAssign }) => {
   const [, drop] = useDrop({
     accept: "REQUEST",
     drop: (item) => onDropRequest(item.id, uiLabel),
@@ -178,6 +179,30 @@ export default function AdminRequestsDashboard() {
     setNewStatus(null);
   };
 
+  const handleAssignRequest = async (requestId, adminId) => {
+    try {
+      const res = await fetch("/api/admin/manual-assign", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-TOKEN": getCSRFToken(),
+        },
+        credentials: "include",
+        body: JSON.stringify({ request_ids: [requestId], admin_id: adminId }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(data.message);
+        fetchRequests(currentPage, searchQuery, viewMode);
+      } else {
+        alert(data.error);
+      }
+    } catch (err) {
+      console.error("Error assigning request:", err);
+      alert("Error assigning request");
+    }
+  };
+
   if (loading) return <LoadingSpinner message="Loading requests..." />;
 
   if (error)
@@ -256,6 +281,7 @@ export default function AdminRequestsDashboard() {
               uiLabel={label}
               onDropRequest={handleDropRequest}
               onCardClick={setSelectedRequest}
+              onAssign={handleAssignRequest}
             />
           ))}
         </div>

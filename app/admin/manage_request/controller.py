@@ -110,12 +110,12 @@ def auto_assign_requests():
 @jwt_required_with_role(role)
 def manual_assign_requests():
     """
-    Manually assign specific requests to the logged-in admin.
+    Manually assign specific requests to the logged-in admin or a specified admin.
     """
     try:
         data = request.get_json()
         request_ids = data.get("request_ids", [])
-        admin_id = get_jwt_identity()
+        admin_id = data.get("admin_id", get_jwt_identity())
         assigned_count = 0
         for req_id in request_ids:
             if ManageRequestModel.assign_request_to_admin(req_id, admin_id):
@@ -264,5 +264,27 @@ def set_admin_max_requests(admin_id):
         max_requests = data.get("max", 10)
         ManageRequestModel.set_admin_max_requests(admin_id, max_requests)
         return jsonify({"message": "Admin max requests updated"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@manage_request_bp.route("/api/admin/unassign", methods=["POST"])
+@jwt_required_with_role(role)
+def unassign_request():
+    """
+    Unassign a request from an admin.
+    """
+    try:
+        data = request.get_json()
+        request_id = data.get("request_id")
+        admin_id = data.get("admin_id")
+        if not request_id or not admin_id:
+            return jsonify({"error": "request_id and admin_id are required"}), 400
+
+        success = ManageRequestModel.unassign_request_from_admin(request_id, admin_id)
+        if success:
+            return jsonify({"message": "Request unassigned successfully"}), 200
+        else:
+            return jsonify({"error": "Request not found or not assigned to this admin"}), 404
     except Exception as e:
         return jsonify({"error": str(e)}), 500
