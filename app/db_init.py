@@ -181,6 +181,11 @@ def ready_logs_table():
    )
    """
    execute_query(query)
+   # Add request_id column if it doesn't exist
+   alter_query = """
+   ALTER TABLE logs ADD COLUMN IF NOT EXISTS request_id VARCHAR(15) DEFAULT 'none'
+   """
+   execute_query(alter_query)
 
 
 def ready_request_assignments_table():
@@ -228,8 +233,34 @@ def ready_admin_settings_table():
    execute_query(query)
 
 
-    
- 
+# ==========================
+# INDEXES FOR PERFORMANCE
+# ==========================
+
+def create_performance_indexes():
+   """Create indexes on frequently queried columns for better performance."""
+   indexes = [
+       "CREATE INDEX IF NOT EXISTS idx_requests_requested_at ON requests(requested_at DESC)",
+       "CREATE INDEX IF NOT EXISTS idx_requests_status ON requests(status)",
+       "CREATE INDEX IF NOT EXISTS idx_requests_request_id ON requests(request_id)",
+       "CREATE INDEX IF NOT EXISTS idx_request_documents_request_id ON request_documents(request_id)",
+       "CREATE INDEX IF NOT EXISTS idx_request_documents_doc_id ON request_documents(doc_id)",
+       "CREATE INDEX IF NOT EXISTS idx_document_requirements_doc_id ON document_requirements(doc_id)",
+       "CREATE INDEX IF NOT EXISTS idx_document_requirements_req_id ON document_requirements(req_id)",
+       "CREATE INDEX IF NOT EXISTS idx_request_requirements_links_request_id ON request_requirements_links(request_id)",
+       "CREATE INDEX IF NOT EXISTS idx_request_requirements_links_requirement_id ON request_requirements_links(requirement_id)",
+       "CREATE INDEX IF NOT EXISTS idx_logs_details ON logs(details)",
+       "CREATE INDEX IF NOT EXISTS idx_logs_admin_id ON logs(admin_id)",
+       "CREATE INDEX IF NOT EXISTS idx_logs_timestamp ON logs(timestamp DESC)",
+       "CREATE INDEX IF NOT EXISTS idx_request_assignments_request_id ON request_assignments(request_id)",
+       "CREATE INDEX IF NOT EXISTS idx_request_assignments_admin_id ON request_assignments(admin_id)"
+   ]
+
+   for index_query in indexes:
+       execute_query(index_query)
+   print("Performance indexes created successfully.")
+
+
 
 # ==========================
 # SAMPLE DATA (OPTIONAL)

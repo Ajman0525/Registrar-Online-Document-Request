@@ -1,92 +1,154 @@
 from flask import g
-
+from collections import defaultdict
 
 class ManageRequestModel:
     @staticmethod
     def get_all_requests(page=1, limit=20, search=None):
-        """Fetch paginated requests with their details."""
         conn = g.db_conn
         cur = conn.cursor()
         try:
             offset = (page - 1) * limit
-            where_clause = ""
+
+            # --------------------------
+            # 1. BASE QUERY + SEARCH
+            # --------------------------
+            where = ""
             params = []
+
             if search:
-                where_clause = """
-                WHERE full_name ILIKE %s OR student_id ILIKE %s OR email ILIKE %s OR contact_number ILIKE %s
+                where = """
+                    WHERE full_name ILIKE %s 
+                    OR student_id ILIKE %s 
+                    OR email ILIKE %s 
+                    OR contact_number ILIKE %s
                 """
-                search_param = f"%{search}%"
-                params = [search_param] * 4
+                p = f"%{search}%"
+                params = [p, p, p, p]
 
             query = f"""
-                SELECT request_id, student_id, full_name, contact_number, email, preferred_contact, status, requested_at, completed_at, remarks, total_cost, payment_status
+                SELECT request_id, student_id, full_name, contact_number,
+                       email, preferred_contact, status, requested_at,
+                       completed_at, remarks, total_cost, payment_status
                 FROM requests
-                {where_clause}
+                {where}
                 ORDER BY requested_at DESC
                 LIMIT %s OFFSET %s
             """
+
             cur.execute(query, params + [limit, offset])
-            requests = cur.fetchall()
+            rows = cur.fetchall()
 
-            # Get total count
-            count_query = f"SELECT COUNT(*) FROM requests {where_clause}"
+            if not rows:
+                return {"requests": [], "total": 0}
+
+            # Extract IDs
+            request_ids = [r[0] for r in rows]
+
+            # --------------------------
+            # 2. TOTAL COUNT
+            # --------------------------
+            count_query = f"SELECT COUNT(*) FROM requests {where}"
             cur.execute(count_query, params)
-            total_count = cur.fetchone()[0]
+            total = cur.fetchone()[0]
 
-            detailed_requests = []
-            for req in requests:
-                request_id = req[0]
-                request_data = {
-                    "request_id": request_id,
-                    "student_id": req[1],
-                    "full_name": req[2],
-                    "contact_number": req[3],
-                    "email": req[4],
-                    "preferred_contact": req[5],
-                    "status": req[6],
-                    "requested_at": req[7].strftime("%Y-%m-%d %H:%M:%S") if req[7] else None,
-                    "completed_at": req[8].strftime("%Y-%m-%d %H:%M:%S") if req[8] else None,
-                    "remarks": req[9],
-                    "total_cost": req[10],
-                    "payment_status": req[11]
+            # --------------------------
+            # 3. BULK FETCH DOCUMENTS
+            # --------------------------
+            cur.execute("""
+                SELECT rd.request_id, d.doc_name, rd.quantity, d.cost
+                FROM request_documents rd
+                JOIN documents d ON rd.doc_id = d.doc_id
+                WHERE rd.request_id IN %s
+            """, (tuple(request_ids),))
+
+            docs_map = defaultdict(list)
+            for rid, name, qty, cost in cur.fetchall():
+                docs_map[rid].append({"name": name, "quantity": qty, "cost": cost})
+
+            # --------------------------
+            # 4. BULK FETCH REQUIREMENTS
+            # --------------------------
+            cur.execute("""
+                SELECT rd.request_id, r.requirement_name
+                FROM request_documents rd
+                JOIN document_requirements dr ON rd.doc_id = dr.doc_id
+                JOIN requirements r ON r.req_id = dr.req_id
+                WHERE rd.request_id IN %s
+            """, (tuple(request_ids),))
+
+            reqs_map = defaultdict(list)
+            for rid, req_name in cur.fetchall():
+                reqs_map[rid].append(req_name)
+
+            # --------------------------
+            # 5. BULK FETCH UPLOADED FILES
+            # --------------------------
+            cur.execute("""
+                SELECT rrl.request_id, r.requirement_name, rrl.file_path
+                FROM request_requirements_links rrl
+                JOIN requirements r ON r.req_id = rrl.requirement_id
+                WHERE rrl.request_id IN %s
+            """, (tuple(request_ids),))
+
+            files_map = defaultdict(list)
+            for rid, req_name, path in cur.fetchall():
+                files_map[rid].append({"requirement": req_name, "file_path": path})
+
+            # --------------------------
+            # 6. BULK FETCH RECENT LOGS
+            # --------------------------
+            cur.execute("""
+                SELECT DISTINCT ON (request_id)
+                    request_id, admin_id, action, details, timestamp
+                FROM (
+                    SELECT
+                        request_id,
+                        admin_id,
+                        action,
+                        details,
+                        timestamp
+                    FROM logs
+                ) AS logs_parsed
+                WHERE request_id IN %s
+                ORDER BY request_id, timestamp DESC
+            """, (tuple(request_ids),))
+
+            logs_map = {}
+            for rid, admin_id, action, details, ts in cur.fetchall():
+                logs_map[rid] = {
+                    "admin_id": admin_id,
+                    "action": action,
+                    "details": details,
+                    "timestamp": ts.strftime("%Y-%m-%d %H:%M:%S") if ts else None,
                 }
-                # Fetch requested documents with cost
-                cur.execute("""
-                    SELECT d.doc_name, rd.quantity, d.cost
-                    FROM request_documents rd
-                    JOIN documents d ON rd.doc_id = d.doc_id
-                    WHERE rd.request_id = %s
-                """, (request_id,))
-                docs = cur.fetchall()
-                request_data["documents"] = [{"name": doc[0], "quantity": doc[1], "cost": doc[2]} for doc in docs]
 
-                # Fetch requirements
-                cur.execute("""
-                    SELECT DISTINCT r.requirement_name
-                    FROM request_documents rd
-                    JOIN document_requirements dr ON rd.doc_id = dr.doc_id
-                    JOIN requirements r ON dr.req_id = r.req_id
-                    WHERE rd.request_id = %s
-                """, (request_id,))
-                reqs = cur.fetchall()
-                request_data["requirements"] = [req[0] for req in reqs]
+            # --------------------------
+            # 7. Assemble Final Output
+            # --------------------------
+            results = []
+            for r in rows:
+                rid = r[0]
+                results.append({
+                    "request_id": rid,
+                    "student_id": r[1],
+                    "full_name": r[2],
+                    "contact_number": r[3],
+                    "email": r[4],
+                    "preferred_contact": r[5],
+                    "status": r[6],
+                    "requested_at": r[7].strftime("%Y-%m-%d %H:%M:%S") if r[7] else None,
+                    "completed_at": r[8].strftime("%Y-%m-%d %H:%M:%S") if r[8] else None,
+                    "remarks": r[9],
+                    "total_cost": r[10],
+                    "payment_status": r[11],
+                    "documents": docs_map[rid],
+                    "requirements": reqs_map[rid],
+                    "uploaded_files": files_map[rid],
+                    "recent_log": logs_map.get(rid)
+                })
 
-                # Fetch uploaded files
-                cur.execute("""
-                    SELECT r.requirement_name, rrl.file_path
-                    FROM request_requirements_links rrl
-                    JOIN requirements r ON rrl.requirement_id = r.req_id
-                    WHERE rrl.request_id = %s
-                """, (request_id,))
-                files = cur.fetchall()
-                request_data["uploaded_files"] = [{"requirement": file[0], "file_path": file[1]} for file in files]
+            return {"requests": results, "total": total}
 
-                # Fetch recent logs
-                recent_logs = ManageRequestModel.get_recent_logs_for_request(request_id, limit=1)
-                request_data["recent_log"] = recent_logs[0] if recent_logs else None
-
-                detailed_requests.append(request_data)
-            return {"requests": detailed_requests, "total": total_count}
         finally:
             cur.close()
 
@@ -112,9 +174,9 @@ class ManageRequestModel:
             if cur.rowcount > 0 and admin_id:
                 # Log the status change
                 cur.execute("""
-                    INSERT INTO logs (admin_id, action, details)
-                    VALUES (%s, %s, %s)
-                """, (admin_id, 'Status Change', f'Changed status of request {request_id} to {new_status}'))
+                    INSERT INTO logs (admin_id, action, details, request_id)
+                    VALUES (%s, %s, %s, %s)
+                """, (admin_id, 'Status Change', f'Changed status of request {request_id} to {new_status}', request_id))
                 conn.commit()
                 return True
             elif cur.rowcount > 0:
@@ -246,12 +308,12 @@ class ManageRequestModel:
         cur = conn.cursor()
         try:
             cur.execute("""
-                SELECT admin_id, action, details, timestamp
+                SELECT admin_id, action, details, timestamp, request_id
                 FROM logs
-                WHERE details LIKE %s
+                WHERE request_id = %s
                 ORDER BY timestamp DESC
                 LIMIT %s
-            """, (f'%{request_id}%', limit))
+            """, (request_id, limit))
             logs = cur.fetchall()
             return [
                 {
@@ -278,9 +340,9 @@ class ManageRequestModel:
             """, (request_id, admin_id))
             # Log the assignment
             cur.execute("""
-                INSERT INTO logs (admin_id, action, details)
-                VALUES (%s, %s, %s)
-            """, (assigner_admin_id, 'Request Assignment', f'Assigned request {request_id} to admin {admin_id}'))
+                INSERT INTO logs (admin_id, action, details, request_id)
+                VALUES (%s, %s, %s, %s)
+            """, (assigner_admin_id, 'Request Assignment', f'Assigned request {request_id} to admin {admin_id}', request_id))
             conn.commit()
             return True
         except Exception as e:
@@ -318,9 +380,9 @@ class ManageRequestModel:
                 """, (req[0], admin_id))
                 # Log the assignment
                 cur.execute("""
-                    INSERT INTO logs (admin_id, action, details)
-                    VALUES (%s, %s, %s)
-                """, (assigner_admin_id, 'Request Assignment', f'Auto-assigned request {req[0]} to admin {admin_id}'))
+                    INSERT INTO logs (admin_id, action, details, request_id)
+                    VALUES (%s, %s, %s, %s)
+                """, (assigner_admin_id, 'Request Assignment', f'Auto-assigned request {req[0]} to admin {admin_id}', req[0]))
 
             conn.commit()
             return len(unassigned_requests)
@@ -438,9 +500,9 @@ class ManageRequestModel:
 
             # Log the deletion
             cur.execute("""
-                INSERT INTO logs (admin_id, action, details)
-                VALUES (%s, %s, %s)
-            """, (admin_id, 'Request Deletion', f'Deleted request {request_id} and all associated data'))
+                INSERT INTO logs (admin_id, action, details, request_id)
+                VALUES (%s, %s, %s, %s)
+            """, (admin_id, 'Request Deletion', f'Deleted request {request_id} and all associated data', request_id))
 
             # Delete request_requirements_links (cascades to request_documents and requests due to FK constraints)
             cur.execute("""

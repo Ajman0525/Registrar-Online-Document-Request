@@ -177,24 +177,38 @@ def get_assignment_progress():
 @jwt_required_with_role(role)
 def get_admins_progress():
     """
-    Get assignment progress for all admins.
+    Get assignment progress for all admins using optimized single query.
     """
     try:
         conn = g.db_conn
         cur = conn.cursor()
-        cur.execute("SELECT email FROM admins ORDER BY email")
-        admins = cur.fetchall()
-        admins_progress = []
-        for admin in admins:
-            admin_id = admin[0]
-            progress = ManageRequestModel.get_assignment_progress(admin_id)
-            max_requests = ManageRequestModel.get_admin_max_requests(admin_id)
-            admins_progress.append({
-                "admin_id": admin_id,
-                "completed": progress["completed"],
-                "total": progress["total"],
-                "max_requests": max_requests
-            })
+        # Single query to get all admins' progress and max_requests
+        cur.execute("""
+            SELECT a.email,
+                   COALESCE(asp.value::int, 10) as max_requests,
+                   COALESCE(prog.total, 0) as total,
+                   COALESCE(prog.completed, 0) as completed
+            FROM admins a
+            LEFT JOIN admin_settings asp ON a.email = asp.admin_id AND asp.key = 'max_requests'
+            LEFT JOIN (
+                SELECT ra.admin_id,
+                       COUNT(*) as total,
+                       COUNT(CASE WHEN r.status = 'DOC-READY' THEN 1 END) as completed
+                FROM request_assignments ra
+                LEFT JOIN requests r ON ra.request_id = r.request_id
+                GROUP BY ra.admin_id
+            ) prog ON a.email = prog.admin_id
+            ORDER BY a.email
+        """)
+        admins_progress = [
+            {
+                "admin_id": row[0],
+                "completed": row[3],
+                "total": row[2],
+                "max_requests": row[1]
+            }
+            for row in cur.fetchall()
+        ]
         cur.close()
         return jsonify({"admins": admins_progress}), 200
     except Exception as e:
