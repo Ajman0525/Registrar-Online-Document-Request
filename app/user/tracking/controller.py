@@ -82,7 +82,7 @@ def get_tracking_data():
 
         # Send OTP to registered phone (printed in dev)
         phone = result["phone_number"]
-        send_whatsapp_otp(phone, f"Your verification code is: {otp}")
+        send_whatsapp_otp(phone, otp)
 
         # Build response
         response_data = {
