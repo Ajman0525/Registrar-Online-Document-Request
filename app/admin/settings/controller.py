@@ -1,7 +1,7 @@
 from . import settings_bp
 from flask import jsonify, request, current_app
 from app.utils.decorator import jwt_required_with_role
-from .models import Admin, Settings
+from .models import Admin, OpenRequestRestriction
 
 role = "admin"
 
@@ -66,7 +66,7 @@ def delete_admin(email):
 def get_settings():
     """Get current settings."""
     try:
-        settings = Settings.get_settings()
+        settings = OpenRequestRestriction.get_settings()
         if settings:
             return jsonify(settings), 200
         else:
@@ -87,7 +87,7 @@ def update_settings():
     if not start_time or not end_time or not available_days:
         return jsonify({"error": "start_time, end_time, and available_days are required"}), 400
 
-    if Settings.update_settings(start_time, end_time, available_days):
+    if OpenRequestRestriction.update_settings(start_time, end_time, available_days):
         current_app.logger.info("Settings updated")
         return jsonify({"message": "Settings updated successfully"}), 200
     else:

@@ -2,14 +2,14 @@ from flask import g
 from app import db_pool
 import json
 
-class Settings:
+class OpenRequestRestriction:
     @staticmethod
     def get_settings():
         """Fetch current settings."""
         conn = g.db_conn
         cur = conn.cursor()
         try:
-            cur.execute("SELECT start_time, end_time, available_days FROM settings WHERE id = 1")
+            cur.execute("SELECT start_time, end_time, available_days FROM open_request_restriction WHERE id = 1")
             row = cur.fetchone()
             if row:
                 return {
@@ -28,7 +28,7 @@ class Settings:
         cur = conn.cursor()
         try:
             cur.execute("""
-                INSERT INTO settings (id, start_time, end_time, available_days)
+                INSERT INTO open_request_restriction (id, start_time, end_time, available_days)
                 VALUES (1, %s, %s, %s)
                 ON CONFLICT (id) DO UPDATE SET
                     start_time = EXCLUDED.start_time,

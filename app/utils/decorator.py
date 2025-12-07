@@ -1,7 +1,7 @@
 from functools import wraps
 from flask import jsonify
 from flask_jwt_extended import verify_jwt_in_request, get_jwt, get_jwt_identity
-from app.admin.settings.models import Settings
+from app.admin.settings.models import OpenRequestRestriction
 import datetime
 
 def jwt_required_with_role(role=None):
@@ -53,7 +53,7 @@ def is_request_allowed():
     current_day = now.strftime('%A')  # e.g., 'Monday'
     current_time = now.time()
 
-    settings = Settings.get_settings()
+    settings = OpenRequestRestriction.get_settings()
     if not settings:
         # If no settings, allow by default
         return True

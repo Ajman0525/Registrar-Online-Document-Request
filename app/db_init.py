@@ -193,9 +193,9 @@ def ready_admins_table():
    execute_query(query)
 
 
-def ready_settings_table():
+def ready_open_request_restriction_table():
    query = """
-   CREATE TABLE IF NOT EXISTS settings (
+   CREATE TABLE IF NOT EXISTS open_request_restriction (
        id SERIAL PRIMARY KEY,
        start_time TIME NOT NULL,
        end_time TIME NOT NULL,
@@ -370,7 +370,7 @@ def initialize_db():
    ready_request_requirements_links_table()
    ready_logs_table()
    ready_admins_table()
-   ready_settings_table()
+   ready_open_request_restriction_table()
    #insert_sample_data()
    print("Database and tables initialized successfully.")
 
