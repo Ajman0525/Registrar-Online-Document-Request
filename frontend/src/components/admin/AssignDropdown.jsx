@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { getCSRFToken } from "../../utils/csrf";
 
-const AssignDropdown = ({ requestId, onAssign }) => {
+const AssignDropdown = ({ requestId, onAssign, onToggleOpen }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [admins, setAdmins] = useState([]);
   const [filteredAdmins, setFilteredAdmins] = useState([]);
@@ -26,6 +26,7 @@ const AssignDropdown = ({ requestId, onAssign }) => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsOpen(false);
+        onToggleOpen(false);
       }
     };
 
@@ -33,7 +34,7 @@ const AssignDropdown = ({ requestId, onAssign }) => {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, []);
+  }, [onToggleOpen]);
 
   const fetchAdmins = async () => {
     setLoading(true);
@@ -62,6 +63,7 @@ const AssignDropdown = ({ requestId, onAssign }) => {
     onAssign(requestId, adminId);
     setIsOpen(false);
     setSearchQuery("");
+    onToggleOpen(false);
   };
 
   return (
@@ -70,7 +72,9 @@ const AssignDropdown = ({ requestId, onAssign }) => {
         className="w-6 h-6 bg-gray-300 rounded-full cursor-pointer hover:bg-gray-400 transition-colors"
         onClick={(e) => {
           e.stopPropagation();
-          setIsOpen(!isOpen);
+          const newIsOpen = !isOpen;
+          setIsOpen(newIsOpen);
+          onToggleOpen(newIsOpen);
         }}
       ></div>
 

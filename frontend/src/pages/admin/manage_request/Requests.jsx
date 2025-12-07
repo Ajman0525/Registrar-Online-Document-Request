@@ -27,6 +27,7 @@ const UI_STATUSES = Object.keys(STATUS_MAP);
 // Card Component
 // =======================================
 const RequestCard = ({ request, onClick, onAssign }) => {
+  const [isAssigning, setIsAssigning] = useState(false);
   const [{ isDragging }, drag] = useDrag(() => ({
     type: "REQUEST",
     item: { id: request.request_id },
@@ -40,8 +41,8 @@ const RequestCard = ({ request, onClick, onAssign }) => {
   return (
     <div
       ref={drag}
-      onClick={() => onClick(request)}
-      className={`bg-white rounded-xl p-4 mb-4 shadow-sm border border-gray-200 cursor-pointer transition
+      onClick={() => !isAssigning && onClick(request)}
+      className={`bg-white rounded-xl p-4 mb-4 shadow-sm border border-gray-200 ${isAssigning ? 'cursor-not-allowed' : 'cursor-pointer'} transition
       ${isDragging ? "opacity-50" : "opacity-100"}`}
     >
       <div className="text-gray-900 font-medium">
@@ -51,7 +52,7 @@ const RequestCard = ({ request, onClick, onAssign }) => {
       <div className="text-gray-400 text-sm">{date}</div>
 
       <div className="flex justify-end mt-2">
-        <AssignDropdown requestId={request.request_id} onAssign={onAssign} />
+        <AssignDropdown requestId={request.request_id} onAssign={onAssign} onToggleOpen={setIsAssigning} />
       </div>
     </div>
   );
@@ -82,7 +83,7 @@ const StatusColumn = ({ title, requests, onDropRequest, uiLabel, onCardClick, on
 
       <div className="flex flex-col">
         {requests.map((r) => (
-          <RequestCard key={r.request_id} request={r} onClick={onCardClick} />
+          <RequestCard key={r.request_id} request={r} onClick={onCardClick} onAssign={onAssign} />
         ))}
 
         {requests.length === 0 && (
