@@ -95,15 +95,19 @@ def get_my_requests():
 @jwt_required_with_role(role)
 def auto_assign_requests():
     """
-    Auto-assign a number of requests to the logged-in admin.
+    Auto-assign a number of requests using load balancing across all admins.
     """
     try:
         data = request.get_json()
         number = data.get("number", 1)
-        admin_id = get_jwt_identity()
         assigner_admin_id = get_jwt_identity()
-        assigned_count = ManageRequestModel.auto_assign_requests(admin_id, number, assigner_admin_id)
-        return jsonify({"message": f"Auto-assigned {assigned_count} requests"}), 200
+
+        assigned_count = ManageRequestModel.auto_assign_requests_load_balanced(number, assigner_admin_id)
+
+        if assigned_count == 0:
+            return jsonify({"error": "No requests could be assigned. All admins may be at capacity or no unassigned requests available."}), 400
+
+        return jsonify({"message": f"Successfully auto-assigned {assigned_count} requests using load balancing"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

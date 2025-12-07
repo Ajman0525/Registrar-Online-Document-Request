@@ -216,10 +216,25 @@ class ManageRequestModel:
 
     @staticmethod
     def assign_request_to_admin(request_id, admin_id, assigner_admin_id):
-        """Assign a request to an admin."""
+        """Assign a request to an admin, respecting max_requests limit."""
         conn = g.db_conn
         cur = conn.cursor()
         try:
+            # Check if the admin is already at max capacity
+            cur.execute("""
+                SELECT COUNT(*)
+                FROM request_assignments
+                WHERE admin_id = %s
+            """, (admin_id,))
+            current_assigned = cur.fetchone()[0]
+
+            # Get max_requests for the admin
+            max_requests = ManageRequestModel.get_admin_max_requests(admin_id)
+
+            if current_assigned >= max_requests:
+                print(f"Admin {admin_id} is already at max capacity ({max_requests})")
+                return False  # Cannot assign more
+
             cur.execute("""
                 INSERT INTO request_assignments (request_id, admin_id)
                 VALUES (%s, %s)
@@ -240,11 +255,39 @@ class ManageRequestModel:
             cur.close()
 
     @staticmethod
-    def auto_assign_requests(admin_id, n, assigner_admin_id):
-        """Auto-assign the next N unassigned PENDING requests to the admin."""
+    def auto_assign_requests_load_balanced(n, assigner_admin_id):
+        """Auto-assign the next N unassigned PENDING requests to admins using load balancing."""
         conn = g.db_conn
         cur = conn.cursor()
         try:
+            # Get all admins with their current load and max_requests
+            cur.execute("""
+                SELECT a.email,
+                       COALESCE(asp.value::int, 10) as max_requests,
+                       COALESCE(assigned.count, 0) as current_assigned
+                FROM admins a
+                LEFT JOIN admin_settings asp ON a.email = asp.admin_id AND asp.key = 'max_requests'
+                LEFT JOIN (
+                    SELECT admin_id, COUNT(*) as count
+                    FROM request_assignments
+                    GROUP BY admin_id
+                ) assigned ON a.email = assigned.admin_id
+                WHERE a.role != 'none'
+                ORDER BY a.email
+            """)
+            admins = cur.fetchall()
+
+            # Calculate available capacity for each admin
+            admin_capacities = []
+            for admin in admins:
+                admin_id, max_requests, current_assigned = admin
+                available = max_requests - current_assigned
+                if available > 0:
+                    admin_capacities.append((admin_id, available))
+
+            if not admin_capacities:
+                return 0  # No admins with available capacity
+
             # Get the next N unassigned PENDING requests
             cur.execute("""
                 SELECT request_id
@@ -259,26 +302,47 @@ class ManageRequestModel:
             if not unassigned_requests:
                 return 0  # No requests to assign
 
-            # Assign them and log
-            for req in unassigned_requests:
-                cur.execute("""
-                    INSERT INTO request_assignments (request_id, admin_id)
-                    VALUES (%s, %s)
-                """, (req[0], admin_id))
-                # Log the assignment
-                cur.execute("""
-                    INSERT INTO logs (admin_id, action, details, request_id)
-                    VALUES (%s, %s, %s, %s)
-                """, (assigner_admin_id, 'Request Assignment', f'Auto-assigned request {req[0]} to admin {admin_id}', req[0]))
+            # Distribute requests using round-robin load balancing
+            assigned_count = 0
+            request_index = 0
+            admin_index = 0
+
+            while assigned_count < len(unassigned_requests) and admin_capacities:
+                admin_id, available = admin_capacities[admin_index % len(admin_capacities)]
+
+                # Assign one request to this admin if they have capacity
+                if available > 0:
+                    req_id = unassigned_requests[request_index][0]
+                    cur.execute("""
+                        INSERT INTO request_assignments (request_id, admin_id)
+                        VALUES (%s, %s)
+                    """, (req_id, admin_id))
+                    # Log the assignment
+                    cur.execute("""
+                        INSERT INTO logs (admin_id, action, details, request_id)
+                        VALUES (%s, %s, %s, %s)
+                    """, (assigner_admin_id, 'Request Assignment', f'Auto-assigned request {req_id} to admin {admin_id}', req_id))
+
+                    assigned_count += 1
+                    request_index += 1
+                    # Reduce available capacity
+                    admin_capacities[admin_index % len(admin_capacities)] = (admin_id, available - 1)
+
+                admin_index += 1
+
+                # Remove admins with no capacity left
+                admin_capacities = [(aid, av) for aid, av in admin_capacities if av > 0]
 
             conn.commit()
-            return len(unassigned_requests)
+            return assigned_count
         except Exception as e:
             conn.rollback()
-            print(f"Error auto-assigning requests to admin {admin_id}: {e}")
+            print(f"Error auto-assigning requests with load balancing: {e}")
             return 0
         finally:
             cur.close()
+
+
 
     @staticmethod
     def get_assigned_requests_for_admin(admin_id):

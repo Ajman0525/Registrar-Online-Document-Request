@@ -15,6 +15,8 @@ export default function AssignRequests() {
   const [selectedAdmin, setSelectedAdmin] = useState(null);
   const [adminRequests, setAdminRequests] = useState([]);
   const [showModal, setShowModal] = useState(false);
+  const [showManualAssignModal, setShowManualAssignModal] = useState(false);
+  const [selectedAdminForManual, setSelectedAdminForManual] = useState(null);
 
   useEffect(() => {
     fetchUnassignedRequests();
@@ -213,9 +215,14 @@ export default function AssignRequests() {
         body: JSON.stringify({ number: autoAssignNumber }),
       });
       const data = await res.json();
-      setMessage(data.message || data.error);
-      fetchProgress();
-      fetchUnassignedRequests();
+      if (res.ok) {
+        setMessage(data.message || "Auto-assignment completed successfully");
+        fetchProgress();
+        fetchUnassignedRequests();
+        fetchAdminsProgress();
+      } else {
+        setMessage(data.error || "Error during auto-assign");
+      }
     } catch (err) {
       setMessage("Error during auto-assign");
     } finally {
@@ -223,7 +230,14 @@ export default function AssignRequests() {
     }
   };
 
-  const handleManualAssign = async () => {
+  const handleManualAssign = () => {
+    if (selectedRequests.length === 0) return;
+    setShowManualAssignModal(true);
+  };
+
+  const confirmManualAssign = async () => {
+    if (!selectedAdminForManual) return;
+
     setLoading(true);
     setMessage("");
     try {
@@ -234,13 +248,18 @@ export default function AssignRequests() {
           "X-CSRF-TOKEN": getCSRFToken(),
         },
         credentials: "include",
-        body: JSON.stringify({ request_ids: selectedRequests }),
+        body: JSON.stringify({ request_ids: selectedRequests, admin_id: selectedAdminForManual }),
       });
       const data = await res.json();
       setMessage(data.message || data.error);
-      setSelectedRequests([]);
-      fetchProgress();
-      fetchUnassignedRequests();
+      if (res.ok) {
+        setSelectedRequests([]);
+        setShowManualAssignModal(false);
+        setSelectedAdminForManual(null);
+        fetchProgress();
+        fetchUnassignedRequests();
+        fetchAdminsProgress();
+      }
     } catch (err) {
       setMessage("Error during manual assign");
     } finally {
@@ -470,6 +489,64 @@ export default function AssignRequests() {
                 className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal for Manual Assign */}
+      {showManualAssignModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full">
+            <h2 className="text-2xl font-bold mb-4">Assign {selectedRequests.length} Request(s)</h2>
+            <p className="mb-4 text-gray-600">Select an admin to assign the selected requests to:</p>
+            <div className="space-y-2 max-h-60 overflow-y-auto">
+              {admins.map((admin) => {
+                const isAtCapacity = admin.total >= admin.max_requests;
+                return (
+                  <div
+                    key={admin.admin_id}
+                    className={`p-3 border rounded cursor-pointer ${
+                      selectedAdminForManual === admin.admin_id
+                        ? 'border-blue-500 bg-blue-50'
+                        : isAtCapacity
+                        ? 'border-gray-300 bg-gray-100 cursor-not-allowed'
+                        : 'border-gray-300 hover:bg-gray-50'
+                    }`}
+                    onClick={() => !isAtCapacity && setSelectedAdminForManual(admin.admin_id)}
+                  >
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <div className="font-medium">{admin.admin_id}</div>
+                        <div className="text-sm text-gray-600">
+                          {admin.total} / {admin.max_requests} requests
+                        </div>
+                      </div>
+                      {isAtCapacity && (
+                        <span className="text-xs text-red-600 font-medium">At Capacity</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="mt-6 flex justify-end space-x-2">
+              <button
+                onClick={() => {
+                  setShowManualAssignModal(false);
+                  setSelectedAdminForManual(null);
+                }}
+                className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmManualAssign}
+                disabled={!selectedAdminForManual || loading}
+                className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:bg-gray-300"
+              >
+                {loading ? "Assigning..." : "Assign"}
               </button>
             </div>
           </div>
