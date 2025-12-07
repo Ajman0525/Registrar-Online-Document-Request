@@ -155,6 +155,14 @@ def ready_request_documents_table():
    """
    execute_query(query)
 
+# Add status column if it doesn't exist
+   alter_query = """
+   ALTER TABLE request_documents ADD COLUMN IF NOT EXISTS status VARCHAR(15) DEFAULT 'IN-PROGRESS' 
+   """
+   execute_query(alter_query)
+
+
+
 
 #mapping table between requests and requirements with uploaded file paths
 def ready_request_requirements_links_table():
