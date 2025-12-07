@@ -1,6 +1,6 @@
 from . import request_bp
 from ...whatsapp.controller import send_whatsapp_message 
-from flask import jsonify, request, session
+from flask import jsonify, request, session, current_app
 from app.utils.decorator import jwt_required_with_role
 from flask_jwt_extended import get_jwt_identity, unset_jwt_cookies
 from .models import Request
@@ -11,6 +11,29 @@ from supabase import create_client, Client
 from config import SUPABASE_URL, SUPABASE_ANON_KEY
 
 role = 'user'
+
+def send_whatsapp_tracking(phone, full_name, request_id):
+    template_name = "tracking_number"
+    
+    components = [
+        {
+            "type": "body",
+            "parameters": [
+                {"type": "text", "text": str(full_name)},
+                {"type": "text", "text": str(request_id)}
+            ]
+        }
+    ]
+    
+    print(f"[OTP Verification] Attempting to send WhatsApp Tracking Number {request_id} to {phone}")
+    
+    result = send_whatsapp_message(phone, template_name, components)
+    
+    if "error" in result:
+        current_app.logger.error(f"WhatsApp send failed for Tracking Number to {phone}: {result['error']}")
+        return {"status": "failed", "message": "Failed to send Tracking Number via WhatsApp"}
+    
+    return {"status": "success"}
 
 @request_bp.route("/api/request", methods=["GET"])
 @jwt_required_with_role(role)
@@ -41,7 +64,11 @@ def get_request_page_data():
         student_data = Request.get_student_data(student_id)
 
         student_name = student_data.get("full_name")
+        session["student_name"] = student_name
+
         student_contact = student_data.get("contact_number")
+        session["student_contact"] = student_contact
+
         student_email = student_data.get("email")
         
         #Store student info in the database
@@ -325,17 +352,15 @@ def set_preferred_contact():
 def complete_request():
 
     request_id = session.get("request_id")
+    phone = session.get("student_contact")
+    full_name = session.get("student_name")
     total_price = request.get_json().get("total_price", 0.0)
 
     try:
+        send_whatsapp_tracking(phone, full_name, request_id)
+
         Request.mark_request_complete(request_id, total_price)
-
-        # Clear request_id from session to allow new requests
-        session.clear()
-
-        #Todo send details include: request id to preferred contact
-        #Todo delete the jwt session and other session variables
-
+        
         return jsonify({
             "success": True,
             "request_id": request_id,
