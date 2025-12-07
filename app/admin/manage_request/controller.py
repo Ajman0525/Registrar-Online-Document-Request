@@ -100,7 +100,8 @@ def auto_assign_requests():
         data = request.get_json()
         number = data.get("number", 1)
         admin_id = get_jwt_identity()
-        assigned_count = ManageRequestModel.auto_assign_requests(admin_id, number)
+        assigner_admin_id = get_jwt_identity()
+        assigned_count = ManageRequestModel.auto_assign_requests(admin_id, number, assigner_admin_id)
         return jsonify({"message": f"Auto-assigned {assigned_count} requests"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -116,9 +117,10 @@ def manual_assign_requests():
         data = request.get_json()
         request_ids = data.get("request_ids", [])
         admin_id = data.get("admin_id", get_jwt_identity())
+        assigner_admin_id = get_jwt_identity()
         assigned_count = 0
         for req_id in request_ids:
-            if ManageRequestModel.assign_request_to_admin(req_id, admin_id):
+            if ManageRequestModel.assign_request_to_admin(req_id, admin_id, assigner_admin_id):
                 assigned_count += 1
         return jsonify({"message": f"Manually assigned {assigned_count} requests"}), 200
     except Exception as e:

@@ -266,7 +266,7 @@ class ManageRequestModel:
             cur.close()
 
     @staticmethod
-    def assign_request_to_admin(request_id, admin_id):
+    def assign_request_to_admin(request_id, admin_id, assigner_admin_id):
         """Assign a request to an admin."""
         conn = g.db_conn
         cur = conn.cursor()
@@ -276,6 +276,11 @@ class ManageRequestModel:
                 VALUES (%s, %s)
                 ON CONFLICT (request_id) DO UPDATE SET admin_id = EXCLUDED.admin_id, assigned_at = NOW()
             """, (request_id, admin_id))
+            # Log the assignment
+            cur.execute("""
+                INSERT INTO logs (admin_id, action, details)
+                VALUES (%s, %s, %s)
+            """, (assigner_admin_id, 'Request Assignment', f'Assigned request {request_id} to admin {admin_id}'))
             conn.commit()
             return True
         except Exception as e:
@@ -286,7 +291,7 @@ class ManageRequestModel:
             cur.close()
 
     @staticmethod
-    def auto_assign_requests(admin_id, n):
+    def auto_assign_requests(admin_id, n, assigner_admin_id):
         """Auto-assign the next N unassigned PENDING requests to the admin."""
         conn = g.db_conn
         cur = conn.cursor()
@@ -305,12 +310,17 @@ class ManageRequestModel:
             if not unassigned_requests:
                 return 0  # No requests to assign
 
-            # Assign them
+            # Assign them and log
             for req in unassigned_requests:
                 cur.execute("""
                     INSERT INTO request_assignments (request_id, admin_id)
                     VALUES (%s, %s)
                 """, (req[0], admin_id))
+                # Log the assignment
+                cur.execute("""
+                    INSERT INTO logs (admin_id, action, details)
+                    VALUES (%s, %s, %s)
+                """, (assigner_admin_id, 'Request Assignment', f'Auto-assigned request {req[0]} to admin {admin_id}'))
 
             conn.commit()
             return len(unassigned_requests)
