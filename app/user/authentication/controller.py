@@ -2,6 +2,11 @@ from . import authentication_user_bp
 from flask import jsonify, request, session, current_app
 from .models import AuthenticationUser
 from flask_jwt_extended import create_access_token, set_access_cookies
+from flask import jsonify, request, session
+from app.utils.decorator import jwt_required_with_role
+from werkzeug.utils import secure_filename
+from supabase import create_client, Client
+from config import SUPABASE_URL, SUPABASE_ANON_KEY 
 import random
 import hashlib
 
@@ -53,6 +58,42 @@ def check_id():
     return jsonify({
         "status": "valid",
         "message": "Student OK, continue",
+        "masked_phone": phone[-2:]
+    }), 200
+
+@authentication_user_bp.route('/check-name', methods=['POST'])
+def check_name():
+    firstname = request.json.get("firstname")
+    lastname = request.json.get("lastname")
+
+    student_id = session.get("student_id")
+    if not student_id:
+        return jsonify({"status": "expired", "message": "Session expired."}), 400
+
+    # Returns dict with exists, has_liability, phone_number
+    result = AuthenticationUser.check_student_name_exists(firstname, lastname)
+
+    if not result["exists"]:
+        return jsonify({"status": "name_mismatch", "message": "Provided name does not match records."}), 400
+
+    if result["has_liability"]:
+        return jsonify({
+            "status": "has_liability",
+            "message": "Student has outstanding liabilities"
+        }), 200
+
+    # Generate OTP + hash it
+    otp, otp_hash = AuthenticationUser.generate_otp()
+    AuthenticationUser.save_otp(student_id, otp_hash, session)
+    session["phone_number"] = result["phone_number"]
+
+    # Send OTP to registered phone (printed in dev)
+    phone = result["phone_number"]
+    send_sms(phone, f"Your verification code is: {otp}")
+
+    return jsonify({
+        "status": "name_verified",
+        "message": "Name verified successfully.",
         "masked_phone": phone[-2:]
     }), 200
 
@@ -137,3 +178,55 @@ def verify_otp():
     current_app.logger.info(f"User {student_id} logged in successfully.")
     print("[SUCCESS] OTP verified, JWT token created")
     return response, 200
+
+@authentication_user_bp.route("/upload-authletter", methods=["POST"])
+def upload_auth_letter():
+    """
+    Uploads an authorization letter for a student before a request exists.
+    Stores the file in Supabase bucket 'auth_letter_odr' and saves the URL in the DB.
+    Expected multipart/form-data:
+      - file: the authorization letter
+    """
+    firstname = request.form.get("firstname")
+    lastname = request.form.get("lastname")
+    number = request.form.get("number")
+
+    if not firstname or not lastname or not number:
+        return jsonify({"success": False, "notification": "Missing student information."}), 400
+
+    if "file" not in request.files:
+        return jsonify({"success": False, "notification": "No file uploaded."}), 400
+
+    file = request.files["file"]
+    if not file.filename:
+        return jsonify({"success": False, "notification": "Empty file."}), 400
+
+    try:
+        filename = secure_filename(file.filename)
+        file_path_in_bucket = f"{firstname}_{lastname}/{filename}"
+
+        # Initialize Supabase client
+        supabase: Client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+        file_content = file.read()
+        supabase.storage.from_("auth_letter_odr").upload(
+            file_path_in_bucket,
+            file_content,
+            {
+                "content-type": file.content_type,
+                "x-upsert": "true"
+            }
+        )
+
+        # Get public URL
+        file_url = supabase.storage.from_("auth_letter_odr").get_public_url(file_path_in_bucket)
+
+        # Store URL in DB
+        success, message = AuthenticationUser.store_authletter(firstname, lastname, file_url, number)
+        status_code = 200 if success else 400
+
+        return jsonify({"success": success, "notification": message, "file_url": file_url}), status_code
+
+    except Exception as e:
+        print(f"Error uploading auth letter: {e}")
+        return jsonify({"success": False, "notification": "Failed to upload authorization letter."}), 500
