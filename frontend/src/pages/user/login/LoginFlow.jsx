@@ -9,9 +9,12 @@ import RequestInBehalf from "./RequestInBehalf";
 function LoginFlow() {
   const [step, setStep] = useState("verification-options");
   const [maskedPhone, setMaskedPhone] = useState("**");
-  const [lastEntry, setLastEntry] = useState(null); // track how we entered OTP
+  const [lastEntry, setLastEntry] = useState(null); 
+  const [studentId, setStudentId] = useState(null); 
 
-  const goNext = (nextStep) => {
+  const goNext = (nextStep, id = null) => {
+    if (id) setStudentId(id);
+
     if (nextStep) {
       setStep(nextStep);
       return;
@@ -27,13 +30,13 @@ function LoginFlow() {
 
   const goBack = () => {
     if (step === "otp") {
-      if (lastEntry === "enter-name") {
-        setStep("enter-name");
-      } else if (lastEntry === "request-in-behalf") {
-        setStep("request-in-behalf");
-      } else {
-        setStep("enter-id");
-      }
+      if (lastEntry === "enter-name") setStep("enter-name");
+      else if (lastEntry === "request-in-behalf") setStep("request-in-behalf");
+      else setStep("enter-id");
+    } else if (step === "enter-name") {
+      setStep("verification-options");
+    } else if (step === "request-in-behalf") {
+      setStep("verification-options");
     } else if (step === "liability") {
       setStep("verification-options");
     } else {
@@ -41,11 +44,9 @@ function LoginFlow() {
     }
   };
 
-
   const goBackToOptions = () => {
     setStep("verification-options");
   };
-
 
   return (
     <>
@@ -54,11 +55,31 @@ function LoginFlow() {
       )}
 
       {step === "enter-id" && (
-        <EnterId onNext={goNext} onBack={goBack} setMaskedPhone={setMaskedPhone} goBackToOptions={goBackToOptions} />
+        <EnterId
+          onNext={goNext}
+          onBack={goBack}
+          setMaskedPhone={setMaskedPhone}
+          setStudentId={setStudentId}
+          goBackToOptions={goBackToOptions}
+        />
       )}
 
       {step === "enter-name" && (
-        <EnterName onNext={goNext} onBack={goBack} setMaskedPhone={setMaskedPhone} goBackToOptions={goBackToOptions} />
+        <EnterName
+          onNext={goNext}
+          onBack={goBack}
+          setMaskedPhone={setMaskedPhone}
+          goBackToOptions={goBackToOptions}
+        />
+      )}
+
+      {step === "request-in-behalf" && (
+        <RequestInBehalf
+          onNext={goNext}
+          onBack={goBack}
+          setMaskedPhone={setMaskedPhone}
+          goBackToOptions={goBackToOptions}
+        />
       )}
 
       {step === "otp" && (
@@ -67,15 +88,12 @@ function LoginFlow() {
           onBack={goBack}
           maskedPhone={maskedPhone}
           setMaskedPhone={setMaskedPhone}
+          studentId={studentId}
         />
       )}
 
       {step === "liability" && (
         <LiabilityDetected onNext={goNext} onBack={goBack} />
-      )}
-
-      {step === "request-in-behalf" && (
-        <RequestInBehalf onNext={goNext} onBack={goBack} setMaskedPhone={setMaskedPhone} goBackToOptions={goBackToOptions} />
       )}
     </>
   );

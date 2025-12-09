@@ -118,6 +118,10 @@ def create_app(test_config=None):
     from .user.tracking import tracking_bp as tracking_blueprint
     app.register_blueprint(tracking_blueprint)
 
+    #WHATSAPP BLUEPRINT
+    from .whatsapp import whatsapp_bp as whatsapp_blueprint 
+    app.register_blueprint(whatsapp_blueprint)           
+
     # === FRONTEND ROUTES (React) ===
     @app.route("/", defaults={"path": ""})
     @app.route("/<path:path>")
