@@ -1,6 +1,6 @@
 from . import request_bp
 from flask import jsonify, request, session
-from app.utils.decorator import jwt_required_with_role
+from app.utils.decorator import jwt_required_with_role, request_allowed_required
 from flask_jwt_extended import get_jwt_identity, unset_jwt_cookies
 from .models import Request
 from app.user.document_list.models import DocumentList
@@ -11,17 +11,26 @@ from config import SUPABASE_URL, SUPABASE_ANON_KEY
 
 role = 'user'
 
+@request_bp.route("/api/check-request-allowed", methods=["GET"])
+@request_allowed_required()
+def check_request_allowed():
+    """
+    Check if requesting is allowed at the current time.
+    If this function is reached, it means the decorator allowed it.
+    """
+    return jsonify({"allowed": True}), 200
+
 @request_bp.route("/api/request", methods=["GET"])
 @jwt_required_with_role(role)
+@request_allowed_required()
 def get_request_page_data():
     """
-    Step 1: Initialize the db with the student_id and request_id 
+    Step 1: Initialize the db with the student_id and request_id
             and Get student data from external DB then fill in the database
     Step 2: Get all available documents for request
     Step 3: Return JSON data to React
     """
     try:
-        
         # step 1: initialize the db
         request_id = session.get("request_id")
         
@@ -70,16 +79,17 @@ def get_request_page_data():
 #submit requests
 @request_bp.route("/api/save-documents", methods=["POST"])
 @jwt_required_with_role(role)
+@request_allowed_required()
 def save_documents():
     """
     Accepts final submission data from React and processes the request.
     Returns a success or error notification based on processing outcome.
     """
-    
+
     """accepts data from react: document id, quantity"""
     data = request.get_json()
     request_id = session.get("request_id")
-    
+
     try:
         #store requested documents to db
         Request.store_requested_documents(
@@ -195,6 +205,7 @@ def get_requirements():
 
 @request_bp.route("/api/save-file-supabase", methods=["POST"])
 @jwt_required_with_role(role)
+@request_allowed_required()
 def submit_requirement_files_supabase():
     """
     Accepts requirement files from React, uploads them to Supabase S3, and stores file URLs to the database.
@@ -425,6 +436,3 @@ def logout_user():
 
     # Delete the session cookie to fully clear the session
     response.delete_cookie('session')
-
-    print("[INFO] Session and JWT cleared successfully.")
-    return response, 200
