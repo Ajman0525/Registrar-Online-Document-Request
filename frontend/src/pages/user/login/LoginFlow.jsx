@@ -6,8 +6,11 @@ import LiabilityDetected from "./LiabilityDetected";
 function LoginFlow() {
   const [step, setStep] = useState("enter-id");
   const [maskedPhone, setMaskedPhone] = useState("**");
+  const [studentId, setStudentId] = useState(null); 
 
-  const goNext = (nextStep) => {
+  const goNext = (nextStep, id = null) => { 
+    if (id) setStudentId(id); 
+
     if (nextStep) {
       setStep(nextStep);
     } else {
@@ -24,8 +27,23 @@ function LoginFlow() {
 
   return (
     <>
-      {step === "enter-id" && <EnterId onNext={goNext} onBack={goBack} setMaskedPhone={setMaskedPhone} />}
-      {step === "otp" && <OtpVerification onNext={goNext} onBack={goBack} maskedPhone={maskedPhone} setMaskedPhone={setMaskedPhone} />}
+      {step === "enter-id" && (
+        <EnterId
+          onNext={goNext}
+          onBack={goBack}
+          setMaskedPhone={setMaskedPhone}
+          setStudentId={setStudentId} 
+        />
+      )}
+      {step === "otp" && (
+        <OtpVerification
+          onNext={goNext}
+          onBack={goBack}
+          maskedPhone={maskedPhone}
+          setMaskedPhone={setMaskedPhone}
+          studentId={studentId} 
+        />
+      )}
       {step === "liability" && <LiabilityDetected onNext={goNext} onBack={goBack} />}
     </>
   );
