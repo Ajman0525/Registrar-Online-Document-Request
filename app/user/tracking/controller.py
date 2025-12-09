@@ -1,20 +1,37 @@
 from . import tracking_bp
+from ...whatsapp.controller import send_whatsapp_message 
 from flask import jsonify, request, current_app, session
 from flask_jwt_extended import create_access_token, set_access_cookies, get_jwt_identity
 from .models import Tracking
 from app.utils.decorator import jwt_required_with_role
 from app.user.authentication.models import AuthenticationUser
 
-
 role = 'user'
 
-# Mock SMS sender (in production you replace this with an actual SMS API)
-# For now, it prints OTP in console for debugging/dev testing
-def send_sms(phone, message):
-    print("=========== DEV OTP ===========")
-    print(f"To: {phone}")
-    print(f"Message: {message}")
-    print("================================")
+def send_whatsapp_otp(phone, otp_code):
+    template_name = "hello_world"
+    components = None
+    
+    if template_name != "hello_world":
+        # Passing the OTP for dynamic variables such as {{1}}.
+        components = [
+            {
+                "type": "body",
+                "parameters": [
+                    {"type": "text", "text": str(otp_code)}
+                ]
+            }
+        ]
+    
+    print(f"[OTP Verification] Attempting to send WhatsApp OTP {otp_code} to {phone}")
+    
+    result = send_whatsapp_message(phone, template_name, components)
+    
+    if "error" in result:
+        current_app.logger.error(f"WhatsApp send failed for OTP to {phone}: {result['error']}")
+        return {"status": "failed", "message": "Failed to send OTP via WhatsApp"}
+    
+    return {"status": "success"}
 
 @tracking_bp.route('/api/track', methods=['POST'])
 def get_tracking_data():
@@ -50,7 +67,7 @@ def get_tracking_data():
             }),404
         
         phone_number = result.get("phone_number") if result else None
-        masked_phone = phone_number[-2:] if phone_number else ""
+        masked_phone = phone_number[-4:] if phone_number else ""
 
         # Generate OTP + hash
         otp, otp_hash = AuthenticationUser.generate_otp()
@@ -65,7 +82,7 @@ def get_tracking_data():
 
         # Send OTP to registered phone (printed in dev)
         phone = result["phone_number"]
-        send_sms(phone, f"Your verification code is: {otp}")
+        send_whatsapp_otp(phone, otp)
 
         # Build response
         response_data = {
