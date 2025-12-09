@@ -110,18 +110,22 @@ function EnterId({ onNext, onBack, maskedPhone, setMaskedPhone, goBackToOptions}
                     <div className="input-section">
                         <p className="subtext">ID Number</p>
                         <div className="input-wrapper">
-                        <input
-                            id="student-id"
-                            type="text"
-                            className={`box-input ${error ? "input-error" : ""} ${shake ? "shake" : ""}`}
-                            placeholder="0000-0000"
-                            value={studentId}
-                            onChange={handleInputChange}
-                            maxLength={9}
-                            disabled={loading}
-                        />
+                            <div className="id-input-wrapper">
+                                <input
+                                    id="student-id"
+                                    type="text"
+                                    className={`box-input ${error ? "input-error" : ""} ${shake ? "shake" : ""}`}
+                                    placeholder="0000-0000"
+                                    value={studentId}
+                                    onChange={handleInputChange}
+                                    maxLength={9}
+                                    disabled={loading}
+                                />
+                            </div>
+                            <div className="error-section">
+                                {error && <p className={`error-text ${shake ? "shake" : ""}`}>{error}</p>}
+                            </div>
                         </div>
-                        {error && <p className={`error-text ${shake ? "shake" : ""}`}>{error}</p>}
                     </div>
 
                     <div className="action-section">

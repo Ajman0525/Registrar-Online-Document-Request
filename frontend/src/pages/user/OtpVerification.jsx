@@ -121,7 +121,7 @@ function OtpVerification({ onNext, onBack, studentId, maskedPhone, setMaskedPhon
           <p className="subtext">6-Digit Code</p>
           <div className="input-wrapper">
           <input
-            id="Code"
+            id="otp-code-input"
             type="numeric"
             className={`box-input ${error ? "input-error" : ""} ${shake ? "shake" : ""}`}
             placeholder="000000"
