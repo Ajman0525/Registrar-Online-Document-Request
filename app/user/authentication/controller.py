@@ -112,7 +112,7 @@ def check_name():
     
     # Send OTP to registered phone (printed in dev)
     phone = result["phone_number"]
-    send_whatsapp_otp(phone, otp, full_name)
+    send_whatsapp_otp(phone, full_name, otp)
 
     return jsonify({
         "status": "name_verified",
