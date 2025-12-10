@@ -8,16 +8,14 @@ from app.user.authentication.models import AuthenticationUser
 
 role = 'user'
 
-def send_whatsapp_otp(phone, otp_code):
-    template_name = "hello_world"
-    components = None
+def send_whatsapp_otp(phone, otp_code, full_name):
+    template_name = "odr_reference_number"
     
-    if template_name != "hello_world":
-        # Passing the OTP for dynamic variables such as {{1}}.
-        components = [
+    components = [
             {
                 "type": "body",
                 "parameters": [
+                    {"type": "text", "text": str(full_name)},
                     {"type": "text", "text": str(otp_code)}
                 ]
             }
@@ -67,6 +65,7 @@ def get_tracking_data():
             }),404
         
         phone_number = result.get("phone_number") if result else None
+        full_name = result.get("full_name") if result else "Valued Customer"
         masked_phone = phone_number[-4:] if phone_number else ""
 
         # Generate OTP + hash
@@ -75,14 +74,14 @@ def get_tracking_data():
         #Save OTP hash in session (temp)
         AuthenticationUser.save_otp(student_id, otp_hash, session)
         session["phone_number"] = result["phone_number"]
-        session["tracking_number"] = tracking_number # Add tracking number to session
+        session["tracking_number"] = tracking_number 
+        session["full_name"] = full_name
 
         # DEBUG: Print session data
         print(f"[DEBUG] Session after saving OTP: {dict(session)}")
 
-        # Send OTP to registered phone (printed in dev)
         phone = result["phone_number"]
-        send_whatsapp_otp(phone, otp)
+        send_whatsapp_otp(phone, otp, full_name)
 
         # Build response
         response_data = {
