@@ -24,7 +24,7 @@ def send_whatsapp_message(recipient_number, template_name, components=None):
         "template":{
             "name": template_name,
             "language":{
-                "code": "en_US"
+                "code": "en"
             },
             **({"components": components} if components is not None else {})
         }
@@ -45,7 +45,7 @@ def send_message_endpoint():
 
     data = request.json
     recipient = data.get("recipient")
-    template_name = data.get("template_name", "hello_world")
+    template_name = data.get("template_name")
 
     if not recipient:
         return jsonify({"error": "Missing recipient"}), 400

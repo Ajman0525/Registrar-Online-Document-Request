@@ -134,6 +134,7 @@ function TrackFlow() {
                     onNext={handleOtpSuccess}
                     onBack={handleBack}
                     studentId={studentId}
+                    setMaskedPhone={setMaskedPhone}
                     maskedPhone={maskedPhone}
                     isTracking={true}
                 />
