@@ -126,7 +126,7 @@ def create_app(test_config=None):
     # Maya can't send csrf tokens, so verify using signature instead
     @app.before_request
     def exempt_webhook_from_csrf():
-        if request.path == 'user/payment/maya/webhook' and request.method == 'POST':
+        if request.path == '/user/payment/maya/webhook' and request.method == 'POST':
             g._jwt_extended_jwt_in_request_context = False
 
     # === FRONTEND ROUTES (React) ===
