@@ -15,7 +15,7 @@ class AuthenticationUser:
             conn = get_connection()
             cur = conn.cursor()
             cur.execute(
-                "SELECT contact_number, liability_status FROM students WHERE student_id = %s",
+                "SELECT full_name, contact_number, liability_status FROM students WHERE student_id = %s",
                 (student_id,)
             )
             row = cur.fetchone()
@@ -25,13 +25,15 @@ class AuthenticationUser:
             if not row:
                 return {
                     "exists": False,
+                    "full_name": None,
                     "has_liability": False,
                     "phone_number": None
                 }
 
-            contact_number, liability_status = row
+            full_name, contact_number, liability_status = row
             return {
                 "exists": True,
+                "full_name": full_name,
                 "has_liability": liability_status,
                 "phone_number": contact_number
             }
@@ -40,6 +42,7 @@ class AuthenticationUser:
             print(f"Database error while checking student: {e}")
             return {
                 "exists": False,
+                "full_name": None,
                 "has_liability": False,
                 "phone_number": None
             }

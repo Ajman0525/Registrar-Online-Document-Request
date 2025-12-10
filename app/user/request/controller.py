@@ -13,7 +13,7 @@ from config import SUPABASE_URL, SUPABASE_ANON_KEY
 role = 'user'
 
 def send_whatsapp_tracking(phone, full_name, request_id):
-    template_name = "tracking_number"
+    template_name = "odr_request_submitted"
     
     components = [
         {
@@ -34,6 +34,14 @@ def send_whatsapp_tracking(phone, full_name, request_id):
         return {"status": "failed", "message": "Failed to send Tracking Number via WhatsApp"}
     
     return {"status": "success"}
+@request_bp.route("/api/check-request-allowed", methods=["GET"])
+@request_allowed_required()
+def check_request_allowed():
+    """
+    Check if requesting is allowed at the current time.
+    If this function is reached, it means the decorator allowed it.
+    """
+    return jsonify({"allowed": True}), 200
 
 @request_bp.route("/api/request", methods=["GET"])
 @jwt_required_with_role(role)

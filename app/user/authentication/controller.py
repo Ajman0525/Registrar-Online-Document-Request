@@ -11,20 +11,18 @@ from config import SUPABASE_URL, SUPABASE_ANON_KEY
 import random
 import hashlib
 
-def send_whatsapp_otp(phone, otp_code):
-    template_name = "hello_world"
-    components = None
-    
-    if template_name != "hello_world":
-        # Passing the OTP for dynamic variables such as {{1}}.
-        components = [
-            {
-                "type": "body",
-                "parameters": [
-                    {"type": "text", "text": str(otp_code)}
-                ]
-            }
-        ]
+def send_whatsapp_otp(phone, full_name, otp_code):
+    template_name = "odr_reference_number"
+
+    components = [
+        {
+            "type": "body",
+            "parameters": [
+                {"type": "text", "text": str(full_name)},
+                {"type": "text", "text": str(otp_code)}
+            ]
+        }
+    ]
     
     print(f"[OTP Verification] Attempting to send WhatsApp OTP {otp_code} to {phone}")
     
@@ -61,13 +59,15 @@ def check_id():
     # Generate OTP + hash it
     otp, otp_hash = AuthenticationUser.generate_otp()
     phone = result["phone_number"] 
+    full_name = result.get("full_name") if result else "Valued Customer"
 
     # Save OTP hash and student ID in session
     AuthenticationUser.save_otp(student_id, otp_hash, session)
     session["phone_number"] = phone
+    session ["full_name"] = full_name 
     
     # Send OTP via WhatsApp
-    whatsapp_result = send_whatsapp_otp(phone, otp)
+    whatsapp_result = send_whatsapp_otp(phone, full_name, otp)
     
     if whatsapp_result["status"] == "failed":
         return jsonify({
@@ -125,6 +125,7 @@ def resend_otp():
 
     student_id = session.get("student_id")
     phone = session.get("phone_number")
+    full_name = session.get("full_name", "Valued Customer")
 
     if not student_id or not phone:
         return jsonify({
@@ -137,7 +138,7 @@ def resend_otp():
     session["otp"] = otp_hash  # replace old OTP
 
     # Send OTP via WhatsApp
-    whatsapp_result = send_whatsapp_otp(phone, otp)
+    whatsapp_result = send_whatsapp_otp(phone, full_name, otp)
     
     if whatsapp_result["status"] == "failed":
         return jsonify({
