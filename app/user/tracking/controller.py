@@ -26,14 +26,10 @@ def get_tracking_data():
     tracking_number = data.get('tracking_number')
     student_id = data.get('student_id')
 
-
     current_app.logger.info(f"Tracking request received: {data}")
-
 
     if not tracking_number or not student_id:
         return jsonify({"message": "Please provide both Tracking Number and Student ID."}), 400
-
-
     try:
         # Fetch tracking record
         record = Tracking.get_record_by_ids(tracking_number, student_id)
@@ -89,32 +85,6 @@ def get_tracking_data():
             "message": "An unexpected error occurred while fetching tracking data."
         }), 500
     
-@tracking_bp.route('/api/track/payment-complete', methods=['POST'], strict_slashes=False)
-@jwt_required_with_role(role)
-def mark_payment_complete():
-    """
-    API endpoint to mark a request's payment as complete.
-    """
-    student_id = get_jwt_identity()
-    if not student_id:
-        return jsonify({"message": "User session not found or invalid."}), 401
-
-    data = request.get_json(silent=True) or {}
-    tracking_number = data.get('tracking_number')
-
-    if not tracking_number:
-        return jsonify({"message": "Tracking number is required."}), 400
-
-    try:
-        success = Tracking.update_payment_status(tracking_number, student_id)
-        if success:
-            return jsonify({"message": "Payment status updated successfully."}), 200
-        else:
-            return jsonify({"message": "Failed to update payment status. Record not found or you do not have permission."}), 404
-    except Exception as e:
-        current_app.logger.error(f"Error in /api/track/payment-complete: {e}")
-        return jsonify({"status": "error", "message": f"An unexpected error occurred: {str(e)}"}), 500
-    
 @tracking_bp.route("/api/set-order-type", methods=["POST"], strict_slashes=False)
 @jwt_required_with_role(role)
 def set_order_type():
@@ -150,6 +120,33 @@ def set_order_type():
         return jsonify({
             "success": False,
             "notification": "Failed to set order type."
+        }), 500
+
+@tracking_bp.route('/api/track/status/<tracking_number>', methods=['GET'])
+@jwt_required_with_role(role)
+def get_tracking_status(tracking_number):
+    """
+    API endpoint to get current tracking status without OTP verification.
+    Used for polling payment status after payment redirect.
+    """
+    student_id = get_jwt_identity()
+    if not student_id:
+        return jsonify({"message": "User session not found or invalid."}), 401
+
+    try:
+        record = Tracking.get_record_by_ids(tracking_number, student_id)
+        if not record:
+            return jsonify({"message": "Tracking record not found."}), 404
+
+        return jsonify({
+            "trackData": record
+        }), 200
+
+    except Exception as e:
+        current_app.logger.error(f"Error in /api/track/status/<tracking_number>: {e}")
+        return jsonify({
+            "status": "error",
+            "message": f"An unexpected error occurred: {str(e)}"
         }), 500
 
 @tracking_bp.route('/api/track/document/<tracking_number>', methods=['GET'])
