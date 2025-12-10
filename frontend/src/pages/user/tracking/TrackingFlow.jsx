@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import EnterTrackId from "./EnterTrackId";
 import TrackStatus from "./TrackStatus";
 import OtpVerification from "../OtpVerification";
@@ -19,6 +20,9 @@ function TrackFlow() {
     const [maskedPhone, setMaskedPhone] = useState("");
     const [studentId, setStudentId] = useState("");
     const [loading, setLoading] = useState(false);
+    const [searchParams] = useSearchParams();
+
+    const MAYA_PUBLIC_KEY = 'pk-Z0OSzLvIcOI2UIvDhdTGVVfRSSeiGStnceqwUE7n0Ah';
 
     // the 'data' parameter will hold the response from the tracking API
     const handleTrackIdSubmit = (data) => {
@@ -50,48 +54,197 @@ function TrackFlow() {
 		setCurrentView("status");
         setLoading(false);
 	};
-	const handleViewDeliveryInstructions = () => setCurrentView("delivery-instructions");
+    const handleViewDeliveryInstructions = () => setCurrentView("delivery-instructions");
 
-	const handleSelectPaymentMethod = (method) => {
-		if (method === "online") {
-			// simulate successful online payment
-			setCurrentView("payment-success");
-		} else if (method === "in-person") {
-			handleViewPaymentInstructions();
-		}
-	};
-	
-	const handlePaymentComplete = async () => {
+    const pollForPaymentStatus = (trackingNumber) => {
+        const maxAttempts = 10;
+        let attempts = 0;
+
+        const poll = setInterval(async () => {
+            try {
+                const response = await fetch(`/api/track/status/${trackingNumber}`, {
+                    credentials: 'include',
+                    headers: { 'X-CSRF-TOKEN': getCSRFToken() }
+                });
+
+                if (response.ok) {
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        const data = await response.json();
+                        
+                        // If payment status updated, refresh and go to status
+                        if (data.trackData && data.trackData.paymentStatus === true) {
+                            clearInterval(poll);
+                            localStorage.removeItem('pendingPayment');
+                            setTrackData(data.trackData);
+                            setCurrentView('status');
+                            return;
+                        }
+                    }
+                }
+
+                attempts++;
+                if (attempts >= maxAttempts) {
+                    clearInterval(poll);
+                }
+            } catch (error) {
+                console.error('Polling error:', error);
+                attempts++;
+                if (attempts >= maxAttempts) {
+                    clearInterval(poll);
+                }
+            }
+        }, 2000);
+    };
+
+    const handleRefreshStatus = async () => {
+        if (!trackData?.trackingNumber || !studentId) {
+            setCurrentView('status');
+            return;
+        }
+
         setLoading(true);
         try {
-            const response = await fetch('/api/track/payment-complete', {
+            const response = await fetch('/api/track', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': getCSRFToken() },
+                headers: {
+                    'Content-Type': 'application/json',
+                },
                 credentials: 'include',
-                body: JSON.stringify({ tracking_number: trackData.trackingNumber }),
+                body: JSON.stringify({ 
+                    tracking_number: trackData.trackingNumber, 
+                    student_id: studentId 
+                }),
             });
 
-            const data = await response.json();
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to update payment status.');
+            if (response.ok) {
+                const data = await response.json();
+                if (data.track_data) {
+                    setTrackData(data.track_data);
+                    setCurrentView('status');
+                }
+            } else {
+                setCurrentView('status');
             }
-
-            // If API call is successful, update the local state
-            setTrackData(prevData => ({
-                ...prevData,
-                status: "DOC-READY",
-                paymentStatus: true
-            }));
-            setCurrentView("status");
         } catch (error) {
-            console.error("Payment completion error:", error);
-            // Optionally, show an error message to the user
+            console.error('Error refreshing status:', error);
+            setCurrentView('status');
         } finally {
             setLoading(false);
         }
     };
+
+    const handleSelectPaymentMethod = async (method) => {
+        // Check which payment method was selected
+        if (method === "online") {
+            setLoading(true);
+            try {
+                // Get studentId from trackData if available, otherwise use state
+                const currentStudentId = trackData?.studentId || studentId;
+                
+                if (!currentStudentId) {
+                    throw new Error('Student ID is required for payment');
+                }
+
+                // Call Maya Checkout API to create a new checkout session
+                const response = await fetch('https://pg-sandbox.paymaya.com/checkout/v1/checkouts', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Basic ' + btoa(MAYA_PUBLIC_KEY + ':')
+                    },
+                    body: JSON.stringify({
+                        // Total cost
+                        totalAmount: {
+                            value: trackData.amountDue,
+                            currency: "PHP"
+                        },
+                        // Use tracking number as unique reference for identifying the transaction
+                        requestReferenceNumber: trackData.trackingNumber,
+                        // Include student_id in metadata so it's passed back in webhook
+                        metadata: {
+                            studentId: studentId,
+                            trackingNumber: trackData.trackingNumber
+                        },
+                        // URLs where Maya will redirect after payment
+                        redirectUrl: {
+                            success: `${window.location.origin}/user/track?payment=success&tracking=${trackData.trackingNumber}`,
+                            failure: `${window.location.origin}/user/track?payment=failure&tracking=${trackData.trackingNumber}`,
+                            cancel: `${window.location.origin}/user/track?payment=cancel&tracking=${trackData.trackingNumber}`
+                        }
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to create Maya checkout.');
+                }
+
+                const checkout = await response.json();
+
+                localStorage.setItem('pendingPayment', JSON.stringify({
+                    checkoutId: checkout.id,
+                    trackingNumber: trackData.trackingNumber,
+                    amountDue: trackData.amountDue,
+                    studentId: studentId,
+                    trackData: trackData,
+                    timestamp: Date.now()
+                }));
+
+                // Redirect to Maya payment page
+                window.location.href = checkout.redirectUrl;
+            }
+            catch (error){
+                console.error('Payment error: ', error)
+                alert('Failed to initiate payment. Please try again.');
+                setLoading(false);
+            }
+        // If method chosen was in person, show instructions
+        } else if (method === "in-person") {
+            handleViewPaymentInstructions();
+        }
+    };
+    
+    // Handle return from Maya
+    useEffect(() => {
+        const paymentStatus = searchParams.get("payment");
+        const trackingNumber = searchParams.get("tracking");
+
+        if (paymentStatus && trackingNumber) {
+            const pendingPayment = localStorage.getItem("pendingPayment");
+
+            if (pendingPayment) {
+                const payment = JSON.parse(pendingPayment);
+
+                if (payment.trackingNumber === trackingNumber) {
+                    // Restore trackData and studentId from localStorage
+                    setTrackData(payment.trackData);
+                    const studentId = payment.studentId || payment.trackData?.studentId;
+                    if (studentId) {
+                        setStudentId(studentId);
+                    }
+
+                    if (paymentStatus === 'success') {
+                        // Start polling for payment status update
+                        pollForPaymentStatus(trackingNumber);
+                        setCurrentView('payment-success');
+
+                    } else if (paymentStatus === 'failure') {
+                        alert('Payment failed. Please try again.');
+                        setCurrentView('payment-options');
+                        localStorage.removeItem('pendingPayment');
+                    } else if (paymentStatus === 'cancel') {
+                        alert('Payment cancelled.');
+                        setCurrentView('payment-options');
+                        localStorage.removeItem('pendingPayment');
+                    }
+                    
+                    // Clean URL
+                    window.history.replaceState({}, '', '/user/track');
+                }
+            }
+        }
+    }, [searchParams]);
+
 
     const handleProceedWithLBC = async () => {
         setLoading(true);
@@ -166,7 +319,17 @@ function TrackFlow() {
                     )}
 
                     {currentView === "payment-success" && (
-                        <PaymentSuccess onPaymentComplete={handlePaymentComplete} />
+                        <PaymentSuccess 
+                            onViewStatus={() => {
+                                // Refresh tracking data and go to status
+                                if (trackData?.trackingNumber && studentId) {
+                                    handleRefreshStatus();
+                                } else {
+                                    setCurrentView('status');
+                                }
+                            }}
+                            trackingNumber={trackData?.trackingNumber}
+                        />
                     )}
 
                     {currentView === "payment-instructions" && (
