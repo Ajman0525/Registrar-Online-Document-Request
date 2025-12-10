@@ -26,7 +26,11 @@ function AdminLogin() {
 
       const data = await response.json();
       if (response.ok) {
-        navigate("/admin/dashboard");
+        if (data.redirect) {
+          navigate(data.redirect);
+        } else {
+          navigate("/admin/dashboard");
+        }
       } else {
         setError(data.error || "Login failed. Please try again.");
       }
