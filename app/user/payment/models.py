@@ -27,6 +27,10 @@ class Payment:
             """, (tracking_number, student_id))
             
             order = cur.fetchone()
+            if has_app_context():
+                current_app.logger.info(f"[MAYA] Fetched order for tracking {tracking_number}: {order}")
+            else:
+                print(f"[MAYA] Fetched order for tracking {tracking_number}: {order}")
             
             if not order:
                 return {
@@ -51,27 +55,33 @@ class Payment:
                     'message': f'Payment amount mismatch: expected {expected_amount}, received {received_amount}'
                 }
             
-            # Update payment status and status
+            # Update payment status
             cur.execute("""
                 UPDATE requests
-                SET payment_status = TRUE,
-                    status = 'DOC-READY'
+                SET payment_status = TRUE
                 WHERE request_id = %s AND student_id = %s
             """, (tracking_number, student_id))
+            rows_updated = cur.rowcount
             conn.commit()
+
+            message = f'Payment confirmed for tracking number: {tracking_number}, rows updated: {rows_updated}'
+            if has_app_context():
+                current_app.logger.info(f"[MAYA] {message}")
+            else:
+                print(f"[MAYA] {message}")
             
             return {
-                'success': True,
-                'message': f'Payment confirmed for tracking number: {tracking_number}'
+                'success': rows_updated > 0,
+                'message': message
             }
             
         except Exception as e:
             conn.rollback()
             error_msg = f"Database error processing webhook payment: {e}"
             if has_app_context():
-                current_app.logger.error(error_msg)
+                current_app.logger.error(f"[MAYA] {error_msg}")
             else:
-                print(error_msg)
+                print(f"[MAYA] {error_msg}")
             return {
                 'success': False,
                 'message': error_msg

@@ -62,6 +62,7 @@ function TrackFlow() {
 
         const poll = setInterval(async () => {
             try {
+                console.log(`[MAYA][POLL] Attempt ${attempts + 1}/${maxAttempts} for tracking ${trackingNumber}`);
                 const response = await fetch(`/api/track/status/${trackingNumber}`, {
                     credentials: 'include',
                     headers: { 'X-CSRF-TOKEN': getCSRFToken() }
@@ -71,6 +72,7 @@ function TrackFlow() {
                     const contentType = response.headers.get('content-type');
                     if (contentType && contentType.includes('application/json')) {
                         const data = await response.json();
+                        console.log("[MAYA][POLL] Response data:", data);
                         
                         // If payment status updated, refresh and go to status
                         if (data.trackData && data.trackData.paymentStatus === true) {
@@ -147,6 +149,11 @@ function TrackFlow() {
                 }
 
                 // Call Maya Checkout API to create a new checkout session
+                console.log("[MAYA][CHECKOUT] Creating checkout with", {
+                    amount: trackData.amountDue,
+                    trackingNumber: trackData.trackingNumber,
+                    studentId: currentStudentId
+                });
                 const response = await fetch('https://pg-sandbox.paymaya.com/checkout/v1/checkouts', {
                     method: 'POST',
                     headers: {
@@ -176,10 +183,13 @@ function TrackFlow() {
                 });
 
                 if (!response.ok) {
+                    const body = await response.text().catch(() => '');
+                    console.error("[MAYA][CHECKOUT] Failed response", response.status, body);
                     throw new Error('Failed to create Maya checkout.');
                 }
 
                 const checkout = await response.json();
+                console.log("[MAYA][CHECKOUT] Checkout created:", checkout);
 
                 localStorage.setItem('pendingPayment', JSON.stringify({
                     checkoutId: checkout.id,
@@ -191,10 +201,11 @@ function TrackFlow() {
                 }));
 
                 // Redirect to Maya payment page
+                console.log("[MAYA][CHECKOUT] Redirecting to", checkout.redirectUrl);
                 window.location.href = checkout.redirectUrl;
             }
             catch (error){
-                console.error('Payment error: ', error)
+                console.error('[MAYA][CHECKOUT] Payment error: ', error)
                 alert('Failed to initiate payment. Please try again.');
                 setLoading(false);
             }
@@ -224,9 +235,34 @@ function TrackFlow() {
                     }
 
                     if (paymentStatus === 'success') {
-                        // Start polling for payment status update
-                        pollForPaymentStatus(trackingNumber);
-                        setCurrentView('payment-success');
+                        // Attempt to mark paid via backend, then poll
+                        const markPaid = async () => {
+                            try {
+                                console.log("[MAYA][BROWSER] Trying to mark paid via backend");
+                                const resp = await fetch('/user/payment/mark-paid', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRF-TOKEN': getCSRFToken()
+                                    },
+                                    credentials: 'include',
+                                    body: JSON.stringify({
+                                        trackingNumber: payment.trackingNumber,
+                                        amount: payment.amountDue,
+                                        studentId: payment.studentId || payment.trackData?.studentId
+                                    })
+                                });
+                                const body = await resp.json().catch(() => ({}));
+                                console.log("[MAYA][BROWSER] mark-paid response", resp.status, body);
+                            } catch (err) {
+                                console.error("[MAYA][BROWSER] mark-paid failed", err);
+                            }
+                        };
+                        markPaid().finally(() => {
+                            // Start polling for payment status update
+                            pollForPaymentStatus(trackingNumber);
+                            setCurrentView('payment-success');
+                        });
 
                     } else if (paymentStatus === 'failure') {
                         alert('Payment failed. Please try again.');
