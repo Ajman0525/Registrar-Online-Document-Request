@@ -15,7 +15,6 @@ import Logs from "./pages/admin/Logs";
 import Settings from "./pages/admin/Settings";
 import RequestFlow from "./pages/user/request/RequestFlow";
 
-
 function App() {
   return (
     <BrowserRouter>
@@ -24,7 +23,7 @@ function App() {
 
         <Route path="/user" element={<UserMasterLayout />}>
           <Route path="Landing" element={< Landing />} />
-          <Route path="login" element={< LoginFlow />}/>
+          <Route path="login" element={<LoginFlow />} />
           <Route path="Request" element={< RequestFlow />} />
           <Route path="documents" element={< DocumentList />} />
           <Route path="Track" element={< Tracking />} />

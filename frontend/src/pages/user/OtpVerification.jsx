@@ -122,17 +122,17 @@ function OtpVerification({ onNext, onBack, studentId, maskedPhone, setMaskedPhon
         <div className="input-section">
           <p className="subtext">6-Digit Code</p>
           <div className="input-wrapper">
-            <input
-              id="Code"
-              type="numeric"
-              className={`box-input ${error ? "input-error" : ""} ${shake ? "shake" : ""}`}
-              placeholder="000000"
-              autoComplete="one-time-code"
-              value={otpCode}
-              onChange={handleInputChange}
-              inputMode="numeric"
-              maxLength={6}
-            />
+          <input
+            id="otp-code-input"
+            type="numeric"
+            className={`box-input ${error ? "input-error" : ""} ${shake ? "shake" : ""}`}
+            placeholder="000000"
+            autoComplete="one-time-code"
+            value={otpCode}
+            onChange={handleInputChange}
+            inputMode="numeric"
+            maxLength={6}
+          />
           </div>
           {error && <p className={`error-text ${shake ? "shake" : ""}`}>{error}</p>}
         </div>
