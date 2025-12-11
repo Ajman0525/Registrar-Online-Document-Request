@@ -1,18 +1,24 @@
 # user/payment/controller.py
 from flask import request, jsonify, current_app, g
+import os
 from . import payment_bp
 from .models import Payment
 import hmac
 import hashlib
-import os
 
 # Store Maya sandbox IPs to make sure webhooks only come from these addresses
 MAYA_SANDBOX_IPS = ['13.229.160.234', '3.1.199.75']
+# Toggle to true for local testing
+MAYA_DISABLE_SECURITY = os.getenv('MAYA_DISABLE_SECURITY', 'false').lower() == 'true'
 
 
 @payment_bp.before_request
 def verify_maya_ip():
     """Verify request comes from Maya servers"""
+    if MAYA_DISABLE_SECURITY:
+        current_app.logger.warning("[MAYA] IP check disabled via MAYA_DISABLE_SECURITY")
+        return
+
     # Skip IP verification for non-webhook routes if needed
     if request.endpoint != 'payment.maya_webhook':
         return
@@ -35,19 +41,21 @@ def maya_webhook():
     """Handle Maya payment webhook"""
     try:
         maya_signature = request.headers.get('PayMaya-Signature')
+        current_app.logger.info(f"[MAYA] Webhook received. Signature present: {bool(maya_signature)}")
         
         if not verify_signature(request.data, maya_signature):
             current_app.logger.warning("Invalid webhook signature")
             return jsonify({'error': 'Invalid signature'}), 401
         
         payload = request.get_json()
-        current_app.logger.info(f"Maya Webhook Payload: {payload}")
+        current_app.logger.info(f"[MAYA] Payload received: {payload}")
         
         status = payload.get('status')
         tracking_number = payload.get('trackingNumber')
         payment_id = payload.get('id')
         amount = payload.get('totalAmount', {}).get('value')
         student_id = payload.get('studentId') or payload.get('metadata', {}).get('studentId')
+        current_app.logger.info(f"[MAYA] Parsed fields -> status: {status}, tracking: {tracking_number}, amount: {amount}, student_id: {student_id}, payment_id: {payment_id}")
         
         if status == 'PAYMENT_SUCCESS' and tracking_number:
             # Process payment
@@ -55,23 +63,29 @@ def maya_webhook():
             
             if result['success']:
                 current_app.logger.info(
-                    f"Payment confirmed: {tracking_number}, Payment ID: {payment_id}"
+                    f"[MAYA] Payment confirmed: {tracking_number}, Payment ID: {payment_id}"
                 )
             else:
                 current_app.logger.warning(
-                    f"Payment processing failed for {tracking_number}: {result['message']}"
+                    f"[MAYA] Payment processing failed for {tracking_number}: {result['message']}"
                 )
+        else:
+            current_app.logger.warning(f"[MAYA] Unexpected status or missing tracking number: status={status}, tracking={tracking_number}")
         
         return jsonify({'success': True}), 200
         
     except Exception as e:
-        current_app.logger.error(f"Webhook error: {str(e)}")
+        current_app.logger.error(f"[MAYA] Webhook error: {str(e)}")
         # Return success to prevent Maya from retrying for transient errors
         return jsonify({'success': True}), 200
 
 
 def verify_signature(payload_bytes, signature):
     """Verify webhook signature"""
+    if MAYA_DISABLE_SECURITY:
+        current_app.logger.warning("[MAYA] Signature check disabled via MAYA_DISABLE_SECURITY")
+        return True
+
     if not signature:
         return False
     
@@ -87,3 +101,28 @@ def verify_signature(payload_bytes, signature):
     ).hexdigest()
     
     return hmac.compare_digest(signature, expected)
+
+
+@payment_bp.route('/mark-paid', methods=['POST'])
+def mark_paid_manual():
+    """
+    Browser-side fallback to mark payment as paid during local testing.
+    Uses the same validation as the webhook, but without signature/IP checks.
+    """
+    try:
+        data = request.get_json() or {}
+        tracking_number = data.get('trackingNumber') or data.get('tracking_number')
+        amount = data.get('amount')
+        student_id = data.get('studentId')
+
+        current_app.logger.info(f"[MAYA][BROWSER] Mark-paid request: tracking={tracking_number}, amount={amount}, student_id={student_id}")
+
+        if not tracking_number or student_id is None:
+            return jsonify({'success': False, 'message': 'trackingNumber and studentId are required'}), 400
+
+        result = Payment.process_webhook_payment(tracking_number, amount, student_id)
+        status_code = 200 if result.get('success') else 400
+        return jsonify(result), status_code
+    except Exception as e:
+        current_app.logger.error(f"[MAYA][BROWSER] mark-paid error: {e}")
+        return jsonify({'success': False, 'message': str(e)}), 500
