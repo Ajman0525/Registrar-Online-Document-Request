@@ -12,25 +12,25 @@
 }
 
 .add-admin-popup {
-  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: var(--color-white);
   border-radius: 20px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   padding: 40px;
+  gap: 20px;
   width: 400px;
   max-width: 90%;
   overflow: hidden;
 }
 
 .title {
+  font-family: var(--font-family-base);
   font-size: 1.5rem;
   font-weight: 600;
   color: #343a40;
-  margin-bottom: 20px;
   text-align: center;
-}
-
-.input-section {
-  margin-bottom: 20px;
 }
 
 .box-input:focus {
@@ -43,7 +43,7 @@
 }
 
 .error-text {
-  color: #dc3545;
+  color: var(--color-destructive);
   font-size: 14px;
 }
 

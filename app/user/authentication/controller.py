@@ -105,17 +105,19 @@ def check_name():
 
     # Generate OTP + hash it
     otp, otp_hash = AuthenticationUser.generate_otp()
+    full_name = f"{firstname} {lastname}"
     AuthenticationUser.save_otp(student_id, otp_hash, session)
     session["phone_number"] = result["phone_number"]
-
+    session["full_name"] = full_name
+    
     # Send OTP to registered phone (printed in dev)
     phone = result["phone_number"]
-    send_sms(phone, f"Your verification code is: {otp}")
+    send_whatsapp_otp(phone, full_name, otp)
 
     return jsonify({
         "status": "name_verified",
         "message": "Name verified successfully.",
-        "masked_phone": phone[-2:]
+        "masked_phone": phone[-4:]
     }), 200
 
 @authentication_user_bp.route('/resend-otp', methods=['POST'])
