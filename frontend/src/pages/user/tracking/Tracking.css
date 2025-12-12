@@ -25,7 +25,6 @@
 .text-section{
     display: flex;
     flex-direction: column;
-    gap: 8p
 }
 
 .text-section .status-title{
@@ -91,7 +90,7 @@
 .input-section{
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 6px;
     width: 100%;
 }
 
@@ -99,8 +98,7 @@
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 4px;
-
+    gap: 8px;
 }
 
 .box-input {
@@ -323,7 +321,7 @@
     display: flex;
     flex-direction: column;
     width: 100%;
-    gap: 24px;
+    gap: 16px;
 }
 
 .button-section{

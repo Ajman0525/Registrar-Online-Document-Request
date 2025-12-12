@@ -224,6 +224,17 @@ def ready_max_request_settings_table():
    CREATE TABLE IF NOT EXISTS max_request_settings (
        key VARCHAR(100) PRIMARY KEY,
        value TEXT NOT NULL
+    )
+    """
+    execute_query(query)
+
+def ready_open_request_restriction_table():
+   query = """
+   CREATE TABLE IF NOT EXISTS open_request_restriction (
+       id SERIAL PRIMARY KEY,
+       start_time TIME NOT NULL,
+       end_time TIME NOT NULL,
+       available_days JSONB NOT NULL
    )
    """
    execute_query(query)
@@ -436,6 +447,7 @@ def initialize_db():
    ready_admins_table()
    ready_max_request_settings_table()
    ready_admin_settings_table()
+   ready_open_request_restriction_table()
    #insert_sample_data()
    print("Database and tables initialized successfully.")
 

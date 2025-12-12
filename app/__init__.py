@@ -1,4 +1,4 @@
-from flask import Flask, g, render_template, send_from_directory
+from flask import Flask, g, render_template, send_from_directory, request
 import os
 from config import DB_USERNAME, DB_PASSWORD, DB_NAME, DB_HOST, DB_PORT, JWT_SECRET_KEY
 from psycopg2 import pool
@@ -122,6 +122,21 @@ def create_app(test_config=None):
     app.register_blueprint(request_blueprint)
     from .user.tracking import tracking_bp as tracking_blueprint
     app.register_blueprint(tracking_blueprint)
+    from .user.payment import payment_bp as payment_blueprint
+    app.register_blueprint(payment_blueprint, url_prefix='/user/payment')
+
+    # ===================== 
+    # MAYA WEBHOOK EXEMPTION
+    # =====================
+    # Maya can't send csrf tokens, so verify using signature instead
+    @app.before_request
+    def exempt_webhook_from_csrf():
+        if request.path == '/user/payment/maya/webhook' and request.method == 'POST':
+            g._jwt_extended_jwt_in_request_context = False
+
+    #WHATSAPP BLUEPRINT
+    from .whatsapp import whatsapp_bp as whatsapp_blueprint 
+    app.register_blueprint(whatsapp_blueprint)           
 
     # === FRONTEND ROUTES (React) ===
     @app.route("/", defaults={"path": ""})

@@ -25,7 +25,7 @@ function App() {
 
         <Route path="/user" element={<UserMasterLayout />}>
           <Route path="Landing" element={< Landing />} />
-          <Route path="login" element={< LoginFlow />}/>
+          <Route path="login" element={<LoginFlow />} />
           <Route path="Request" element={< RequestFlow />} />
           <Route path="documents" element={< DocumentList />} />
           <Route path="Track" element={< Tracking />} />

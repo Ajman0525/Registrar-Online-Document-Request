@@ -5,7 +5,7 @@ import ContentBox from "../../../components/user/ContentBox";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
 
 
-function EnterId({ onNext, onBack, maskedPhone, setMaskedPhone}) {
+function EnterId({ onNext, onBack, maskedPhone, setMaskedPhone, goBackToOptions}) {
     const [studentId, setStudentId] = useState("");
     const [error, setError] = useState("");
     const [shake, setShake] = useState(false);
@@ -110,18 +110,22 @@ function EnterId({ onNext, onBack, maskedPhone, setMaskedPhone}) {
                     <div className="input-section">
                         <p className="subtext">ID Number</p>
                         <div className="input-wrapper">
-                        <input
-                            id="student-id"
-                            type="text"
-                            className={`box-input ${error ? "input-error" : ""} ${shake ? "shake" : ""}`}
-                            placeholder="0000-0000"
-                            value={studentId}
-                            onChange={handleInputChange}
-                            maxLength={9}
-                            disabled={loading}
-                        />
+                            <div className="id-input-wrapper">
+                                <input
+                                    id="student-id"
+                                    type="text"
+                                    className={`box-input ${error ? "input-error" : ""} ${shake ? "shake" : ""}`}
+                                    placeholder="0000-0000"
+                                    value={studentId}
+                                    onChange={handleInputChange}
+                                    maxLength={9}
+                                    disabled={loading}
+                                />
+                            </div>
+                            <div className="error-section">
+                                {error && <p className={`error-text ${shake ? "shake" : ""}`}>{error}</p>}
+                            </div>
                         </div>
-                        {error && <p className={`error-text ${shake ? "shake" : ""}`}>{error}</p>}
                     </div>
 
                     <div className="action-section">
@@ -144,8 +148,8 @@ function EnterId({ onNext, onBack, maskedPhone, setMaskedPhone}) {
                         </div>
 
                         <div className="support-section">
-                            <p className="subtext">Forgot ID Number? Contact the </p>
-                            <a href="mailto:support@example.com" className="forgot-id-link">support.</a>
+                            <p className="subtext">Forgot ID Number?</p>
+                            <a onClick={goBackToOptions} className="forgot-id-link">Try Another Way</a>
                         </div>
                         </div>
                 </ContentBox>
