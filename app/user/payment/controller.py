@@ -3,6 +3,7 @@ from flask import request, jsonify, current_app, g
 import os
 from . import payment_bp
 from ...whatsapp.controller import send_whatsapp_message
+from app.user.authentication.models import AuthenticationUser
 from .models import Payment
 import hmac
 import hashlib
@@ -128,10 +129,6 @@ def verify_signature(payload_bytes, signature):
 
 @payment_bp.route('/mark-paid', methods=['POST'])
 def mark_paid_manual():
-    """
-    Browser-side fallback to mark payment as paid during local testing.
-    Uses the same validation as the webhook, but without signature/IP checks.
-    """
     try:
         data = request.get_json() or {}
         tracking_number = data.get('trackingNumber') or data.get('tracking_number')
@@ -144,6 +141,30 @@ def mark_paid_manual():
             return jsonify({'success': False, 'message': 'trackingNumber and studentId are required'}), 400
 
         result = Payment.process_webhook_payment(tracking_number, amount, student_id)
+        
+        if result.get("success"):
+            user_data = AuthenticationUser.check_student_in_school_system(student_id)
+            
+            if user_data.get("exists"):
+                phone_number = user_data.get("phone_number") 
+                full_name = user_data.get("full_name") if user_data else "Valued Customer"
+                
+                if phone_number:
+                    whatsapp_result = send_whatsapp_payment_confirmation(
+                        phone_number, 
+                        full_name, 
+                        tracking_number
+                    )
+                    
+                    if whatsapp_result.get("status") == "failed":
+                        current_app.logger.error(
+                            f"[MAYA] Failed to send WhatsApp payment confirmation for {tracking_number} to {phone_number}: {whatsapp_result.get('message')}"
+                        )
+                else:
+                    current_app.logger.warning(
+                        f"[MAYA] Phone number missing for student {student_id}."
+                    )
+        
         status_code = 200 if result.get('success') else 400
         return jsonify(result), status_code
     except Exception as e:
