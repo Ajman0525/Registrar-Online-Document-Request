@@ -226,7 +226,7 @@ def ready_max_request_settings_table():
        value TEXT NOT NULL
     )
     """
-    execute_query(query)
+   execute_query(query)
 
 def ready_open_request_restriction_table():
    query = """
