@@ -1,0 +1,175 @@
+.overlay{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.2); 
+    z-index: 999;
+}
+
+.popup {
+    /* Auto layout */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 60px 100px;
+    gap: 24px;
+
+    width: 620px;
+    height: 620px;
+
+    background: var(--color-white);
+    border-radius: 20px;
+
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+    z-index: 1000;
+}
+
+.popup h3 {
+  color: var(--color-black);
+  font-size: var(--font-size-title);
+  font-weight: bold;
+  margin: 0px;
+  text-align: center;
+}
+
+hr{
+    margin: 0px;
+    border: solid 0.5px var(--color-black);     
+    width: 100%;
+}
+
+.name-and-description-wrapper, .requirements-wrapper{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+}
+
+.requirements-wrapper{
+    height: 100%;
+}
+.popup .requirement-item-wrapper{
+    display: flex;
+    flex-direction: column;
+    height: 200px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+.price-wrapper{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+.name-section, .description-section, .price-section, 
+.requirement-item, .add-requirement-section{
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+.add-requirement, .requirement-action-section{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    gap: 8px;
+}
+
+.requirement-item .remove-icon, .requirement-item .edit-icon{
+  opacity: 0;
+  cursor: pointer;
+  width: 20px;
+  height: 20px;
+}
+
+.requirement-item:hover .remove-icon, .requirement-item:hover .edit-icon{
+  opacity: 1;
+}
+
+.price-text{
+    margin: 0px;
+    font-size: var(--font-size-regular);
+    color: var(--color-text-subtext);
+    font-weight: 600;
+}
+.document-name-field, .document-description-field, .document-requirements-field, .requirement-name-field{
+    border: none;
+    width: 100%;
+    font-family: var(--font-family-base);
+}
+
+.document-price-field{
+    border: none;
+    flex: 1;
+    font-family: var(--font-family-base);
+}
+
+.document-name-field:focus, .document-description-field:focus, .document-requirements-field:focus, .document-price-field:focus, .requirement-name-field:focus{
+    outline: none;
+    border: none;
+}
+
+.document-name-field{
+    font-size: var(--font-size-regular);
+    color: var(--color-black);
+    font-weight: 600;
+}
+
+.document-price-field{  
+    text-align: right;
+    font-size: var(--font-size-regular);
+    color: var(--color-black);
+    font-weight: 600;
+}
+
+.document-price-field {
+  -moz-appearance: textfield;
+}
+
+.document-price-field::-webkit-outer-spin-button,
+.document-price-field::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.document-price-field::placeholder{
+    text-align: right;
+}
+
+.popup-error-section{
+    display: flex;
+    justify-content: left;
+    width: 100%;
+}
+
+.popup .action-section{
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+}
+
+.cancel-button-wrapper,
+.proceed-button-wrapper {
+  width: 76.47px;
+}
+
+
+.cancel-button,
+.proceed-button {
+  width: 100%;
+}

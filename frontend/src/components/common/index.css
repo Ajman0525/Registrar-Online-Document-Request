@@ -1,4 +1,5 @@
 
+
 :root {
   /* Color Variables */
     --color-primary: #EAEAEA;
@@ -7,12 +8,22 @@
 
     /* Button Colors */
     --color-button-primary-default: #0070E2;
+    --color-button-red: #B81D23;
+    --color-button-gray: #EAEAEA;
     --color-button-primary-hover: #80A2FF;
     --color-button-destructive-default: #EA3D2F;
     --color-button-destructive-hover: #FEE4E3;
+    --color-button-success-default: #4ADE80;
+    --color-button-success-hover: #BBF7D1;
     --color-button-disabled: #E3E3E1;
 
-    /* Input Colors */
+    /* Shadow Colors when hovered */
+    --color-when-hovered: #f0f0f0;
+
+    /* Shadow Colors when active */
+    --color-when-active: #e0e0e0;
+
+    /* Input Border Color */
     --color-input-border: #6E6E73;
     /* Shadow Colors when hovered */
     --color-when-hovered: #f0f0f0;

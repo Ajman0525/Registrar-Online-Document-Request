@@ -1,18 +1,19 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import AdminLogin from "./pages/admin/AdminLogin";
+import AdminWaiting from "./pages/admin/AdminWaiting";
 import Index from "./pages/Index";
 import Landing from "./pages/user/Landing";
 import UserMasterLayout from "./pages/layouts/UserMasterLayout";
 import LoginFlow from "./pages/user/login/LoginFlow";
-import Tracking from "./pages/user/Tracking";
+import Tracking from "./pages/user/tracking/TrackingFlow";
 import DocumentList from "./pages/user/DocumentList";
-import Request from "./pages/user/Request";
 import RegistrarMasterLayout from "./pages/layouts/RegistrarMasterLayout";
 import Dashboard from "./pages/admin/Dashboard";
-import Documents from "./pages/admin/Documents";
-import Requests from "./pages/admin/Requests";
+import Documents from "./pages/admin/Documents/Documents";
+import Requests from "./pages/admin/manage_request/Requests";
 import Logs from "./pages/admin/Logs";
-
+import Settings from "./pages/admin/Settings";
+import RequestFlow from "./pages/user/request/RequestFlow";
 
 function App() {
   return (
@@ -22,18 +23,20 @@ function App() {
 
         <Route path="/user" element={<UserMasterLayout />}>
           <Route path="Landing" element={< Landing />} />
-          <Route path="login" element={< LoginFlow />}/>
-          <Route path="Request" element={< Request />} />
-          <Route path="View" element={< DocumentList />} />
+          <Route path="login" element={<LoginFlow />} />
+          <Route path="Request" element={< RequestFlow />} />
+          <Route path="documents" element={< DocumentList />} />
           <Route path="Track" element={< Tracking />} />
         </Route>
         
         <Route path="/admin/login" element={< AdminLogin />} />
+        <Route path="/admin/waiting" element={< AdminWaiting />} />
         <Route path="/admin" element={<RegistrarMasterLayout />}>
           <Route path="Dashboard" element={<Dashboard />} />
           <Route path="Requests" element={<Requests />} />
           <Route path ="Document" element = {<Documents />} />
           <Route path ="Logs" element = {<Logs />} />
+          <Route path="settings" element={<Settings />} />
         </Route>
         
       </Routes>
@@ -41,4 +44,5 @@ function App() {
   );
 }
 
+// Todo: protect the routes through role in jwt token except for the login and landing pages
 export default App;
