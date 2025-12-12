@@ -34,6 +34,7 @@ def send_whatsapp_otp(phone, full_name, otp_code):
     
     return {"status": "success"}
 
+
 @authentication_user_bp.route('/check-id', methods=['POST'])
 def check_id():
     # Get student ID from frontend
@@ -74,7 +75,7 @@ def check_id():
             "status": "error",
             "message": whatsapp_result["message"]
         }), 500
-
+  
     # Return masked number to frontend
     return jsonify({
         "status": "valid",
@@ -82,16 +83,14 @@ def check_id():
         "masked_phone": phone[-4:] 
     }), 200
 
+
+
 @authentication_user_bp.route('/check-name', methods=['POST'])
 def check_name():
     firstname = request.json.get("firstname")
     lastname = request.json.get("lastname")
 
-    student_id = session.get("student_id")
-    if not student_id:
-        return jsonify({"status": "expired", "message": "Session expired."}), 400
-
-    # Returns dict with exists, has_liability, phone_number
+    # Returns dict with exists, has_liability, phone_number, student_id, full_name
     result = AuthenticationUser.check_student_name_exists(firstname, lastname)
 
     if not result["exists"]:
@@ -105,20 +104,29 @@ def check_name():
 
     # Generate OTP + hash it
     otp, otp_hash = AuthenticationUser.generate_otp()
-    full_name = f"{firstname} {lastname}"
-    AuthenticationUser.save_otp(student_id, otp_hash, session)
-    session["phone_number"] = result["phone_number"]
-    session["full_name"] = full_name
-    
-    # Send OTP to registered phone (printed in dev)
     phone = result["phone_number"]
-    send_whatsapp_otp(phone, full_name, otp)
+    full_name = result.get("full_name", f"{firstname} {lastname}")
 
+    # Save OTP hash, student ID and full name in session
+    AuthenticationUser.save_otp(result["student_id"], otp_hash, session)
+    session["phone_number"] = phone
+    session["full_name"] = full_name
+
+    # Send OTP via WhatsApp 
+    whatsapp_result = send_whatsapp_otp(phone, full_name, otp)
+    
+    if whatsapp_result["status"] == "failed":
+        return jsonify({
+            "status": "error",
+            "message": whatsapp_result["message"]
+        }), 500
+   
     return jsonify({
         "status": "name_verified",
         "message": "Name verified successfully.",
-        "masked_phone": phone[-4:]
+        "masked_phone": phone[-4:]  
     }), 200
+
 
 @authentication_user_bp.route('/resend-otp', methods=['POST'])
 def resend_otp():
@@ -137,7 +145,7 @@ def resend_otp():
 
     # Generate new OTP
     otp, otp_hash = AuthenticationUser.generate_otp()
-    session["otp"] = otp_hash  # replace old OTP
+    session["otp"] = otp_hash  
 
     # Send OTP via WhatsApp
     whatsapp_result = send_whatsapp_otp(phone, full_name, otp)
@@ -147,7 +155,7 @@ def resend_otp():
             "status": "error",
             "message": whatsapp_result["message"]
         }), 500
-        
+    
     # Success response
     return jsonify({
         "status": "resent",

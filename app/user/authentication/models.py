@@ -47,21 +47,25 @@ class AuthenticationUser:
                 "phone_number": None
             }
 
+
     @staticmethod
     def check_student_name_exists(firstname, lastname):
         """
-        Verify if the student exists by matching firstname + lastname.
+        Verify if the student exists by matching firstname + lastname (case-insensitive).
         Returns a dict with:
             exists: True/False
             has_liability: True/False
             phone_number: str or None
+            student_id: str or None
+            full_name: str or None
         """
         try:
             conn = get_connection()
             cur = conn.cursor()
 
+            # Case-insensitive search using LOWER() function
             cur.execute(
-                "SELECT contact_number, liability_status FROM students WHERE firstname = %s AND lastname = %s",
+                "SELECT student_id, contact_number, liability_status, firstname, lastname FROM students WHERE LOWER(firstname) = LOWER(%s) AND LOWER(lastname) = LOWER(%s)",
                 (firstname, lastname)
             )
             row = cur.fetchone()
@@ -73,14 +77,19 @@ class AuthenticationUser:
                 return {
                     "exists": False,
                     "has_liability": False,
-                    "phone_number": None
+                    "phone_number": None,
+                    "student_id": None,
+                    "full_name": None
                 }
 
-            contact_number, liability_status = row
+            student_id, contact_number, liability_status, db_firstname, db_lastname = row
+            full_name = f"{db_firstname} {db_lastname}"
             return {
                 "exists": True,
                 "has_liability": liability_status,
-                "phone_number": contact_number
+                "phone_number": contact_number,
+                "student_id": student_id,
+                "full_name": full_name
             }
 
         except Exception as e:
@@ -88,7 +97,9 @@ class AuthenticationUser:
             return {
                 "exists": False,
                 "has_liability": False,
-                "phone_number": None
+                "phone_number": None,
+                "student_id": None,
+                "full_name": None
             }
 
     @staticmethod
