@@ -143,6 +143,9 @@ def mark_paid_manual():
         result = Payment.process_webhook_payment(tracking_number, amount, student_id)
         
         if result.get("success"):
+            if result.get("was_already_paid"):
+                return jsonify(result), 200
+            
             user_data = AuthenticationUser.check_student_in_school_system(student_id)
             
             if user_data.get("exists"):
