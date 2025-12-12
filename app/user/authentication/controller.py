@@ -34,6 +34,7 @@ def send_whatsapp_otp(phone, full_name, otp_code):
     
     return {"status": "success"}
 
+
 @authentication_user_bp.route('/check-id', methods=['POST'])
 def check_id():
     # Get student ID from frontend
@@ -66,7 +67,14 @@ def check_id():
     session["phone_number"] = phone
     session ["full_name"] = full_name 
     
-    send_whatsapp_otp(phone, full_name, otp)
+    # Send OTP via WhatsApp
+    whatsapp_result = send_whatsapp_otp(phone, full_name, otp)
+    
+    if whatsapp_result["status"] == "failed":
+        return jsonify({
+            "status": "error",
+            "message": whatsapp_result["message"]
+        }), 500
   
     # Return masked number to frontend
     return jsonify({
@@ -74,6 +82,7 @@ def check_id():
         "message": "Student OK, continue",
         "masked_phone": phone[-4:] 
     }), 200
+
 
 
 @authentication_user_bp.route('/check-name', methods=['POST'])
@@ -103,13 +112,21 @@ def check_name():
     session["phone_number"] = phone
     session["full_name"] = full_name
 
-    send_whatsapp_otp(phone, full_name, otp)
+    # Send OTP via WhatsApp 
+    whatsapp_result = send_whatsapp_otp(phone, full_name, otp)
+    
+    if whatsapp_result["status"] == "failed":
+        return jsonify({
+            "status": "error",
+            "message": whatsapp_result["message"]
+        }), 500
    
     return jsonify({
         "status": "name_verified",
         "message": "Name verified successfully.",
         "masked_phone": phone[-4:]  
     }), 200
+
 
 @authentication_user_bp.route('/resend-otp', methods=['POST'])
 def resend_otp():
@@ -130,7 +147,14 @@ def resend_otp():
     otp, otp_hash = AuthenticationUser.generate_otp()
     session["otp"] = otp_hash  
 
-    send_whatsapp_otp(phone, full_name, otp)
+    # Send OTP via WhatsApp
+    whatsapp_result = send_whatsapp_otp(phone, full_name, otp)
+    
+    if whatsapp_result["status"] == "failed":
+        return jsonify({
+            "status": "error",
+            "message": whatsapp_result["message"]
+        }), 500
     
     # Success response
     return jsonify({
