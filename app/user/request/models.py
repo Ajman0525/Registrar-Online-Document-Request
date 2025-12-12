@@ -76,92 +76,6 @@ class Request:
             cur.close()
             db_pool.putconn(conn)
             
-    #store request_id and student_id to db
-    @staticmethod
-    def store_request(request_id, student_id):
-        """
-        Stores the request_id and student_id into the requests table.
-        """
-        conn = db_pool.getconn()
-        cur = conn.cursor()
-
-        try:
-            cur.execute("""
-                INSERT INTO requests (request_id, student_id)
-                VALUES (%s, %s)
-            """, (request_id, student_id))
-            conn.commit()
-            return True
-
-        except Exception as e:
-            print(f"Error storing request data: {e}")
-            conn.rollback()
-            return False
-
-        finally:
-            cur.close()
-            db_pool.putconn(conn)
-            
-   #store student full name, contact number, email to db
-    @staticmethod
-    def store_student_info(request_id, student_id, full_name, contact_number, email):
-        """
-        Stores or updates the student's full name, contact number, and email
-        in the requests table based on request_id.
-        """
-        conn = db_pool.getconn()
-        cur = conn.cursor()
-
-        try:
-            cur.execute("""
-                INSERT INTO requests (request_id, student_id, full_name, contact_number, email)
-                VALUES (%s, %s, %s, %s, %s)
-                ON CONFLICT (request_id) DO UPDATE
-                SET full_name = EXCLUDED.full_name,
-                    contact_number = EXCLUDED.contact_number,
-                    email = EXCLUDED.email,
-                    student_id = EXCLUDED.student_id
-            """, (request_id, student_id, full_name, contact_number, email))
-            conn.commit()
-            return True
-
-        except Exception as e:
-            print(f"Error storing student info: {e}")
-            conn.rollback()
-            return False
-
-        finally:
-            cur.close()
-            db_pool.putconn(conn)
-
-    #store preferred contact to db
-    @staticmethod
-    def store_preferred_contact(request_id, preferred_contact):
-        """
-        Stores or updates the preferred contact method in the requests table.
-        """
-        conn = db_pool.getconn()
-        cur = conn.cursor()
-
-        try:
-            cur.execute("""
-                UPDATE requests
-                SET preferred_contact = %s
-                WHERE request_id = %s
-            """, (preferred_contact, request_id))
-            conn.commit()
-            return True
-
-        except Exception as e:
-            print(f"Error storing preferred contact: {e}")
-            conn.rollback()
-            return False
-
-        finally:
-            cur.close()
-            db_pool.putconn(conn)
-    
-   
    #store requested documents to db
     @staticmethod
     def store_requested_documents(request_id, document_ids, quantity_list):
@@ -195,110 +109,57 @@ class Request:
         finally:
             cur.close()
             db_pool.putconn(conn)
-            
-    @staticmethod
-    def get_uploaded_files(request_id):
-        """
-        Fetch previously uploaded requirement files for a given request.
-        Returns a dict: {requirement_id: file_path}
-        """
-        conn = db_pool.getconn()
-        cur = conn.cursor()
-        try:
-            cur.execute("""
-                SELECT requirement_id, file_path
-                FROM request_requirements_links
-                WHERE request_id = %s
-            """, (request_id,))
-            rows = cur.fetchall()
-            return {row[0]: row[1] for row in rows}
-        finally:
-            cur.close()
-            db_pool.putconn(conn)
-            
-            
-    @staticmethod
-    def delete_requirement_file(request_id, requirement_id):
-        """
-        Delete a requirement file from Supabase and DB.
-        """
-        from supabase import create_client, Client
-        from config import SUPABASE_URL, SUPABASE_ANON_KEY
 
-        conn = db_pool.getconn()
-        cur = conn.cursor()
-        try:
-            # Get file URL
-            cur.execute("""
-                SELECT file_path FROM request_requirements_links
-                WHERE request_id = %s AND requirement_id = %s
-            """, (request_id, requirement_id))
-            row = cur.fetchone()
-            if row:
-                file_path = row[0]
-                # Extract file path from URL for deletion in Supabase
-                # URL Format is https://supabase-url.supabase.co/storage/v1/object/public/requirements-odr/request_id/req_id_filename
-                # Extract path after 'requirements-odr/'
-                from urllib.parse import urlparse
-                parsed = urlparse(file_path)
-                if parsed.path and 'requirements-odr' in parsed.path:
-                    path_parts = parsed.path.split('requirements-odr/', 1)
-                    if len(path_parts) > 1:
-                        file_path_in_bucket = path_parts[1]
-                        supabase: Client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
-                        supabase.storage.from_('requirements-odr').remove([file_path_in_bucket])
 
-                # Delete from DB
-                cur.execute("""
-                    DELETE FROM request_requirements_links
-                    WHERE request_id = %s AND requirement_id = %s
-                """, (request_id, requirement_id))
-                conn.commit()
-            return True, "File deleted"
-        except Exception as e:
-            conn.rollback()
-            print(f"Error deleting file: {e}")
-            return False, "Error deleting file"
-        finally:
-            cur.close()
-            db_pool.putconn(conn)
-            
-   #fetch requirements needed by request id
+
+    #fetch requirements needed by document IDs (for UploadRequirements step)
     @staticmethod
-    def get_requirements_by_request_id(request_id):
+    def get_requirements_by_document_ids(document_ids):
         """
-        Fetch all unique requirements for the documents in a given request.
+        Fetch all unique requirements for selected documents.
+        Requirements are deduplicated - same requirement appearing in multiple documents 
+        will only appear once in the result.
 
         Args:
-            request_id (str): The request ID (e.g., "R0000123")
+            document_ids (list): List of document IDs
 
         Returns:
-            dict: {"requirements": [{"req_id": "REQ0001", "requirement_name": "Birth Certificate"}, ...]}
+            dict: {"requirements": [{"req_id": "REQ0001", "requirement_name": "Birth Certificate", "doc_names": ["Document 1", "Document 2"]}, ...]}
         """
-        if not request_id:
+        if not document_ids:
             return {"requirements": []}
 
         conn = db_pool.getconn()
         cur = conn.cursor()
 
         try:
-            query = """
-                SELECT DISTINCT r.req_id, r.requirement_name
-                FROM request_documents rd
-                JOIN document_requirements dr ON rd.doc_id = dr.doc_id
+            # Create placeholders for the IN clause
+            placeholders = ','.join(['%s'] * len(document_ids))
+            query = f"""
+                SELECT r.req_id, r.requirement_name, STRING_AGG(dl.doc_name, ', ' ORDER BY dl.doc_name) as doc_names
+                FROM document_requirements dr
                 JOIN requirements r ON dr.req_id = r.req_id
-                WHERE rd.request_id = %s
+                JOIN documents dl ON dr.doc_id = dl.doc_id
+                WHERE dr.doc_id IN ({placeholders})
+                GROUP BY r.req_id, r.requirement_name
                 ORDER BY r.requirement_name;
             """
-            cur.execute(query, (request_id,))
+            cur.execute(query, tuple(document_ids))
             rows = cur.fetchall()
 
-            # Extract req_id and requirement_name
-            requirement_list = [{"req_id": row[0], "requirement_name": row[1]} for row in rows] if rows else []
+            # Extract req_id, requirement_name, and doc_names (comma-separated list)
+            requirement_list = [
+                {
+                    "req_id": row[0], 
+                    "requirement_name": row[1],
+                    "doc_names": row[2].split(', ') if row[2] else []
+                } 
+                for row in rows
+            ] if rows else []
             return {"requirements": requirement_list}
 
         except Exception as e:
-            print(f"Error fetching requirements for request {request_id}: {e}")
+            print(f"Error fetching requirements for documents {document_ids}: {e}")
             return {"requirements": []}
 
         finally:
@@ -352,133 +213,45 @@ class Request:
         finally:
             cur.close()
             db_pool.putconn(conn)
+        
+    @staticmethod
+    def submit_request(request_id, student_id, full_name, contact_number, email, preferred_contact, payment_status, total_cost, remarks=None, order_type="ONLINE"):
+        """
+        Submit a complete request with all student information and details.
+        This method consolidates multiple database operations into one transaction.
+        """
+        conn = db_pool.getconn()
+        cur = conn.cursor()
+
+        try:
+            # Use INSERT ... ON CONFLICT DO UPDATE for upsert behavior
+            cur.execute("""
+                INSERT INTO requests (
+                    request_id, student_id, full_name, contact_number, email,
+                    preferred_contact, payment_status, total_cost, remarks, order_type, status
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'PENDING')
+                ON CONFLICT (request_id) DO UPDATE SET
+                    student_id = EXCLUDED.student_id,
+                    full_name = EXCLUDED.full_name,
+                    contact_number = EXCLUDED.contact_number,
+                    email = EXCLUDED.email,
+                    preferred_contact = EXCLUDED.preferred_contact,
+                    payment_status = EXCLUDED.payment_status,
+                    total_cost = EXCLUDED.total_cost,
+                    remarks = EXCLUDED.remarks,
+                    order_type = EXCLUDED.order_type,
+                    status = 'PENDING'
+            """, (request_id, student_id, full_name, contact_number, email, 
+                  preferred_contact, payment_status, total_cost, remarks, order_type))
             
-    # get contact number and email by student id from requests table
-    @staticmethod
-    def get_contact_info_by_student_id(student_id):
-        """
-        Fetch contact number and email for a given student ID from the requests table.
-
-        Args:
-            student_id (str): The student ID.
-
-        Returns:
-            dict: A dictionary with 'contact_number' and 'email' if found, else None.
-        """
-        conn = db_pool.getconn()  # assuming you have a connection pool
-        cur = conn.cursor()
-
-        try:
-            query = """
-                SELECT contact_number, email
-                FROM requests
-                WHERE student_id = %s
-                ORDER BY requested_at DESC
-                LIMIT 1
-            """
-            cur.execute(query, (student_id,))
-            result = cur.fetchone()
-            if result:
-                return {"contact_number": result[0], "email": result[1]}
-            else:
-                return None
-        except Exception as e:
-            print(f"Error fetching contact info: {e}")
-            return None
-        finally:
-            cur.close()
-            db_pool.putconn(conn)
-
-    #mark request as complete
-    @staticmethod
-    def mark_request_complete(request_id, total_cost):
-        """
-        Marks a request as complete in the requests table and stores the total cost.
-        """
-        conn = db_pool.getconn()
-        cur = conn.cursor()
-
-        try:
-            cur.execute("""
-                UPDATE requests
-                SET status = 'SUBMITTED', completed_at = NOW(), total_cost = %s
-                WHERE request_id = %s
-            """, (total_cost, request_id))
             conn.commit()
+            print(f"Request {request_id} submitted successfully")
+            return True
 
         except Exception as e:
-            print(f"Error marking request as complete: {e}")
+            print(f"Error submitting request: {e}")
             conn.rollback()
-
-        finally:
-            cur.close()
-            db_pool.putconn(conn)
-
-    @staticmethod
-    def get_saved_documents(request_id):
-        """
-        Fetch saved documents and quantities for a given request_id.
-        Returns a list of dicts: [{"doc_id": "DOC0001", "doc_name": "...", "quantity": 1, "requirements": [...]}]
-        """
-        conn = db_pool.getconn()
-        cur = conn.cursor()
-
-        try:
-            query = """
-                SELECT rd.doc_id, d.doc_name, rd.quantity, ARRAY_AGG(r.requirement_name) as requirements
-                FROM request_documents rd
-                JOIN documents d ON rd.doc_id = d.doc_id
-                LEFT JOIN document_requirements dr ON rd.doc_id = dr.doc_id
-                LEFT JOIN requirements r ON dr.req_id = r.req_id
-                WHERE rd.request_id = %s
-                GROUP BY rd.doc_id, d.doc_name, rd.quantity
-                ORDER BY d.doc_name;
-            """
-            cur.execute(query, (request_id,))
-            rows = cur.fetchall()
-
-            documents = []
-            for row in rows:
-                doc_id, doc_name, quantity, reqs = row
-                requirements = reqs if reqs and reqs[0] is not None else []
-                documents.append({
-                    "doc_id": doc_id,
-                    "doc_name": doc_name,
-                    "quantity": quantity,
-                    "requirements": requirements
-                })
-
-            return documents
-
-        except Exception as e:
-            print(f"Error fetching saved documents for request {request_id}: {e}")
-            return []
-
-        finally:
-            cur.close()
-            db_pool.putconn(conn)
-
-    @staticmethod
-    def get_preferred_contact(request_id):
-        """
-        Fetch preferred contact for a given request_id.
-        Returns the preferred_contact string or None.
-        """
-        conn = db_pool.getconn()
-        cur = conn.cursor()
-
-        try:
-            cur.execute("""
-                SELECT preferred_contact
-                FROM requests
-                WHERE request_id = %s
-            """, (request_id,))
-            row = cur.fetchone()
-            return row[0] if row else None
-
-        except Exception as e:
-            print(f"Error fetching preferred contact for request {request_id}: {e}")
-            return None
+            return False
 
         finally:
             cur.close()
