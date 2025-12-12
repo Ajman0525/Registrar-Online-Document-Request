@@ -2,6 +2,7 @@
 from flask import request, jsonify, current_app, g
 import os
 from . import payment_bp
+from ...whatsapp.controller import send_whatsapp_message
 from .models import Payment
 import hmac
 import hashlib
@@ -11,6 +12,28 @@ MAYA_SANDBOX_IPS = ['13.229.160.234', '3.1.199.75']
 # Toggle to true for local testing
 MAYA_DISABLE_SECURITY = os.getenv('MAYA_DISABLE_SECURITY', 'false').lower() == 'true'
 
+def send_whatsapp_payment_confirmation(phone, full_name, request_id):
+    template_name = "odr_payment_successful"
+
+    components = [
+        {
+            "type": "body",
+            "parameters" : [
+                {"type": "text", "text": str(full_name)},
+                {"type": "text", "text": str(request_id)}
+            ]
+        }
+    ]
+
+    print(f"[Payment Successful] Sending payment confirmation to {phone} for request {request_id}")
+
+    result = send_whatsapp_message(phone, template_name, components)
+
+    if "error" in result:
+        current_app.logger.error(f"WhatsApp send failed for {phone}: {result['error']}")
+        return {"status": "failed", "message": "Failed to send payment confirmation to WhatsApp"}
+
+    return {"status": "success"}
 
 @payment_bp.before_request
 def verify_maya_ip():
