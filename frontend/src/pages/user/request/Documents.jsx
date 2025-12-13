@@ -7,6 +7,8 @@ import FileCard from "../../../components/common/FileCard";
 import RequestPopup from "../../../components/user/RequestPopup";
 import SearchBar from "../../../components/common/SearchBar";
 
+
+
 function Documents({ selectedDocs, setSelectedDocs, onNext, steps, currentStepIndex }) {
   const [documents, setDocuments] = useState([]);
   const [showPopup, setShowPopup] = useState(false);
@@ -49,12 +51,16 @@ function Documents({ selectedDocs, setSelectedDocs, onNext, steps, currentStepIn
       });
   }, [navigate]);
 
+
   const handleSelect = (doc) => {
     setSelectedDocs((prevSelected) => {
-      if (prevSelected.find((d) => d.doc_id === doc.doc_id)) {
-        return prevSelected.filter((d) => d.doc_id !== doc.doc_id);
+      // Ensure prevSelected is always an array
+      const currentSelected = Array.isArray(prevSelected) ? prevSelected : [];
+      
+      if (currentSelected.find((d) => d.doc_id === doc.doc_id)) {
+        return currentSelected.filter((d) => d.doc_id !== doc.doc_id);
       } else {
-        return [...prevSelected, doc];
+        return [...currentSelected, doc];
       }
     });
   };
@@ -78,20 +84,6 @@ function Documents({ selectedDocs, setSelectedDocs, onNext, steps, currentStepIn
       {loading && <LoadingSpinner message="Loading documents..." />}
       {!loading && (
         <div className="select-documents-page">
-          <div className="hero-section">
-            <img src="/assets/HeroImage.png" alt="Request" className="hero-image" />
-            <div className="welcome-text">
-              <h1>Welcome to the Online Document Request System</h1>
-              <p className="subtext">
-                Select the documents you need below and follow the steps to complete your request.
-                <br />
-                Make sure to review each document’s requirements before proceeding.
-              </p>
-            </div>
-            <a href="#documents-section" className="view-documents-btn">
-              Get Started
-            </a>
-          </div>
 
           <div className="bottom-section" id="documents-section">
             <h1 className="title">Select Your Documents</h1>
