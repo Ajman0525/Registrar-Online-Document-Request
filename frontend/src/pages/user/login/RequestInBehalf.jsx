@@ -9,6 +9,8 @@ function RequestInBehalf({ onNext, onBack, maskedPhone, setMaskedPhone, goBackTo
     const [Lastname, setLastname] = useState("");
     const [WhatsappNo, setWhatsappNo] = useState("");
     const [whatsappError, setWhatsappError] = useState("");
+    const [requesterName, setRequesterName] = useState("");
+    const [requesterNameError, setRequesterNameError] = useState("");
     const [firstnameError, setFirstnameError] = useState("");
     const [lastnameError, setLastnameError] = useState("");
     const [uploadError, setUploadError] = useState("");
@@ -59,6 +61,14 @@ function RequestInBehalf({ onNext, onBack, maskedPhone, setMaskedPhone, goBackTo
         
     const handleSubmit = async () => {
         let hasError = false;
+
+        // Validate requester name
+        if (!requesterName) {
+            setRequesterNameError("Please fill in Name (Person or Organization).");
+            hasError = true;
+        } else {
+            setRequesterNameError("");
+        }
 
         // Validate WhatsApp number
         if (!WhatsappNo) {
@@ -122,11 +132,11 @@ function RequestInBehalf({ onNext, onBack, maskedPhone, setMaskedPhone, goBackTo
                 return;
             }
 
-            if (verifyData.status === "has_liability") {
-                onNext("liability");
-                setLoading(false);
-                return;
-            }
+            // if (verifyData.status === "has_liability") {
+            //     onNext("liability");
+            //     setLoading(false);
+            //     return;
+            // }
 
             // 2. Upload authorization letter
             const formData = new FormData();
@@ -134,6 +144,7 @@ function RequestInBehalf({ onNext, onBack, maskedPhone, setMaskedPhone, goBackTo
             formData.append("firstname", Firstname);
             formData.append("lastname", Lastname);
             formData.append("number", WhatsappNo);
+            formData.append("requester_name", requesterName);
 
             const uploadResponse = await fetch("/user/upload-authletter", {
                 method: "POST",
@@ -176,6 +187,21 @@ function RequestInBehalf({ onNext, onBack, maskedPhone, setMaskedPhone, goBackTo
                     <div className="input-section">
                         <h5>Requester Details</h5>
                         <div className="input-wrapper">
+                            <p className="subtext">Name (Person or Organization)</p>
+                            <input
+                                id="requester-name"
+                                type="text"
+                                className={`box-input ${error ? "input-error" : ""} ${shake ? "shake" : ""}`}
+                                placeholder="e.g. Juan Dela Cruz or ABC Corporation"
+                                value={requesterName}
+                                onChange={e => setRequesterName(e.target.value)}
+                                disabled={loading}
+                            />
+                            <div className="error-section">
+                                 {requesterNameError && <p className="error-text">{requesterNameError}</p>}
+                            </div>
+                        </div>
+                        <div className="input-wrapper">
                             <p className="subtext">Whatsapp No.</p>
                             <input
                                 id="Whatsapp-no"
@@ -190,6 +216,7 @@ function RequestInBehalf({ onNext, onBack, maskedPhone, setMaskedPhone, goBackTo
                                 {whatsappError && <p className="error-text">{whatsappError}</p>}
                             </div>
                         </div>
+                        
                         <h5>Student Information</h5>
                         <div className="input-wrapper">
                             <p className="subtext">Firstname</p>
@@ -197,7 +224,7 @@ function RequestInBehalf({ onNext, onBack, maskedPhone, setMaskedPhone, goBackTo
                                 id="student-id"
                                 type="text"
                                 className={`box-input ${error ? "input-error" : ""} ${shake ? "shake" : ""}`}
-                                placeholder="Smith"
+                                placeholder="e.g. John"
                                 value={Firstname}
                                 onChange={e => setFirstname(e.target.value)}
                                 disabled={loading}
@@ -213,7 +240,7 @@ function RequestInBehalf({ onNext, onBack, maskedPhone, setMaskedPhone, goBackTo
                             id="student-id"
                             type="text"
                             className={`box-input ${error ? "input-error" : ""} ${shake ? "shake" : ""}`}
-                            placeholder="Doe"
+                            placeholder="e.g. Doe"
                             value={Lastname}
                             onChange={e => setLastname(e.target.value)}
                             disabled={loading}
