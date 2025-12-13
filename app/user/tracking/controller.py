@@ -68,7 +68,7 @@ def get_tracking_data():
         otp, otp_hash = AuthenticationUser.generate_otp()
 
         #Save OTP hash in session (temp)
-        AuthenticationUser.save_otp(student_id, otp_hash, session)
+        AuthenticationUser.save_otp(student_id, otp_hash,has_liability=result["has_liability"], session=session)
         session["phone_number"] = result["phone_number"]
         session["tracking_number"] = tracking_number 
         session["full_name"] = full_name
