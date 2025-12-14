@@ -1,4 +1,5 @@
 from . import manage_request_bp
+from ...whatsapp.controller import send_whatsapp_message
 from flask import jsonify, request, g
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.utils.decorator import jwt_required_with_role
