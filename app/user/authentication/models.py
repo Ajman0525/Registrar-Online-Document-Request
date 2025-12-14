@@ -50,13 +50,14 @@ class AuthenticationUser:
                 "phone_number": None
             }
 
+
     @staticmethod
-    def check_student_name_exists(firstname, lastname):
+    def check_student_name_exists(firstname, lastname, skip_liability_check=False):
         """
         Verify if the student exists by matching firstname + lastname (case-insensitive).
         Returns a dict with:
             exists: True/False
-            has_liability: True/False
+            has_liability: True/False (skipped if skip_liability_check=True)
             phone_number: str or None
             student_id: str or None
             full_name: str or None
@@ -88,9 +89,13 @@ class AuthenticationUser:
 
             student_id, contact_number, liability_status, db_firstname, db_lastname, college_code = row
             full_name = f"{db_firstname} {db_lastname}"
+            
+            # Skip liability check for outsider users
+            has_liability = False if skip_liability_check else liability_status
+            
             return {
                 "exists": True,
-                "has_liability": liability_status,
+                "has_liability": has_liability,
                 "phone_number": contact_number,
                 "student_id": student_id,
                 "full_name": full_name,
@@ -143,10 +148,11 @@ class AuthenticationUser:
         }
 
     
+
     @staticmethod
-    def store_authletter(firstname, lastname, file_url, number, requester_name):
+    def store_authletter(request_id, firstname, lastname, file_url, number, requester_name):
         """
-        Insert or update the authorization letter record in the DB.
+        Insert or update the authorization letter record in the DB using request_id as primary key.
         """
         try:
             conn = db_pool.getconn()
@@ -154,11 +160,11 @@ class AuthenticationUser:
 
             # Upsert: if already exists, replace URL
             cur.execute("""
-                INSERT INTO auth_letters (firstname, lastname, file_url, number, requester_name)
-                VALUES (%s, %s, %s, %s, %s)
+                INSERT INTO auth_letters (id, firstname, lastname, file_url, number, requester_name)
+                VALUES (%s, %s, %s, %s, %s, %s)
                 ON CONFLICT (id)
                 DO UPDATE SET file_url = EXCLUDED.file_url
-            """, (firstname, lastname, file_url, number, requester_name))
+            """, (request_id, firstname, lastname, file_url, number, requester_name))
 
             conn.commit()
             cur.close()

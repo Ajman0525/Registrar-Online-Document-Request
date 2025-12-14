@@ -13,12 +13,17 @@ import { getCSRFToken } from "../../../utils/csrf";
 
 
 
+
 function RequestFlow() {
-  const [step, setStep] = useState("checkActiveRequests");
+
+  const [step, setStep] = useState("documents"); // Start with documents, will change based on user type
   const [trackingId, setTrackingId] = useState("");
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState(null);
   const [hasActiveRequests, setHasActiveRequests] = useState(false);
+
+  const [userType, setUserType] = useState(null); // null = unknown, 'student' or 'outsider'
+
 
   // Progress indicator steps
   const steps = [
@@ -31,6 +36,47 @@ function RequestFlow() {
   ];
 
   const currentStepIndex = steps.findIndex(s => s.key === step);
+
+
+  // Get user type on component mount
+  useEffect(() => {
+    const getUserType = () => {
+      const localUserType = localStorage.getItem("user_type");
+      const sessionUserType = sessionStorage.getItem("user_type");
+      const storedUserType = localUserType || sessionUserType || "student";
+      setUserType(storedUserType);
+      console.log("User type detected:", storedUserType, "local:", localUserType, "session:", sessionUserType);
+      return storedUserType;
+    };
+
+    // Get initial user type
+    const initialUserType = getUserType();
+
+    // Listen for changes to user_type in both storage types
+    const handleStorageChange = (e) => {
+      if (e.key === "user_type") {
+        const newUserType = getUserType();
+        console.log("User type changed via storage:", newUserType);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+
+    // Also check sessionStorage changes (storage event doesn't fire for sessionStorage)
+    const intervalId = setInterval(() => {
+      const currentUserType = sessionStorage.getItem("user_type") || localStorage.getItem("user_type");
+      if (currentUserType && currentUserType !== initialUserType) {
+        console.log("User type changed via storage:", currentUserType);
+        getUserType();
+      }
+    }, 200); // Check more frequently
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(intervalId);
+    };
+  }, []);
 
   // Centralized state for all request data
   const [requestData, setRequestData] = useState({
@@ -118,10 +164,9 @@ function RequestFlow() {
       }
     };
 
+
     fetchStudentData();
   }, []);
-
-
 
   // Initialize requirements state when documents change
   useEffect(() => {
@@ -134,7 +179,10 @@ function RequestFlow() {
       }));
     }
   }, [requestData.documents.length]); // Only depend on documents length, not the whole requirements object
-  
+
+
+
+
   // Check for active requests on component mount
   useEffect(() => {
     const checkActiveRequests = async () => {
@@ -153,7 +201,6 @@ function RequestFlow() {
           const hasActive = data.active_requests && data.active_requests.length > 0;
           setHasActiveRequests(hasActive);
           
-         
           // If active requests exist, go to pending requests page
           // If no active requests, go directly to documents
           if (hasActive) {
@@ -163,7 +210,6 @@ function RequestFlow() {
           }
         } else {
           // If error checking active requests, proceed to documents
-
           setStep("documents");
         }
       } catch (error) {
@@ -172,8 +218,20 @@ function RequestFlow() {
       }
     };
 
-    checkActiveRequests();
-  }, []);
+    // Only check for regular students (not outsiders)
+    if (userType === "student") {
+      console.log("Regular student detected - checking for active requests");
+      checkActiveRequests();
+    } else if (userType === "outsider") {
+      // Outsiders skip the active requests check entirely
+      console.log("Outsider user detected - skipping active requests check");
+      setStep("documents");
+    } else {
+      // Unknown user type - default to documents
+      console.log("Unknown user type, defaulting to documents:", userType);
+      setStep("documents");
+    }
+  }, [userType]);
 
 
   // Step navigation handlers
@@ -381,6 +439,7 @@ function RequestFlow() {
     goNextStep();
   };
 
+
   // Handle final submission
   const handleFinalSubmission = async () => {
     try {
@@ -448,7 +507,51 @@ function RequestFlow() {
 
       const data = await response.json();
       if (data.success) {
-        setTrackingId(data.request_id);
+        const requestId = data.request_id;
+        setTrackingId(requestId);
+
+        // Upload auth letter if it exists (for outsider users)
+        const authLetterData = sessionStorage.getItem("authLetterData");
+        if (authLetterData) {
+          try {
+            const parsedAuthData = JSON.parse(authLetterData);
+            
+            // Convert base64 to blob for upload
+            const byteCharacters = atob(parsedAuthData.fileData);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+              byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: parsedAuthData.fileType });
+
+            const formData = new FormData();
+            formData.append("file", blob, parsedAuthData.fileName);
+            formData.append("firstname", parsedAuthData.firstname);
+            formData.append("lastname", parsedAuthData.lastname);
+            formData.append("number", parsedAuthData.number);
+            formData.append("requester_name", parsedAuthData.requesterName);
+            formData.append("request_id", requestId);
+
+            const authUploadResponse = await fetch("/user/upload-authletter", {
+              method: "POST",
+              body: formData
+            });
+
+            const authUploadData = await authUploadResponse.json();
+            
+            if (authUploadResponse.ok && authUploadData.success) {
+              console.log("Auth letter uploaded successfully with request ID:", requestId);
+              // Clear stored auth letter data after successful upload
+              sessionStorage.removeItem("authLetterData");
+            } else {
+              console.warn("Auth letter upload failed:", authUploadData.notification);
+            }
+          } catch (authError) {
+            console.error("Error uploading auth letter:", authError);
+          }
+        }
+
         goNextStep();
       } else {
         alert(`Error: ${data.notification}`);

@@ -84,7 +84,7 @@ def ready_students_table():
        liability_status BOOLEAN DEFAULT FALSE,
        firstname VARCHAR(50) NOT NULL,
        lastname VARCHAR(50) NOT NULL,
-       college_code VARCHAR(20) NOT NULL
+       college_code VARCHAR(20)
    )
    """
    execute_query(query)
