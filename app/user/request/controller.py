@@ -196,6 +196,7 @@ def complete_request():
             "error": str(e)
         }), 500
 
+
 @request_bp.route("/api/clear-session", methods=["POST"])
 @jwt_required_with_role(role)
 def logout_user():
@@ -212,6 +213,8 @@ def logout_user():
 
     # Delete the session cookie to fully clear the session
     response.delete_cookie('session')
+    
+    return response
 
 
 def save_documents_to_db(request_id, documents_data):

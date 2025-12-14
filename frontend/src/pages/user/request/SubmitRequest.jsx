@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./Request.css";
 import ContentBox from "../../../components/user/ContentBox";
 import ButtonLink from "../../../components/common/ButtonLink";
@@ -6,36 +6,49 @@ import { getCSRFToken } from "../../../utils/csrf";
 
 function SubmitRequest({ trackingId }) {
   const [loading, setLoading] = useState(false);
+  const [sessionCleared, setSessionCleared] = useState(false);
 
-  // Logs out (clears JWT + session) and redirects
-  const handleLogoutAndRedirect = async (redirectPath) => {
+  // Auto-clear session when component mounts
+  useEffect(() => {
+    const clearSession = async () => {
+      try {
+        await fetch("/api/clear-session", {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "X-CSRF-TOKEN": getCSRFToken(),
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+          },
+        });
+        
+        // Clear any local or session storage
+        localStorage.removeItem("jwtToken");
+        sessionStorage.clear();
+
+        // Clear cookies to ensure session is fully cleared
+        document.cookie = "session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        document.cookie = "access_token_cookie=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        
+        setSessionCleared(true);
+      } catch (error) {
+        console.error("Error during session clear:", error);
+        // Still mark as cleared to allow navigation
+        setSessionCleared(true);
+      }
+    };
+
+    clearSession();
+  }, []);
+
+  // Simplified redirect function - session is already cleared
+  const handleRedirect = (redirectPath) => {
     setLoading(true);
-    try {
-      await fetch("/api/clear-session", {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "X-CSRF-TOKEN": getCSRFToken(),
-          "Accept": "application/json",
-          "Content-Type": "application/json",
-        },
-      });
-    } catch (error) {
-      console.error("Error during logout:", error);
-    } finally {
-      // Clear any local or session storage (if used)
-      localStorage.removeItem("jwtToken");
-      sessionStorage.clear();
-
-      // Clear cookies to ensure session is fully cleared
-      document.cookie = "session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      document.cookie = "access_token_cookie=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-
-      // Redirect smoothly after logout
-      setTimeout(() => {
-        window.location.href = redirectPath;
-      }, 400);
-    }
+    
+    // Redirect smoothly after session is cleared
+    setTimeout(() => {
+      window.location.href = redirectPath;
+    }, 400);
   };
 
   return (
@@ -58,15 +71,15 @@ function SubmitRequest({ trackingId }) {
         <div className="action-buttons">
           <ButtonLink
             placeholder={loading ? "Please wait..." : "Return to Home"}
-            onClick={() => handleLogoutAndRedirect("/user/Landing")}
+            onClick={() => handleRedirect("/user/Landing")}
             variant="secondary"
-            disabled={loading}
+            disabled={loading || !sessionCleared}
           />
           <ButtonLink
             placeholder={loading ? "Please wait..." : "Track Request"}
-            onClick={() => handleLogoutAndRedirect("/user/Track")}
+            onClick={() => handleRedirect("/user/Track")}
             variant="primary"
-            disabled={loading}
+            disabled={loading || !sessionCleared}
           />
         </div>
       </ContentBox>
