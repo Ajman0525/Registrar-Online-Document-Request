@@ -16,10 +16,11 @@ class Payment:
         Returns:
             dict: A dictionary with 'success' (bool) and 'message' (str) keys.
         """
+        previous_payment_status = False 
         conn = db_pool.getconn()
         cur = conn.cursor()
         try:
-            # Verify the amount matches and validate student_id
+            # 1. Fetch data
             cur.execute("""
                 SELECT total_cost, payment_status, student_id
                 FROM requests
@@ -27,15 +28,20 @@ class Payment:
             """, (tracking_number, student_id))
             
             order = cur.fetchone()
-            if has_app_context():
-                current_app.logger.info(f"[MAYA] Fetched order for tracking {tracking_number}: {order}")
-            else:
-                print(f"[MAYA] Fetched order for tracking {tracking_number}: {order}")
+            
+            if order: 
+                previous_payment_status = order[1]
+                
+                if has_app_context():
+                    current_app.logger.info(f"[MAYA] Fetched order for tracking {tracking_number}: {order}")
+                else:
+                    print(f"[MAYA] Fetched order for tracking {tracking_number}: {order}")
             
             if not order:
                 return {
                     'success': False,
-                    'message': f'Order not found for tracking number: {tracking_number} with student_id: {student_id}'
+                    'message': f'Order not found for tracking number: {tracking_number} with student_id: {student_id}',
+                    'was_already_paid': previous_payment_status 
                 }
             
             expected_amount = float(order[0]) if order[0] else 0.0
@@ -46,13 +52,15 @@ class Payment:
             if db_student_id != student_id:
                 return {
                     'success': False,
-                    'message': f'Student ID mismatch for tracking number: {tracking_number}'
+                    'message': f'Student ID mismatch for tracking number: {tracking_number}',
+                    'was_already_paid': previous_payment_status
                 }
             
             if received_amount != expected_amount:
                 return {
                     'success': False,
-                    'message': f'Payment amount mismatch: expected {expected_amount}, received {received_amount}'
+                    'message': f'Payment amount mismatch: expected {expected_amount}, received {received_amount}',
+                    'was_already_paid': previous_payment_status
                 }
             
             # Update payment status
@@ -65,14 +73,11 @@ class Payment:
             conn.commit()
 
             message = f'Payment confirmed for tracking number: {tracking_number}, rows updated: {rows_updated}'
-            if has_app_context():
-                current_app.logger.info(f"[MAYA] {message}")
-            else:
-                print(f"[MAYA] {message}")
             
             return {
-                'success': rows_updated > 0,
-                'message': message
+                'success': True,
+                'message': message,
+                'was_already_paid': previous_payment_status 
             }
             
         except Exception as e:
@@ -84,7 +89,8 @@ class Payment:
                 print(f"[MAYA] {error_msg}")
             return {
                 'success': False,
-                'message': error_msg
+                'message': error_msg,
+                'was_already_paid': previous_payment_status
             }
         finally:
             cur.close()
