@@ -158,21 +158,46 @@ function Transactions() {
     setEndDate(end);
   }
 
+  /* Helper to format date: November 10, 2025, 10:00 PM */
+  function formatPaymentDate(dateString) {
+    if (!dateString) return '';
+    return new Date(dateString).toLocaleString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: true
+    }).replace(' at', ',');
+  }
+
+  /* Helper to get timeframe string */
+  function getTimeframeString() {
+    if (!startDate && !endDate) return '';
+    const start = startDate ? new Date(`${startDate}T00:00:00`).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '';
+    const end = endDate ? new Date(`${endDate}T00:00:00`).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '';
+    
+    if (start && end) return `${start} - ${end}`;
+    return `${start || end}`;
+  }
+
   /* Downloads the current transactions list as a csv file */
   function downloadCSV() {
     const csvRows = [];
-    const headers = ['Request ID', 'User', 'Amount', 'Payment Date'];
+    const headers = ['Request ID', 'User', 'ID Number', 'Amount', 'Payment Date'];
     /* Add the headers row to the csv row array */
     csvRows.push(headers.join(','));
 
     /* Loop thhrough transactions and add each as a row */
     transactions.forEach((t) => {
+      const formattedDate = formatPaymentDate(t.payment_date);
       csvRows.push(
         [
           t.request_id,
-          `"${t.full_name} (${t.student_id})"`,
+          t.full_name,
+          t.student_id,
           t.amount,
-          t.payment_date || ''
+          `"${formattedDate}"`
         ].join(',')
       );
     });
@@ -196,13 +221,14 @@ function Transactions() {
   function downloadInvoice(tx) {
     const invoiceWindow = window.open('', '_blank');
     if (invoiceWindow) {
+      const formattedDate = formatPaymentDate(tx.payment_date) || '-';
       invoiceWindow.document.title = `Invoice ${tx.transaction_id}`;
       invoiceWindow.document.body.innerHTML = `
         <h1>Invoice: ${tx.transaction_id}</h1>
         <p>Request ID: ${tx.request_id}</p>
         <p>User: ${tx.full_name} (${tx.student_id})</p>
         <p>Amount: ₱${tx.amount.toFixed(2)}</p>
-        <p>Payment Date: ${tx.payment_date || '-'}</p>
+        <p>Payment Date: ${formattedDate}</p>
       `;
       invoiceWindow.print();
     }
@@ -210,6 +236,23 @@ function Transactions() {
 
   return (
     <div className="transactions-page">
+      {/* Print Report Header */}
+      <div className="print-report-header">
+        <div className="print-header-top">
+          <img src="/assets/MSUIITLogo.png" alt="MSUIIT Logo" className="sidebar-brand-logo" />
+          <div className="print-header-details">
+            <h1>Mindanao State Universityy - Iligan Institute of Technology</h1>
+            <p>Office of the University Registrar</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Print Title */}
+      <div className="print-title">
+        <h2>Transactions Report</h2>
+        <p>{getTimeframeString()}</p>
+      </div>
+
       {/* Header */}
       <div className="dashboard-header-wrapper">
         <div className="header-content">
@@ -298,7 +341,7 @@ function Transactions() {
                 <th>User</th>
                 <th>Amount</th>
                 <th>Payment Date</th>
-                <th>Actions</th>
+                <th className="th-actions">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200 py-4">
@@ -310,7 +353,7 @@ function Transactions() {
               {transactions.map((tx) => (
                 <tr key={tx.request_id}>
                   <td className="td-request-id">
-                    <Link to={`/admin/requests?request_id=${tx.request_id}`}>#{tx.request_id}</Link>
+                    <Link to={`/admin/requests?request_id=${tx.request_id}`}>{tx.request_id}</Link>
                   </td>
                   <td className="td-user-info">
                     <div className="font-medium">{tx.full_name}</div>
@@ -320,7 +363,7 @@ function Transactions() {
                     ₱{parseFloat(tx.amount).toFixed(2)}
                   </td>
                   <td className="td-date">
-                    {tx.payment_date ? new Date(tx.payment_date).toLocaleDateString() : '-'}
+                    {formatPaymentDate(tx.payment_date) || '-'}
                   </td>
                   <td className="td-actions">
                     <button 
