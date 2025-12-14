@@ -10,7 +10,7 @@ class ManageRequestModel:
         try:
             offset = (page - 1) * limit
             cur.execute("""
-                SELECT request_id, student_id, full_name, contact_number, email, preferred_contact, status, requested_at, completed_at, remarks, total_cost, payment_status
+                SELECT request_id, student_id, full_name, contact_number, email, preferred_contact, status, requested_at, remarks, total_cost, payment_status
                 FROM requests
                 ORDER BY requested_at DESC
                 LIMIT %s OFFSET %s
@@ -33,10 +33,9 @@ class ManageRequestModel:
                     "preferred_contact": req[5],
                     "status": req[6],
                     "requested_at": req[7].strftime("%Y-%m-%d %H:%M:%S") if req[7] else None,
-                    "completed_at": req[8].strftime("%Y-%m-%d %H:%M:%S") if req[8] else None,
-                    "remarks": req[9],
-                    "total_cost": req[10],
-                    "payment_status": req[11]
+                    "remarks": req[8],
+                    "total_cost": req[9],
+                    "payment_status": req[10]
                 }
                 # Fetch requested documents with cost
                 cur.execute("""
@@ -87,15 +86,15 @@ class ManageRequestModel:
             if payment_status is not None:
                 cur.execute("""
                     UPDATE requests
-                    SET status = %s, payment_status = %s, completed_at = CASE WHEN %s IN ('RELEASED', 'REJECTED') THEN NOW() ELSE completed_at END
+                    SET status = %s, payment_status = %s
                     WHERE request_id = %s
-                """, (new_status, payment_status, new_status, request_id))
+                """, (new_status, payment_status, request_id))
             else:
                 cur.execute("""
                     UPDATE requests
-                    SET status = %s, completed_at = CASE WHEN %s IN ('RELEASED', 'REJECTED') THEN NOW() ELSE completed_at END
+                    SET status = %s
                     WHERE request_id = %s
-                """, (new_status, new_status, request_id))
+                """, (new_status, request_id))
 
             if cur.rowcount > 0 and admin_id:
                 # Log the status change
@@ -145,7 +144,7 @@ class ManageRequestModel:
             offset = (page - 1) * limit
 
             query = f"""
-                SELECT request_id, student_id, full_name, contact_number, email, preferred_contact, status, requested_at, completed_at, remarks, total_cost, payment_status
+                SELECT request_id, student_id, full_name, contact_number, email, preferred_contact, status, requested_at, remarks, total_cost, payment_status
                 FROM requests
                 WHERE request_id IN ({placeholders})
                 ORDER BY requested_at DESC
@@ -172,10 +171,9 @@ class ManageRequestModel:
                     "preferred_contact": req[5],
                     "status": req[6],
                     "requested_at": req[7].strftime("%Y-%m-%d %H:%M:%S") if req[7] else None,
-                    "completed_at": req[8].strftime("%Y-%m-%d %H:%M:%S") if req[8] else None,
-                    "remarks": req[9],
-                    "total_cost": req[10],
-                    "payment_status": req[11]
+                    "remarks": req[8],
+                    "total_cost": req[9],
+                    "payment_status": req[10]
                 }
                 # Fetch requested documents with cost
                 cur.execute("""

@@ -23,7 +23,84 @@ function Summary({
 
   const handleComplete = () => {
     setCompleting(true);
-    onNext(totalPrice);
+    
+    // Convert File objects to base64 for submission
+    const convertFilesToBase64 = async () => {
+      const requirementsPromises = Object.entries(uploadedFiles).map(async ([req_id, file]) => {
+        if (file instanceof File) {
+          // Convert File to base64
+          const base64Data = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+              const result = reader.result;
+              // Remove the data URL prefix (e.g., "data:application/pdf;base64,")
+              const base64 = result.split(',')[1];
+              resolve(base64);
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          });
+          
+          return {
+            requirement_id: req_id,
+            filename: file.name,
+            content_type: file.type,
+            alreadyUploaded: false,
+            file_data: base64Data
+          };
+        } else if (typeof file === "string" && file) {
+          // Already uploaded file
+          return {
+            requirement_id: req_id,
+            filename: file.split("/").pop(),
+            content_type: "application/octet-stream",
+            alreadyUploaded: true,
+            file_data: file
+          };
+        } else {
+          // No file
+          return {
+            requirement_id: req_id,
+            filename: "",
+            content_type: "application/octet-stream",
+            alreadyUploaded: false,
+            file_data: null
+          };
+        }
+      });
+      
+      return Promise.all(requirementsPromises);
+    };
+    
+    // Process the data and call onNext
+    convertFilesToBase64().then(requirements => {
+      const student_info = {
+        full_name: contactInfo.full_name || "",
+        contact_number: contactInfo.contact_number || "",
+        email: contactInfo.email || ""
+      };
+      
+      const documents = selectedDocs.map(doc => ({
+        doc_id: doc.doc_id,
+        quantity: doc.quantity || 1
+      }));
+      
+      const submissionData = {
+        student_info,
+        documents,
+        requirements,
+        total_price: totalPrice,
+        preferred_contact: preferredContactInfo.method || "SMS",
+        payment_status: false, // Default to unpaid for now
+        remarks: "Request submitted successfully"
+      };
+      
+      onNext(submissionData);
+    }).catch(error => {
+      console.error("Error converting files:", error);
+      setCompleting(false);
+      alert("An error occurred while processing files. Please try again.");
+    });
   };
 
   return (
@@ -40,7 +117,7 @@ function Summary({
             ) : (
               selectedDocs.map((doc, idx) => (
                 <div key={idx} className="summary-item">
-                  {doc.doc_name} {doc.quantity}x
+                  {doc.doc_name} {doc.quantity && doc.quantity > 1 ? `${doc.quantity}x` : ''}
                 </div>
               ))
             )}

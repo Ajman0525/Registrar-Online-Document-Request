@@ -145,12 +145,12 @@ def ready_requests_table():
        contact_number VARCHAR(20),
        email VARCHAR(100),
        preferred_contact VARCHAR(50),
-       status VARCHAR(50) DEFAULT 'PENDING' CHECK (status IN ('UNCONFIRMED', 'SUBMITTED', 'PENDING', 'IN-PROGRESS', 'DOC-READY', 'RELEASED', 'REJECTED')),
+       status VARCHAR(50) DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'IN-PROGRESS', 'DOC-READY', 'RELEASED', 'REJECTED')),
        payment_status BOOLEAN DEFAULT FALSE,
        total_cost NUMERIC(10,2) DEFAULT 0.00,
        requested_at TIMESTAMP DEFAULT NOW(),
-       completed_at TIMESTAMP NULL,
-       remarks VARCHAR(255)
+       remarks VARCHAR(255),
+       order_type varchar(20)
    )
    """
    execute_query(query)

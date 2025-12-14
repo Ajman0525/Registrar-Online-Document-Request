@@ -1,139 +1,163 @@
-import React, { useState, useEffect } from "react";
+
+import React, { useState, useEffect, useCallback } from "react";
 import "./Request.css";
-import { getCSRFToken } from "../../../utils/csrf";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
 import ContentBox from "../../../components/user/ContentBox";
 import ButtonLink from "../../../components/common/ButtonLink";
 
-
 function RequestList({ selectedDocs = [], setSelectedDocs, quantities = {}, setQuantities, onBack, onProceed}) {
   const [loading, setLoading] = useState(false);
   const [syncLoading, setSyncLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  // Fetch saved documents on mount and sync quantities
+  // Quantity validation constants
+  const MIN_QUANTITY = 1;
+  const MAX_QUANTITY = 100;
+
+  // Initialize quantities from selectedDocs on mount and updates
   useEffect(() => {
-    let mounted = true;
-    const fetchSavedDocuments = async () => {
-      setSyncLoading(true);
-      try {
-        const res = await fetch("/api/get-saved-documents", {
-          method: "GET",
-          headers: { "X-CSRF-TOKEN": getCSRFToken() },
-          credentials: "include",
-        });
-        const data = await res.json();
-        if (!mounted) return;
-        if (data && data.success && Array.isArray(data.documents) && data.documents.length > 0) {
-          // Sync saved quantities with current selection
-          const savedQuantities = data.documents.reduce((acc, doc) => {
-            acc[doc.doc_id] = doc.quantity || 1;
-            return acc;
-          }, {});
-          setQuantities((prevQuantities) => ({ ...prevQuantities, ...savedQuantities }));
-        } else {
-          // No saved documents, initialize quantities from current selectedDocs if not already set
-          if (Object.keys(quantities).length === 0) {
-            const initialQuantities = selectedDocs.reduce((acc, doc) => {
-              acc[doc.doc_id] = 1;
-              return acc;
-            }, {});
-            setQuantities(initialQuantities);
-          }
-        }
-      } catch (err) {
-        console.error("Error fetching saved documents:", err);
-        // On error, initialize quantities from current selectedDocs if not already set
-        if (Object.keys(quantities).length === 0) {
-          const initialQuantities = selectedDocs.reduce((acc, doc) => {
-            acc[doc.doc_id] = 1;
-            return acc;
-          }, {});
+    try {
+      if (selectedDocs.length > 0) {
+        const initialQuantities = selectedDocs.reduce((acc, doc) => {
+          // Ensure quantity is within valid bounds
+          const quantity = Math.max(MIN_QUANTITY, Math.min(MAX_QUANTITY, doc.quantity || 1));
+          acc[doc.doc_id] = quantity;
+          return acc;
+        }, {});
+        
+        // Only update if quantities have changed to prevent infinite loops
+        const hasChanges = Object.keys(initialQuantities).some(docId => 
+          quantities[docId] !== initialQuantities[docId]
+        );
+        
+        if (hasChanges) {
           setQuantities(initialQuantities);
         }
-      } finally {
-        if (mounted) setSyncLoading(false);
       }
-    };
+    } catch (err) {
+      console.error("Error initializing quantities:", err);
+      setError("Failed to initialize quantities. Please refresh the page.");
+    } finally {
+      setSyncLoading(false);
+    }
+  }, [selectedDocs, setQuantities, quantities]);
 
-    fetchSavedDocuments();
-    return () => {
-      mounted = false;
-    };
-  }, [setSelectedDocs, selectedDocs, setQuantities]);
+  // Validation function
+  const validateQuantity = useCallback((quantity) => {
+    if (typeof quantity !== 'number' || isNaN(quantity)) {
+      throw new Error("Quantity must be a valid number");
+    }
+    if (quantity < MIN_QUANTITY) {
+      throw new Error(`Quantity cannot be less than ${MIN_QUANTITY}`);
+    }
+    if (quantity > MAX_QUANTITY) {
+      throw new Error(`Quantity cannot be more than ${MAX_QUANTITY}`);
+    }
+    return true;
+  }, []);
 
-  const increaseQuantity = (docId) => {
-    setQuantities((prev) => ({
-      ...prev,
-      [docId]: prev[docId] + 1,
-    }));
-  };
-
-  const decreaseQuantity = (docId) => {
-    setQuantities((prev) => ({
-      ...prev,
-      [docId]: prev[docId] > 1 ? prev[docId] - 1 : 1,
-    }));
-  };
-
-  // Function to save documents to backend
-  const saveDocuments = async (updatedDocs) => {
-    const payload = {
-      document_ids: updatedDocs.map((doc) => doc.doc_id),
-      quantity_list: updatedDocs.map((doc) => doc.quantity),
-    };
-
+  // Error handling wrapper for quantity operations
+  const handleQuantityOperation = useCallback((operation, docId) => {
     try {
-      const response = await fetch("/api/save-documents", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-TOKEN": getCSRFToken(),
-        },
-        credentials: "include",
-        body: JSON.stringify(payload),
+      setError(""); // Clear any previous errors
+      
+      setQuantities((prev) => {
+        const currentQuantity = prev[docId] || 1;
+        let newQuantity;
+        
+        if (operation === 'increase') {
+          newQuantity = currentQuantity + 1;
+        } else if (operation === 'decrease') {
+          newQuantity = currentQuantity - 1;
+        } else {
+          throw new Error("Invalid operation");
+        }
+        
+        // Validate the new quantity
+        validateQuantity(newQuantity);
+        
+        return {
+          ...prev,
+          [docId]: newQuantity
+        };
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to save documents");
-      }
-
-      const data = await response.json();
-      if (data.success) {
-        return true;
-      } else {
-        throw new Error(data.notification || "Save failed");
-      }
-    } catch (error) {
-      alert(`Error: ${error.message}`);
-      return false;
+    } catch (err) {
+      console.error("Error updating quantity:", err);
+      setError(err.message || "Failed to update quantity");
+      
+      // Clear error after 3 seconds
+      setTimeout(() => setError(""), 3000);
     }
-  };
+  }, [setQuantities, validateQuantity]);
 
-  // Handler for Proceed button click
-  const handleProceed = async () => {
-    setLoading(true);
-    const updatedDocs = selectedDocs.map((doc) => ({
-      ...doc,
-      quantity: quantities[doc.doc_id],
-    }));
 
-    const success = await saveDocuments(updatedDocs);
+  const increaseQuantity = useCallback((docId) => {
+    handleQuantityOperation('increase', docId);
+  }, [handleQuantityOperation]);
 
-    setLoading(false);
-    if (success) {
-      onProceed(updatedDocs, quantities);
+  const decreaseQuantity = useCallback((docId) => {
+    handleQuantityOperation('decrease', docId);
+  }, [handleQuantityOperation]);
+
+  // Enhanced proceed handler with error handling
+  const handleProceed = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError("");
+      
+      // Validate all quantities before proceeding
+      const invalidQuantities = Object.entries(quantities).filter(([_, qty]) => {
+        try {
+          validateQuantity(qty);
+          return false;
+        } catch {
+          return true;
+        }
+      });
+      
+      if (invalidQuantities.length > 0) {
+        throw new Error("Some quantities are invalid. Please check your selections.");
+      }
+      
+      const updatedDocs = selectedDocs.map((doc) => ({
+        ...doc,
+        quantity: quantities[doc.doc_id] || 1,
+      }));
+
+      // Call onProceed with validated data
+      await onProceed(updatedDocs, quantities);
+    } catch (err) {
+      console.error("Error proceeding with request:", err);
+      setError(err.message || "Failed to proceed. Please try again.");
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [selectedDocs, quantities, onProceed, validateQuantity]);
+
 
   return (
     <>
-      {(loading || syncLoading) && <LoadingSpinner message={syncLoading ? "Loading saved documents..." : "Saving documents..."} />}
-
+      {loading && <LoadingSpinner message="Processing..." />}
+      {syncLoading && <LoadingSpinner message="Loading..." />}
+      
       <ContentBox className="request-list">
         <div className="title-container">
           <h3 className="title">My Requests</h3>
           <hr />
         </div>
+
+        {error && (
+          <div className="error-message" style={{ 
+            backgroundColor: '#fee', 
+            color: '#c33', 
+            padding: '8px 12px', 
+            borderRadius: '4px', 
+            marginBottom: '16px',
+            fontSize: '14px'
+          }}>
+            {error}
+          </div>
+        )}
 
         <div className="request-item-container">
         {selectedDocs.length === 0 ? (
@@ -148,15 +172,17 @@ function RequestList({ selectedDocs = [], setSelectedDocs, quantities = {}, setQ
                   <button
                     className="qty-btn"
                     onClick={() => decreaseQuantity(doc.doc_id)}
-                    disabled={loading}
+                    disabled={loading || syncLoading}
+                    title={`Decrease quantity (min: ${MIN_QUANTITY})`}
                   >
                     -
                   </button>
-                  <span className="quantity-number">{quantities[doc.doc_id]}</span>
+                  <span className="quantity-number">{quantities[doc.doc_id] || 1}</span>
                   <button
                     className="qty-btn"
                     onClick={() => increaseQuantity(doc.doc_id)}
-                    disabled={loading}
+                    disabled={loading || syncLoading}
+                    title={`Increase quantity (max: ${MAX_QUANTITY})`}
                   >
                     +
                   </button>
@@ -186,17 +212,15 @@ function RequestList({ selectedDocs = [], setSelectedDocs, quantities = {}, setQ
             placeholder="Back"
             onClick={onBack}
             variant="secondary"
-            disabled={loading}
-          />
-          <ButtonLink
-            placeholder={loading ? "Saving..." : "Proceed"}
-            onClick={handleProceed}
-            variant="primary"
             disabled={loading || syncLoading}
           />
+          <ButtonLink
+            placeholder={loading ? "Processing..." : "Proceed"}
+            onClick={handleProceed}
+            variant="primary"
+            disabled={loading || syncLoading || selectedDocs.length === 0}
+          />
         </div>
-
-       
       </ContentBox>
     </>
   );
