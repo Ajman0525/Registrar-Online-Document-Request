@@ -108,20 +108,53 @@ export default function AdminRequestsDashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRequests, setTotalRequests] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState('all'); // 'all' or 'my'
+  const [collegeCodeFilter, setCollegeCodeFilter] = useState('');
+  const [requesterTypeFilter, setRequesterTypeFilter] = useState('');
+  const [hasOthersDocsFilter, setHasOthersDocsFilter] = useState('');
+  const [availableCollegeCodes, setAvailableCollegeCodes] = useState([]);
   const limit = 20;
+
 
   useEffect(() => {
     fetchRequests(1, '', 'all');
+    fetchAvailableFilters();
   }, []);
+
+  const fetchAvailableFilters = async () => {
+    try {
+      const res = await fetch('/api/admin/requests/filters', {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-TOKEN": getCSRFToken(),
+        },
+        credentials: "include",
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setAvailableCollegeCodes(data.college_codes || []);
+      }
+    } catch (err) {
+      console.error('Error fetching filter options:', err);
+    }
+  };
 
   const fetchRequests = async (page, search, mode) => {
     setLoading(true);
     try {
-      const searchParam = search ? `&search=${encodeURIComponent(search)}` : '';
-      const endpoint = mode === 'my' ? '/api/admin/my-requests' : '/api/admin/requests';
-      const res = await fetch(`${endpoint}?page=${page}&limit=${limit}${searchParam}`, {
+      let endpoint = mode === 'my' ? '/api/admin/my-requests' : '/api/admin/requests';
+      let params = [`page=${page}`, `limit=${limit}`];
+      
+      if (search) params.push(`search=${encodeURIComponent(search)}`);
+      if (collegeCodeFilter) params.push(`college_code=${encodeURIComponent(collegeCodeFilter)}`);
+      if (requesterTypeFilter) params.push(`requester_type=${encodeURIComponent(requesterTypeFilter)}`);
+      if (hasOthersDocsFilter) params.push(`has_others_docs=${encodeURIComponent(hasOthersDocsFilter)}`);
+
+      const res = await fetch(`${endpoint}?${params.join('&')}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -162,6 +195,7 @@ export default function AdminRequestsDashboard() {
     }
   };
 
+
   const confirmStatusChange = async () => {
     if (!statusChangeRequest) return;
 
@@ -178,6 +212,20 @@ export default function AdminRequestsDashboard() {
     fetchRequests(currentPage, searchQuery, viewMode);
     setStatusChangeRequest(null);
     setNewStatus(null);
+  };
+
+  const applyFilters = () => {
+    setCurrentPage(1);
+    fetchRequests(1, searchQuery, viewMode);
+  };
+
+  const clearFilters = () => {
+    setCollegeCodeFilter('');
+    setRequesterTypeFilter('');
+    setHasOthersDocsFilter('');
+    setSearchQuery('');
+    setCurrentPage(1);
+    fetchRequests(1, '', viewMode);
   };
 
   const handleCardClick = (request) => {
@@ -268,12 +316,78 @@ export default function AdminRequestsDashboard() {
           </button>
         </div>
 
+
         <div className="mb-8">
           <ReqSearchbar onSearch={(value) => {
             setSearchQuery(value);
             setCurrentPage(1);
             fetchRequests(1, value, viewMode);
           }} />
+        </div>
+
+        {/* Filter Controls */}
+        <div className="mb-6 p-4 bg-white rounded-lg shadow-sm border border-gray-200">
+          <h3 className="text-lg font-semibold mb-4 text-gray-800">Filters</h3>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* College Code Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">College Code</label>
+              <select
+                value={collegeCodeFilter}
+                onChange={(e) => setCollegeCodeFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">All Colleges</option>
+                {availableCollegeCodes.map(code => (
+                  <option key={code} value={code}>{code}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Requester Type Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Requester Type</label>
+              <select
+                value={requesterTypeFilter}
+                onChange={(e) => setRequesterTypeFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">All Requesters</option>
+                <option value="student">Student</option>
+                <option value="outsider">Outsider</option>
+              </select>
+            </div>
+
+            {/* Others Documents Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Others Documents</label>
+              <select
+                value={hasOthersDocsFilter}
+                onChange={(e) => setHasOthersDocsFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">All Requests</option>
+                <option value="true">Has Others Documents</option>
+                <option value="false">No Others Documents</option>
+              </select>
+            </div>
+
+            {/* Filter Action Buttons */}
+            <div className="flex items-end gap-2">
+              <button
+                onClick={applyFilters}
+                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+              >
+                Apply Filters
+              </button>
+              <button
+                onClick={clearFilters}
+                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Columns */}

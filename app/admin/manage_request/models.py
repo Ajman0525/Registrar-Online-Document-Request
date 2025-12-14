@@ -2,11 +2,13 @@ from flask import g
 from collections import defaultdict
 
 class ManageRequestModel:
+
     @staticmethod
-    def fetch_requests(page=1, limit=20, search=None, admin_id=None):
+    def fetch_requests(page=1, limit=20, search=None, admin_id=None, college_code=None, requester_type=None, has_others_docs=None):
         """
         Fetch paginated requests with full details.
         If admin_id is provided, only fetch requests assigned to that admin.
+        Supports filtering by college_code, requester_type (student/outsider), and has_others_docs.
         """
         conn = g.db_conn
         cur = conn.cursor()
@@ -14,7 +16,7 @@ class ManageRequestModel:
             offset = (page - 1) * limit
 
             # --------------------------
-            # 1. Base query
+            # 1. Base query with filters
             # --------------------------
             params = []
             where_clauses = []
@@ -27,6 +29,22 @@ class ManageRequestModel:
                 where_clauses.append("(r.full_name ILIKE %s OR r.student_id ILIKE %s OR r.email ILIKE %s OR r.contact_number ILIKE %s)")
                 search_param = f"%{search}%"
                 params.extend([search_param] * 4)
+
+            if college_code:
+                where_clauses.append("r.college_code = %s")
+                params.append(college_code)
+
+            if requester_type:
+                if requester_type == "outsider":
+                    where_clauses.append("r.request_id IN (SELECT id FROM auth_letters)")
+                elif requester_type == "student":
+                    where_clauses.append("r.request_id NOT IN (SELECT id FROM auth_letters)")
+
+            if has_others_docs is not None:
+                if has_others_docs:
+                    where_clauses.append("r.request_id IN (SELECT DISTINCT request_id FROM others_docs)")
+                else:
+                    where_clauses.append("r.request_id NOT IN (SELECT DISTINCT request_id FROM others_docs)")
 
             where_sql = f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
 
@@ -589,6 +607,7 @@ class ManageRequestModel:
             reqs = cur.fetchall()
             request_data["requirements"] = [req[0] for req in reqs]
 
+
             # Fetch uploaded files
             cur.execute("""
                 SELECT r.requirement_name, rrl.file_path
@@ -598,6 +617,24 @@ class ManageRequestModel:
             """, (request_id,))
             files = cur.fetchall()
             request_data["uploaded_files"] = [{"requirement": file[0], "file_path": file[1]} for file in files]
+
+            # Fetch others documents (custom documents)
+            cur.execute("""
+                SELECT id, document_name, document_description, created_at
+                FROM others_docs
+                WHERE request_id = %s
+                ORDER BY created_at ASC
+            """, (request_id,))
+            others_docs = cur.fetchall()
+            request_data["others_documents"] = [
+                {
+                    "id": doc[0], 
+                    "name": doc[1], 
+                    "description": doc[2], 
+                    "created_at": doc[3].strftime("%Y-%m-%d %H:%M:%S") if doc[3] else None
+                } 
+                for doc in others_docs
+            ]
 
             # Fetch recent logs
             recent_logs = ManageRequestModel.get_recent_logs_for_request(request_id, limit=1)

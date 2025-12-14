@@ -38,6 +38,7 @@ const RequestViewPage_Pending = ({ request, onRefresh }) => {
           )}
         </section>
 
+
         {/* Uploaded Files */}
         <section className="section-block">
           <h2>Uploaded Files</h2>
@@ -48,6 +49,29 @@ const RequestViewPage_Pending = ({ request, onRefresh }) => {
             ))
           ) : (
             <p>No uploaded files</p>
+          )}
+        </section>
+
+        {/* Others Documents */}
+        <section className="section-block">
+          <h2>Others Documents</h2>
+          <hr />
+          {request.others_documents?.length ? (
+            request.others_documents.map((doc, index) => (
+              <div key={index} className="others-document-row">
+                <div className="document-info">
+                  <span className="document-name">{doc.name}</span>
+                  {doc.description && (
+                    <span className="document-description">{doc.description}</span>
+                  )}
+                </div>
+                <div className="document-timestamp">
+                  <small>Created: {doc.created_at}</small>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p>No other documents</p>
           )}
         </section>
 

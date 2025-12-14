@@ -9,17 +9,34 @@ from .models import ManageRequestModel
 role = "admin"
 
 
+
 @manage_request_bp.route("/api/admin/requests", methods=["GET"])
 @jwt_required_with_role(role)
 def get_requests():
     """
-    Get paginated requests for admin management.
+    Get paginated requests for admin management with filtering options.
     """
     try:
         page = int(request.args.get('page', 1))
         limit = int(request.args.get('limit', 20))
         search = request.args.get('search')
-        result = ManageRequestModel.fetch_requests(page=page, limit=limit, search=search)
+        college_code = request.args.get('college_code')
+        requester_type = request.args.get('requester_type')
+        has_others_docs = request.args.get('has_others_docs')
+        
+        # Parse has_others_docs parameter
+        has_others_docs_filter = None
+        if has_others_docs is not None:
+            has_others_docs_filter = has_others_docs.lower() in ('true', '1', 'yes')
+        
+        result = ManageRequestModel.fetch_requests(
+            page=page, 
+            limit=limit, 
+            search=search,
+            college_code=college_code,
+            requester_type=requester_type,
+            has_others_docs=has_others_docs_filter
+        )
         return jsonify({"requests": result["requests"], "total": result["total"]}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -74,18 +91,36 @@ def delete_request(request_id):
         return jsonify({"error": str(e)}), 500
 
 
+
 @manage_request_bp.route("/api/admin/my-requests", methods=["GET"])
 @jwt_required_with_role(role)
 def get_my_requests():
     """
-    Get paginated requests assigned to the logged-in admin.
+    Get paginated requests assigned to the logged-in admin with filtering options.
     """
     try:
         page = int(request.args.get('page', 1))
         limit = int(request.args.get('limit', 20))
         search = request.args.get('search')
+        college_code = request.args.get('college_code')
+        requester_type = request.args.get('requester_type')
+        has_others_docs = request.args.get('has_others_docs')
+        
+        # Parse has_others_docs parameter
+        has_others_docs_filter = None
+        if has_others_docs is not None:
+            has_others_docs_filter = has_others_docs.lower() in ('true', '1', 'yes')
+        
         admin_id = get_jwt_identity()
-        result = ManageRequestModel.fetch_requests(page=page, limit=limit, search=search, admin_id=admin_id)
+        result = ManageRequestModel.fetch_requests(
+            page=page, 
+            limit=limit, 
+            search=search, 
+            admin_id=admin_id,
+            college_code=college_code,
+            requester_type=requester_type,
+            has_others_docs=has_others_docs_filter
+        )
         return jsonify({"requests": result["requests"], "total": result["total"]}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -373,6 +408,7 @@ def get_single_request(request_id):
         return jsonify({"error": str(e)}), 500
 
 
+
 @manage_request_bp.route("/api/admin/requests/<request_id>/documents/<doc_id>/status", methods=["PUT"])
 @jwt_required_with_role(role)
 def toggle_document_status(request_id, doc_id):
@@ -391,5 +427,35 @@ def toggle_document_status(request_id, doc_id):
             }), 200
         else:
             return jsonify({"error": result}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@manage_request_bp.route("/api/admin/requests/filters", methods=["GET"])
+@jwt_required_with_role(role)
+def get_requests_filters():
+    """
+    Get available filter options for requests.
+    """
+    try:
+        conn = g.db_conn
+        cur = conn.cursor()
+        
+        # Get unique college codes
+        cur.execute("""
+            SELECT DISTINCT college_code
+            FROM requests
+            WHERE college_code IS NOT NULL
+            ORDER BY college_code
+        """)
+        college_codes = [row[0] for row in cur.fetchall()]
+        
+        cur.close()
+        
+        return jsonify({
+            "college_codes": college_codes,
+            "requester_types": ["Student", "Outsider"],
+            "others_docs_options": ["Has Others Documents", "No Others Documents"]
+        }), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
