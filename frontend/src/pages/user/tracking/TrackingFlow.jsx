@@ -379,7 +379,10 @@ function TrackFlow() {
                         />
                     )}
                     {currentView === "pickup-instructions" && (
-                        <PickupInstructions onBack={handleBack} />
+                        <PickupInstructions 
+                        onBack={handleBack} 
+                        onViewDetails={handleViewDetails}
+                        />
                     )}
                 </ContentBox>
             )}
