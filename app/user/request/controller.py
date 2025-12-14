@@ -256,6 +256,8 @@ def logout_user():
 
     # Delete the session cookie to fully clear the session
     response.delete_cookie('session')
+    
+    return response
 
 
 def save_documents_to_db(request_id, documents_data):
