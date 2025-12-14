@@ -1,6 +1,7 @@
 import React from "react";
 import { Outlet } from "react-router-dom";
 import Sidebar from "../../components/admin/Sidebar";
+import DashboardHeader from "../../components/admin/DashboardHeader";
 import "./RegistrarMasterLayout.css";
 
 function RegistrarMasterLayout(){
