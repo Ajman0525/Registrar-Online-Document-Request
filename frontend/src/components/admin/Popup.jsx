@@ -7,7 +7,7 @@ function Popup({ onClose, onSuccess, document }) {
   const isEditMode = !!document;
   const [docName, setDocName] = useState("");
   const [description, setDescription] = useState("");
-  const [price, setPrice] = useState("");
+  const [price, setPrice] = useState(0);
 
   // Keep both states:
   const [requirements, setRequirements] = useState([]); // names for the document
@@ -16,6 +16,7 @@ function Popup({ onClose, onSuccess, document }) {
   const [showRequirementsPopup, setShowRequirementsPopup] = useState(false);
   const [shake, setShake] = useState(false);
   const [initialState, setInitialState] = useState(null);
+  const [requiresPaymentFirst, setRequiresPaymentFirst] = useState(false);
 
   const [errors, setErrors] = useState({
     docName: "",
@@ -47,16 +48,16 @@ function Popup({ onClose, onSuccess, document }) {
     setInitialState({
       docName: document?.doc_name || "",
       description: document?.description || "",
-      price: document?.cost?.toString() || "",
+      price: document?.cost ?? 0,
       requirements: document?.requirements || [],
       selectedRequirements: isEditMode
         ? allRequirements
             .filter((r) => document.requirements.includes(r.requirement_name))
             .map((r) => r.req_id)
         : [],
+      requiresPaymentFirst: document?.requires_payment_first ?? false,
     });
   }, [isEditMode, document, allRequirements]);
-
 
   useEffect(() => {
   fetch("/admin/get-requirements")
@@ -92,8 +93,13 @@ function Popup({ onClose, onSuccess, document }) {
     if (isEditMode) {
       setDocName(document.doc_name || "");
       setDescription(document.description || "");
-      setPrice(document.cost?.toString() || "");
+      setPrice(
+        document.cost !== undefined && document.cost !== null
+          ? document.cost
+          : 0
+      );
       setRequirements(document.requirements || []);
+    setRequiresPaymentFirst(document.requires_payment_first ?? false);
     }
   }, [document, isEditMode]);
 
@@ -103,23 +109,22 @@ function Popup({ onClose, onSuccess, document }) {
     setRequirements(updated);
   };
 
-const handleRemoveRequirement = (index) => {
-  // Remove the name
-  const updatedNames = requirements.filter((_, i) => i !== index);
-  setRequirements(updatedNames);
+  const handleRemoveRequirement = (index) => {
+    // Remove the name
+    const updatedNames = requirements.filter((_, i) => i !== index);
+    setRequirements(updatedNames);
 
-  // Remove the corresponding ID from selectedRequirements
-  const removedRequirementName = requirements[index];
-  const removedRequirement = allRequirements.find(
-    (r) => r.requirement_name === removedRequirementName
-  );
-  if (removedRequirement) {
-    setSelectedRequirements(
-      selectedRequirements.filter((id) => id !== removedRequirement.req_id)
+    // Remove the corresponding ID from selectedRequirements
+    const removedRequirementName = requirements[index];
+    const removedRequirement = allRequirements.find(
+      (r) => r.requirement_name === removedRequirementName
     );
-  }
-};
-
+    if (removedRequirement) {
+      setSelectedRequirements(
+        selectedRequirements.filter((id) => id !== removedRequirement.req_id)
+      );
+    }
+  };
 
   const handleSubmit = async () => {
     const newErrors = { 
@@ -141,8 +146,8 @@ const handleRemoveRequirement = (index) => {
       hasError = true;
     }
 
-    if (!price || isNaN(price) || parseFloat(price) <= 0) {
-      newErrors.price = "Price must be a valid number greater than 0.";
+    if (price === "" || isNaN(price) || parseFloat(price) < 0) {
+      newErrors.price = "Price must be a valid number 0 or greater.";
       hasError = true;
     }
 
@@ -171,7 +176,9 @@ const handleRemoveRequirement = (index) => {
       description,
       cost: parseFloat(price) || 0,
       requirements,
+      requires_payment_first: requiresPaymentFirst,
     };
+
 
     const url = isEditMode
       ? `/admin/edit-document/${document.doc_id}`
@@ -293,9 +300,10 @@ const handleRemoveRequirement = (index) => {
             <input
               className="document-price-field"
               type="number"
-              placeholder="0000"
+              min="0"
+              placeholder="0"
               value={price}
-              onChange={(e) => setPrice(e.target.value)}
+              onChange={(e) => setPrice(Number(e.target.value))}
             />
           </div>
           <hr />
@@ -303,6 +311,16 @@ const handleRemoveRequirement = (index) => {
             {errors.price && (
               <p className="error-text">{errors.price}</p>
             )}
+          </div>
+          <div className="checkbox-section">
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={requiresPaymentFirst}
+                onChange={(e) => setRequiresPaymentFirst(e.target.checked)}
+              />
+              Require payment before processing
+            </label>
           </div>
         </div>
 
@@ -317,6 +335,7 @@ const handleRemoveRequirement = (index) => {
                     setPrice(initialState.price);
                     setRequirements(initialState.requirements);
                     setSelectedRequirements(initialState.selectedRequirements);
+                    setRequiresPaymentFirst(initialState.requiresPaymentFirst);
                   }
                   onClose();
                 }}
