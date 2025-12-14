@@ -132,34 +132,103 @@ def manual_assign_requests():
         return jsonify({"error": str(e)}), 500
 
 
+
+
+
 @manage_request_bp.route("/api/admin/unassigned-requests", methods=["GET"])
 @jwt_required_with_role(role)
 def get_unassigned_requests():
     """
-    Get unassigned requests for manual assignment.
+    Get unassigned requests for manual assignment with filtering and search.
     """
     try:
         conn = g.db_conn
         cur = conn.cursor()
+        
+        # Get query parameters
+        search = request.args.get('search')
+        college_code = request.args.get('college_code')
+        requester_type = request.args.get('requester_type')
+        
+        # Build the base query
+        query = """
+            SELECT r.request_id, r.full_name, r.requested_at, r.college_code
+            FROM requests r
+            WHERE r.status = 'PENDING'
+            AND r.request_id NOT IN (SELECT request_id FROM request_assignments)
+        """
+        params = []
+        
+        # Add search condition
+        if search:
+            query += " AND (r.full_name ILIKE %s OR r.request_id ILIKE %s)"
+            search_param = f"%{search}%"
+            params.extend([search_param, search_param])
+        
+        # Add college_code filter
+        if college_code and college_code != 'all':
+            query += " AND r.college_code = %s"
+            params.append(college_code)
+        
+        query += " ORDER BY r.requested_at ASC LIMIT 50"
+        
+        cur.execute(query, params)
+        unassigned = cur.fetchall()
+        
+        # Get auth letter IDs to determine requester type
+        cur.execute("SELECT id FROM auth_letters")
+        auth_letter_ids = {row[0] for row in cur.fetchall()}
+        
+        requests = []
+        for req in unassigned:
+            requester_type_val = "Outsider" if req[0] in auth_letter_ids else "Student"
+            
+            # Apply requester_type filter after getting auth letter data
+            if requester_type and requester_type != 'all':
+                if requester_type != requester_type_val:
+                    continue
+                    
+            requests.append({
+                "request_id": req[0],
+                "full_name": req[1],
+                "requested_at": req[2].strftime("%Y-%m-%d %H:%M:%S") if req[2] else None,
+                "college_code": req[3],
+                "requester_type": requester_type_val
+            })
+        
+        cur.close()
+        return jsonify({"requests": requests}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@manage_request_bp.route("/api/admin/unassigned-requests/filters", methods=["GET"])
+@jwt_required_with_role(role)
+def get_unassigned_requests_filters():
+    """
+    Get available filter options for unassigned requests.
+    """
+    try:
+        conn = g.db_conn
+        cur = conn.cursor()
+        
+        # Get unique college codes
         cur.execute("""
-            SELECT request_id, full_name, requested_at
+            SELECT DISTINCT college_code
             FROM requests
             WHERE status = 'PENDING'
             AND request_id NOT IN (SELECT request_id FROM request_assignments)
-            ORDER BY requested_at ASC
-            LIMIT 50
+            AND college_code IS NOT NULL
+            ORDER BY college_code
         """)
-        unassigned = cur.fetchall()
-        requests = [
-            {
-                "request_id": req[0],
-                "full_name": req[1],
-                "requested_at": req[2].strftime("%Y-%m-%d %H:%M:%S") if req[2] else None
-            }
-            for req in unassigned
-        ]
+        college_codes = [row[0] for row in cur.fetchall()]
+        
         cur.close()
-        return jsonify({"requests": requests}), 200
+        
+        return jsonify({
+            "college_codes": college_codes,
+            "requester_types": ["Student", "Outsider"]
+        }), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -198,7 +267,7 @@ def get_admins_progress():
             LEFT JOIN (
                 SELECT ra.admin_id,
                        COUNT(*) as total,
-                       COUNT(CASE WHEN r.status = 'DOC-READY' THEN 1 END) as completed
+                       COUNT(CASE WHEN r.status = 'RELEASED' THEN 1 END) as completed
                 FROM request_assignments ra
                 LEFT JOIN requests r ON ra.request_id = r.request_id
                 GROUP BY ra.admin_id
@@ -233,32 +302,8 @@ def get_admin_requests(admin_id):
         return jsonify({"error": str(e)}), 500
 
 
-@manage_request_bp.route("/api/admin/global-max-assign", methods=["GET"])
-@jwt_required_with_role(role)
-def get_global_max_assign():
-    """
-    Get the global max assign per account.
-    """
-    try:
-        max_assign = ManageRequestModel.get_global_max_assign()
-        return jsonify({"max": max_assign}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
 
 
-@manage_request_bp.route("/api/admin/global-max-assign", methods=["PUT"])
-@jwt_required_with_role(role)
-def set_global_max_assign():
-    """
-    Set the global max assign per account.
-    """
-    try:
-        data = request.get_json()
-        max_assign = data.get("max", 10)
-        ManageRequestModel.set_global_max_assign(max_assign)
-        return jsonify({"message": "Global max assign updated"}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
 
 
 @manage_request_bp.route("/api/admin/admin-max-requests/<admin_id>", methods=["GET"])

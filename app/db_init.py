@@ -322,6 +322,7 @@ def create_performance_indexes():
 # ==========================
 
 
+
 def populate_independent_tables():
    """Populate all tables except request-related ones."""
    conn = get_connection()
@@ -433,6 +434,99 @@ def populate_independent_tables():
        conn.close()
 
 
+def populate_logs_table():
+   """Populate the logs table with sample data representing typical admin actions."""
+   conn = get_connection()
+   cur = conn.cursor()
+   try:
+       # Sample logs data representing typical registrar system activities
+       log_values = [
+           # System initialization and admin activities
+           ("admin1@registrar.edu", "System Initialization", "Database initialized with sample data including students, documents, and requirements", None, "2024-01-15 08:30:00"),
+           ("admin1@registrar.edu", "Admin Login", "Administrator logged into the system", None, "2024-01-15 08:31:00"),
+           ("admin2@registrar.edu", "Admin Login", "Staff administrator logged into the system", None, "2024-01-15 09:15:00"),
+           
+           # Document management activities
+           ("admin1@registrar.edu", "Document Created", "Created new document: Official Transcript of Records with cost ₱100.00", "DOC0001", "2024-01-15 10:00:00"),
+           ("admin1@registrar.edu", "Document Updated", "Updated document requirements for Diploma/Certificate of Completion", "DOC0002", "2024-01-15 10:15:00"),
+           ("admin2@registrar.edu", "Document Hidden", "Hidden document: Authentication of Documents for maintenance", "DOC0006", "2024-01-15 11:30:00"),
+           ("admin1@registrar.edu", "Document Cost Updated", "Updated cost for Replacement of Lost Diploma to ₱200.00", "DOC0007", "2024-01-15 14:20:00"),
+           
+           # Request management activities
+           ("admin1@registrar.edu", "Request Created", "New request created by student John Smith for Official Transcript of Records", "REQ2024001", "2024-01-16 09:45:00"),
+           ("admin2@registrar.edu", "Request Assigned", "Assigned request REQ2024001 to admin2@registrar.edu", "REQ2024001", "2024-01-16 10:00:00"),
+           ("admin2@registrar.edu", "Status Updated", "Updated request REQ2024001 status from PENDING to IN-PROGRESS", "REQ2024001", "2024-01-16 11:30:00"),
+           ("admin1@registrar.edu", "Request Created", "New request created by student Maria Garcia for Diploma/Certificate", "REQ2024002", "2024-01-16 13:20:00"),
+           ("admin1@registrar.edu", "Payment Confirmed", "Payment confirmed for request REQ2024001 - ₱100.00 received", "REQ2024001", "2024-01-16 15:45:00"),
+           ("admin2@registrar.edu", "Status Updated", "Updated request REQ2024001 status from IN-PROGRESS to DOC-READY", "REQ2024001", "2024-01-17 09:15:00"),
+           ("admin1@registrar.edu", "Document Released", "Released Official Transcript of Records for request REQ2024001", "REQ2024001", "2024-01-17 14:30:00"),
+           ("admin2@registrar.edu", "Status Updated", "Updated request REQ2024001 status from DOC-READY to RELEASED", "REQ2024001", "2024-01-17 14:35:00"),
+           
+           # Student management activities
+           ("admin1@registrar.edu", "Student Added", "Added new student: David Johnson (2025-1013) from CAS", None, "2024-01-18 08:00:00"),
+           ("admin2@registrar.edu", "Student Updated", "Updated contact information for student Emma Wilson", None, "2024-01-18 10:30:00"),
+           ("admin1@registrar.edu", "Liability Status Updated", "Updated liability status for student Michael Brown to cleared", None, "2024-01-18 11:45:00"),
+           
+           # Requirement management activities
+           ("admin1@registrar.edu", "Requirement Created", "Created new requirement: Marriage Certificate (if applicable)", None, "2024-01-19 09:00:00"),
+           ("admin2@registrar.edu", "Requirement Updated", "Updated requirement details for Valid Student ID", None, "2024-01-19 10:15:00"),
+           ("admin1@registrar.edu", "Document-Requirement Mapping", "Mapped Birth Certificate (PSA) requirement to Replacement Diploma", None, "2024-01-19 13:20:00"),
+           
+           # System configuration activities
+           ("admin1@registrar.edu", "Settings Updated", "Updated maximum concurrent requests limit to 50", None, "2024-01-20 08:30:00"),
+           ("admin2@registrar.edu", "Request Window Updated", "Modified request submission window: 8:00 AM - 5:00 PM", None, "2024-01-20 09:45:00"),
+           ("admin1@registrar.edu", "Admin Role Updated", "Changed admin2@registrar.edu role from staff to senior_admin", None, "2024-01-20 11:00:00"),
+           
+           # Recent activities for testing
+           ("admin1@registrar.edu", "Request Created", "New request created by student Emma Wilson for Good Moral Certificate", "REQ2024003", "2024-01-21 10:30:00"),
+           ("admin2@registrar.edu", "Request Assigned", "Assigned request REQ2024003 to admin2@registrar.edu", "REQ2024003", "2024-01-21 10:45:00"),
+           ("admin1@registrar.edu", "Status Updated", "Updated request REQ2024002 status from PENDING to IN-PROGRESS", "REQ2024002", "2024-01-21 14:15:00"),
+           ("admin2@registrar.edu", "Requirements Verified", "Verified all requirements for request REQ2024003", "REQ2024003", "2024-01-22 09:30:00"),
+           ("admin1@registrar.edu", "Payment Confirmed", "Payment confirmed for request REQ2024003 - ₱75.00 received", "REQ2024003", "2024-01-22 11:20:00"),
+           ("admin2@registrar.edu", "Document Processing", "Started processing Good Moral Certificate for request REQ2024003", "REQ2024003", "2024-01-22 13:45:00"),
+           ("admin1@registrar.edu", "Status Updated", "Updated request REQ2024003 status from IN-PROGRESS to DOC-READY", "REQ2024003", "2024-01-23 08:15:00"),
+           ("admin2@registrar.edu", "Document Released", "Released Good Moral Certificate for request REQ2024003", "REQ2024003", "2024-01-23 10:30:00"),
+           ("admin1@registrar.edu", "Status Updated", "Updated request REQ2024003 status from DOC-READY to RELEASED", "REQ2024003", "2024-01-23 10:35:00"),
+           
+           # Error handling and maintenance activities
+           ("admin1@registrar.edu", "System Maintenance", "Performed routine database maintenance and optimization", None, "2024-01-24 06:00:00"),
+           ("admin2@registrar.edu", "Backup Completed", "Daily database backup completed successfully", None, "2024-01-24 06:30:00"),
+           ("admin1@registrar.edu", "User Support", "Assisted student with document request troubleshooting", "REQ2024004", "2024-01-24 15:20:00"),
+           
+           # Authentication and security activities
+           ("admin1@registrar.edu", "Password Reset", "Performed password reset for admin2@registrar.edu", None, "2024-01-25 08:45:00"),
+           ("admin2@registrar.edu", "Security Check", "Reviewed system access logs and user permissions", None, "2024-01-25 14:30:00"),
+           
+           # Current day activities for demo purposes
+           ("admin1@registrar.edu", "Request Created", "New request created by student Michael Brown for Course Description", "REQ2024005", "2024-01-26 09:15:00"),
+           ("admin2@registrar.edu", "Request Assigned", "Assigned request REQ2024005 to admin1@registrar.edu", "REQ2024005", "2024-01-26 09:30:00"),
+           ("admin1@registrar.edu", "Status Updated", "Updated request REQ2024005 status from PENDING to IN-PROGRESS", "REQ2024005", "2024-01-26 11:45:00"),
+           ("admin2@registrar.edu", "Document Cost Verified", "Verified pricing for Course Description (₱40.00)", None, "2024-01-26 13:20:00"),
+           ("admin1@registrar.edu", "Payment Confirmed", "Payment confirmed for request REQ2024005 - ₱40.00 received", "REQ2024005", "2024-01-26 15:50:00")
+       ]
+       
+       # Insert logs data with proper timestamp formatting
+       for log_entry in log_values:
+           admin_id, action, details, request_id, timestamp = log_entry
+           cur.execute(
+               """
+               INSERT INTO logs (admin_id, action, details, request_id, timestamp)
+               VALUES (%s, %s, %s, %s, %s)
+               ON CONFLICT DO NOTHING
+               """,
+               (admin_id, action, details, request_id, timestamp)
+           )
+
+       conn.commit()
+       print("Logs table populated with sample data successfully.")
+   except Exception as e:
+       print(f"Error populating logs table: {e}")
+       conn.rollback()
+   finally:
+       cur.close()
+       conn.close()
+
+
 def insert_sample_data():
    """Legacy function - kept for compatibility but redirects to new function."""
    populate_independent_tables()
@@ -468,16 +562,30 @@ def initialize_db():
    print("Database and tables initialized successfully.")
 
 
+
 def initialize_and_populate():
    """Initialize database, tables, and populate independent tables."""
    initialize_db()
    populate_independent_tables()
+   populate_logs_table()
    print("Database initialized and independent tables populated successfully.")
+
 
 
 def populate_only():
    """Populate only independent tables (assumes tables already exist)."""
    populate_independent_tables()
+
+
+def populate_logs_only():
+   """Populate only logs table (assumes tables already exist)."""
+   populate_logs_table()
+
+
+def populate_logs_and_independent():
+   """Populate both independent tables and logs table (assumes tables already exist)."""
+   populate_independent_tables()
+   populate_logs_table()
 
 
 if __name__ == "__main__":
