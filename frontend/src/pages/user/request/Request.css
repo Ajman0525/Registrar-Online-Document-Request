@@ -636,11 +636,97 @@ width: 100%;
   justify-content: space-between;
   gap: 8px;
 }
+
 .upload-requirements-page .tracking-id {
   font-family: var(--font-family-base);
   font-size: 18px;
   font-weight: 600;
   color: var(--color-button-destructive-default);
+}
+
+/* Summary page file viewing styles */
+.uploaded-file-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.uploaded-file-item:last-child {
+  border-bottom: none;
+}
+
+.file-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 12px;
+}
+
+.file-name {
+  font-size: 14px;
+  color: var(--color-text-subtext);
+  flex: 1;
+}
+
+.view-file-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  white-space: nowrap;
+}
+
+.view-file-btn:hover {
+  background-color: #0056b3;
+}
+
+.view-file-btn:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.view-icon {
+  width: 14px;
+  height: 14px;
+  filter: brightness(0) invert(1);
+}
+
+/* Authorization letter styles */
+.auth-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.auth-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.auth-details .summary-item {
+  font-size: 14px;
+  color: var(--color-text-subtext);
+}
+
+.auth-details .summary-item strong {
+  color: var(--color-black);
+  font-weight: 600;
+}
+
+.auth-view-btn {
+  align-self: flex-start;
+  margin-top: 8px;
 }
 
 
