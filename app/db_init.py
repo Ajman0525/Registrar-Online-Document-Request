@@ -80,13 +80,26 @@ def ready_students_table():
        full_name VARCHAR(100) NOT NULL,
        contact_number VARCHAR(20),
        email VARCHAR(100),
-       liability_status BOOLEAN DEFAULT FALSE
+       liability_status BOOLEAN DEFAULT FALSE,
+       firstname VARCHAR(50) NOT NULL,
+       lastname VARCHAR(50) NOT NULL
    )
    """
    execute_query(query)
 
-
-
+def ready_auth_letters_table():
+   query = """
+   CREATE TABLE IF NOT EXISTS auth_letters (
+       id VARCHAR(10) PRIMARY KEY,
+       created_at TIMESTAMP DEFAULT NOW(),
+       firstname VARCHAR(50) NOT NULL,
+       lastname VARCHAR(50) NOT NULL,
+       file_url VARCHAR(255) NOT NULL,
+       number VARCHAR(20) NOT NULL,
+       requester_name VARCHAR(100) NOT NULL
+   )
+   """
+   execute_query(query)
 
 def ready_requirements_table():
    query = """
@@ -218,19 +231,13 @@ def insert_sample_data():
    try:
        # Students
        student_values = [
-           ("2025-1011", "Juan Dela Cruz", "09171234567", "juan@example.com", False),
-           ("2025-1012", "Maria Clara", "09179876543", "maria@example.com", True),
-           ("2025-1013", "Maria Juan", "09179876543", "maria@example.com", True),
-           ("2025-1014", "Maria Mendoza", "09179876543", "maria@example.com", True),
-           ("2025-1015", "Maria Cruz", "09179876543", "maria@example.com", True),
-           ("2025-1017", "Maria Juan", "09179876543", "maria@example.com", False),
-           ("2025-1018", "Maria Mendoza", "09179876543", "maria@example.com", False),
-           ("2025-1019", "Maria Cruz", "09179876543", "maria@example.com", True)
+           ("2025-1011", "Nights Project", "6309518876143", "nightnightproject@gmail.com", True, "Nights", "Project")
+        
        ]
        extras.execute_values(
            cur,
            """
-           INSERT INTO students (student_id, full_name, contact_number, email, liability_status)
+           INSERT INTO students (student_id, full_name, contact_number, email, liability_status, firstname, lastname)
            VALUES %s
            ON CONFLICT (student_id) DO NOTHING
            """,
@@ -281,67 +288,7 @@ def insert_sample_data():
        # Get current timestamp
        now = datetime.datetime.now()
 
-       # Requests
-       request_values = [
-           ("R0000001", "2025-1011", "Juan Dela Cruz", "09171234567", "juan@example.com", "Email", "SUBMITTED", True, 125.00, now, None, "Request submitted successfully"),
-           ("R0000002", "2025-1012", "Maria Clara", "09179876543", "maria@example.com", "SMS", "PENDING", False, 75.00, now, None, "Awaiting payment"),
-           ("R0000003", "2025-1013", "Maria Juan", "09179876543", "maria@example.com", "Email", "IN-PROGRESS", True, 150.00, now, None, "Processing documents"),
-           ("R0000004", "2025-1014", "Maria Mendoza", "09179876543", "maria@example.com", "SMS", "DOC-READY", True, 100.00, now, None, "Documents ready for pickup"),
-           ("R0000005", "2025-1015", "Maria Cruz", "09179876543", "maria@example.com", "Email", "RELEASED", True, 50.00, now, now, "Released to student"),
-           ("R0000006", "2025-1017", "Maria Juan", "09179876543", "maria@example.com", "SMS", "REJECTED", False, 0.00, now, None, "Incomplete requirements"),
-           ("R0000007", "2025-1018", "Maria Mendoza", "09179876543", "maria@example.com", "Email", "UNCONFIRMED", False, 0.00, now, None, "Awaiting confirmation"),
-           ("R0000008", "2025-1019", "Maria Cruz", "09179876543", "maria@example.com", "SMS", "SUBMITTED", True, 200.00, now, None, "Request submitted"),
-       ]
-       extras.execute_values(
-           cur,
-           """
-           INSERT INTO requests (request_id, student_id, full_name, contact_number, email, preferred_contact, status, payment_status, total_cost, requested_at, completed_at, remarks)
-           VALUES %s
-           ON CONFLICT (request_id) DO NOTHING
-           """,
-           request_values
-       )
-
-       # Request Documents
-       req_doc_values = [
-           ("R0000001", "DOC0001", 1),
-           ("R0000001", "DOC0002", 2),
-           ("R0000002", "DOC0002", 1),
-           ("R0000003", "DOC0001", 1),
-           ("R0000003", "DOC0003", 1),
-           ("R0000004", "DOC0003", 1),
-           ("R0000005", "DOC0001", 1),
-           ("R0000006", "DOC0002", 1),
-           ("R0000007", "DOC0001", 1),
-           ("R0000008", "DOC0001", 2),
-           ("R0000008", "DOC0002", 1),
-           ("R0000008", "DOC0003", 1),
-       ]
-       cur.executemany(
-           "INSERT INTO request_documents (request_id, doc_id, quantity) VALUES (%s, %s, %s) ON CONFLICT DO NOTHING",
-           req_doc_values
-       )
-
-       # Request Requirements Links (simulate uploaded files)
-       req_req_links_values = [
-           ("R0000001", "REQ0001", "uploads/R0000001_REQ0001_valid_id.pdf"),
-           ("R0000001", "REQ0002", "uploads/R0000001_REQ0002_proof_address.jpg"),
-           ("R0000002", "REQ0001", "uploads/R0000002_REQ0001_valid_id.png"),
-           ("R0000003", "REQ0001", "uploads/R0000003_REQ0001_valid_id.pdf"),
-           ("R0000003", "REQ0002", "uploads/R0000003_REQ0002_proof_address.jpg"),
-           ("R0000003", "REQ0003", "uploads/R0000003_REQ0003_photo.jpg"),
-           ("R0000004", "REQ0001", "uploads/R0000004_REQ0001_valid_id.pdf"),
-           ("R0000004", "REQ0003", "uploads/R0000004_REQ0003_photo.png"),
-           ("R0000005", "REQ0001", "uploads/R0000005_REQ0001_valid_id.pdf"),
-           ("R0000005", "REQ0002", "uploads/R0000005_REQ0002_proof_address.jpg"),
-           ("R0000008", "REQ0001", "uploads/R0000008_REQ0001_valid_id.pdf"),
-           ("R0000008", "REQ0002", "uploads/R0000008_REQ0002_proof_address.jpg"),
-           ("R0000008", "REQ0003", "uploads/R0000008_REQ0003_photo.jpg"),
-       ]
-       cur.executemany(
-           "INSERT INTO request_requirements_links (request_id, requirement_id, file_path) VALUES (%s, %s, %s) ON CONFLICT DO NOTHING",
-           req_req_links_values
-       )
+    
 
        conn.commit()
        print("Sample data inserted successfully.")
@@ -364,6 +311,7 @@ def initialize_db():
    ready_students_table()
    ready_requirements_table()
    ready_documents_table()
+   ready_auth_letters_table()
    ready_document_requirements_table()
    ready_requests_table()
    ready_request_documents_table()
@@ -373,8 +321,6 @@ def initialize_db():
    ready_open_request_restriction_table()
    #insert_sample_data()
    print("Database and tables initialized successfully.")
-
-
 
 
 if __name__ == "__main__":
