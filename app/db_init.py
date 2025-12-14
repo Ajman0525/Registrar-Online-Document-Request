@@ -112,6 +112,7 @@ def ready_requirements_table():
    """
    execute_query(query)
 
+
 def ready_documents_table():
     query = """
     CREATE TABLE IF NOT EXISTS documents (
@@ -120,7 +121,8 @@ def ready_documents_table():
         description VARCHAR(255),
         logo_link VARCHAR(255),
         cost NUMERIC(10,2) DEFAULT 0.00,
-        hidden BOOLEAN DEFAULT FALSE
+        hidden BOOLEAN DEFAULT FALSE,
+        requires_payment_first BOOLEAN DEFAULT FALSE
     )
     """
     execute_query(query)
@@ -161,12 +163,14 @@ def ready_requests_table():
 
 
 #mapping table between requests and requested documents for each request and quantity
+
 def ready_request_documents_table():
    query = """
    CREATE TABLE IF NOT EXISTS request_documents (
        request_id VARCHAR(15) REFERENCES requests(request_id) ON DELETE CASCADE,
        doc_id VARCHAR(200),
        quantity INTEGER DEFAULT 1,
+       payment_status BOOLEAN DEFAULT FALSE,
        PRIMARY KEY (request_id, doc_id)
    )
    """
@@ -252,7 +256,7 @@ def populate_independent_tables():
    try:
        # Students data
        student_values = [
-           ("2025-1011", "John Smith", "09171234567", "john.smith@example.com", False, "John", "Smith", "CCS"),
+           ("2025-1011", "John Smith", "639518876143", "john.smith@example.com", False, "John", "Smith", "CCS"),
            ("2025-1012", "Maria Garcia", "09172345678", "maria.garcia@example.com", True, "Maria", "Garcia", "COE"),
            ("2025-1013", "David Johnson", "09173456789", "david.johnson@example.com", False, "David", "Johnson", "CAS"),
            ("2025-1014", "Emma Wilson", "09174567890", "emma.wilson@example.com", True, "Emma", "Wilson", "CBA"),
@@ -288,21 +292,23 @@ def populate_independent_tables():
        )
 
 
+
        # Documents data
        doc_values = [
-           ("DOC0001", "Official Transcript of Records", "Complete academic record with grades and units earned", "/assets/logos/transcript.png", 100.00, False),
-           ("DOC0002", "Diploma/Certificate of Completion", "Official proof of degree or program completion", "/assets/logos/diploma.png", 150.00, False),
-           ("DOC0003", "Certificate of Enrollment", "Proof of current enrollment status", "/assets/logos/enrollment.png", 50.00, False),
-           ("DOC0004", "Good Moral Certificate", "Character reference for employment or further education", "/assets/logos/moral.png", 75.00, False),
-           ("DOC0005", "Certification of Grades", "Summary of academic performance for specific period", "/assets/logos/grades.png", 60.00, False),
-           ("DOC0006", "Authentication of Documents", "Official verification of document authenticity", "/assets/logos/authentication.png", 80.00, False),
-           ("DOC0007", "Replacement of Lost Diploma", "Duplicate diploma for lost or damaged original", "/assets/logos/replacement.png", 200.00, False),
-           ("DOC0008", "Course Description", "Detailed description of subjects taken", "/assets/logos/course_desc.png", 40.00, False),
-           ("DOC0009", "Ranking Certificate", "Academic ranking among graduating class", "/assets/logos/ranking.png", 65.00, False),
-           ("DOC0010", "Special Order/Citation", "Recognition of academic achievements or awards", "/assets/logos/awards.png", 55.00, False)
+           ("DOC0001", "Official Transcript of Records", "Complete academic record with grades and units earned", "/assets/logos/transcript.png", 100.00, False, True),
+           ("DOC0002", "Diploma/Certificate of Completion", "Official proof of degree or program completion", "/assets/logos/diploma.png", 150.00, False, False),
+           ("DOC0003", "Certificate of Enrollment", "Proof of current enrollment status", "/assets/logos/enrollment.png", 50.00, False, False),
+           ("DOC0004", "Good Moral Certificate", "Character reference for employment or further education", "/assets/logos/moral.png", 75.00, False, True),
+           ("DOC0005", "Certification of Grades", "Summary of academic performance for specific period", "/assets/logos/grades.png", 60.00, False, False),
+           ("DOC0006", "Authentication of Documents", "Official verification of document authenticity", "/assets/logos/authentication.png", 80.00, False, True),
+           ("DOC0007", "Replacement of Lost Diploma", "Duplicate diploma for lost or damaged original", "/assets/logos/replacement.png", 200.00, False, False),
+           ("DOC0008", "Course Description", "Detailed description of subjects taken", "/assets/logos/course_desc.png", 40.00, False, False),
+           ("DOC0009", "Ranking Certificate", "Academic ranking among graduating class", "/assets/logos/ranking.png", 65.00, False, False),
+           ("DOC0010", "Special Order/Citation", "Recognition of academic achievements or awards", "/assets/logos/awards.png", 55.00, False, False)
        ]
+
        cur.executemany(
-           "INSERT INTO documents (doc_id, doc_name, description, logo_link, cost, hidden) VALUES (%s, %s, %s, %s, %s, %s) ON CONFLICT (doc_id) DO NOTHING",
+           "INSERT INTO documents (doc_id, doc_name, description, logo_link, cost, hidden, requires_payment_first) VALUES (%s, %s, %s, %s, %s, %s, %s) ON CONFLICT (doc_id) DO NOTHING",
            doc_values
        )
 
