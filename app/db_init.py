@@ -93,7 +93,7 @@ def ready_auth_letters_table():
        firstname VARCHAR(50) NOT NULL,
        lastname VARCHAR(50) NOT NULL,
        file_url VARCHAR(255) NOT NULL,
-       number VARCHAR(20) NOT NULL
+       number VARCHAR(20) NOT NULL,
        requester_name VARCHAR(100) NOT NULL
    )
    """
