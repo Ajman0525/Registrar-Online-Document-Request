@@ -1,7 +1,28 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Transactions.css';
-import ButtonLink from '../../../components/common/ButtonLink';
+import TotalTransactionsIcon from "../../../components/icons/TotalTransactionsIcon";
+import AdminFeeIcon from "../../../components/icons/AdminFeeIcon";
+import UnpaidIcon from "../../../components/icons/UnpaidIcons";
+import PaidIcon from "../../../components/icons/PaidIcon";
+import SearchIcon from "../../../components/icons/SearchIcon";
+
+const SummaryCard = ({ title, icon: Icon, value, subText, trend }) => (
+  <div className="summary-card">
+    <div className="card-header">
+      <div className="card-icon">
+        <Icon className="card-metric-icon" />
+      </div>
+      <p className="card-title">{title}</p>
+    </div>
+    <div className="card-content-body">
+      <p className="card-subtext">{subText}</p>
+      <div className="card-value-row">
+        <h2 className="card-value">{value}</h2>
+      </div>
+    </div>
+  </div>
+);
 
 function Transactions() {
   const [transactions, setTransactions] = useState([]);
@@ -14,6 +35,7 @@ function Transactions() {
   const [sortOrder, setSortOrder] = useState('desc');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [range, setRange] = useState('all');
   const totalAdminFee = transactions.reduce((total, t) => total + (t.admin_fee || 0), 0);
 
   /* Fetch transactions and summary */
@@ -31,7 +53,7 @@ function Transactions() {
     if (search) params.append('search', search);
     if (sortOrder) params.append('sort', sortOrder);
     if (startDate) params.append('start_date', startDate);
-    if (endDate) params.append('end _date', endDate);
+    if (endDate) params.append('end_date', endDate);
 
     try {
       /* fetch transactions from the backend */
@@ -57,11 +79,12 @@ function Transactions() {
 
   /* Apply date range filters */
   /* Sets startDate and endDate based on predefined ranges */
-  function applyDateRange(range) {
+  function applyDateRange(selectedRange) {
+    setRange(selectedRange);
     const now = new Date();
     let start = '';
     let end = '';
-    switch (range) {
+    switch (selectedRange) {
       case '7':
         start = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
         end = now.toISOString().slice(0, 10);
@@ -107,85 +130,158 @@ function Transactions() {
 
   return (
     <div className="transactions-page">
-      {/* Page Header with Summary and Controls */}
-      <div className="page-header">
-        <div className="summary-section">
-          <div className="summary-card">
-            <span className="summary-label">Total Amount (Paid)</span>
-            <span className="summary-value">₱{(summary?.total_amount_completed || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-          </div>
-          <div className="summary-card">
-            <span className="summary-label">Total Transactions</span>
-            <span className="summary-value">{summary?.total_transactions || 0}</span>
-          </div>
-          <div className="summary-card">
-            <span className="summary-label">Total Admin Fee</span>
-            <span className="summary-value">{totalAdminFee}</span>
-          </div>
-          <div className="summary-card">
-            <span className="summary-label">Unpaid Requests</span>
-            <span className="summary-value">{summary?.total_unpaid || 0}</span>
-          </div>
+      {/* Header */}
+      <div className="dashboard-header-wrapper">
+        <div className="header-content">
+          <h1>Transactions Management</h1>
         </div>
-        <h2>Transactions</h2>
-        {/* Controls: Search, Sort, Date Filters, Export Buttons */}
-        <div className="controls">
-          <input className="search-input" placeholder="Search Transaction ID, User, Request ID" value={search} onChange={(e) => setSearch(e.target.value)} />
-          <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value)}>
-            <option value="desc">Newest to Oldest</option>
-            <option value="asc">Oldest to Newest</option>
-          </select>
-          <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-          <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
-          <div className="date-filters"> 
-            <button className="small" onClick={() => applyDateRange('7')}>Last 7 days</button>
-            <button className="small" onClick={() => applyDateRange('30')}>Last 30 days</button>
-            <button className="small" onClick={() => applyDateRange('month')}>This Month</button>
-            <button className="small" onClick={() => applyDateRange('year')}>This Year</button>
-          </div>
-          <button onClick={() => downloadCSV()}>Export CSV</button>
-          <button onClick={() => downloadPDF()}>Export PDF</button>
-        </div>
-      </div>
-      <div className="table-wrapper">
-        <table className="transactions-table">
-          <thead>
-            <tr>
-              <th>Request ID</th>
-              <th>User</th>
-              <th>Amount</th>
-              <th>Payment Date</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {transactions.length === 0 && (
-              <tr>
-                <td colSpan={8} className="text-center">No transactions found</td>
-              </tr>
-            )}
-            {transactions.map((tx) => (
-              <tr key={tx.request_id}>
-                <td>
-                  <a href={`/admin/requests?request_id=${tx.request_id}`}>{tx.request_id}</a>
-                </td>
-                <td>{tx.full_name} ({tx.student_id})</td>
-                <td>₱{parseFloat(tx.amount).toFixed(2)}</td>
-                <td>{tx.payment_date ? new Date(tx.payment_date).toLocaleString() : '-'}</td>
-                <td>{tx.request_status}</td>
-                <td>
-                  <button className="small" onClick={() => downloadInvoice(tx)} disabled={!tx.paid}>Download Invoice</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+
+        <select className="date-select" value={range} onChange={(e) => applyDateRange(e.target.value)}>
+          <option value="7">Last 7 Days</option>
+          <option value="30">Last 30 Days</option>
+          <option value="month">This Month</option>
+          <option value="year">This Year</option>
+          <option value="all">All Time</option>
+        </select>
       </div>
 
-      <div className="pagination">
-        <ButtonLink placeholder="Prev" onClick={() => setPage(Math.max(1, page - 1))} variant="secondary" />
-        <span>Page {page} of {totalPages} ({total})</span>
-        <ButtonLink placeholder="Next" onClick={() => setPage(Math.min(totalPages, page + 1))} variant="secondary" />
+      {/* Summary Cards */}
+      <div className="summary-cards-content">
+        <div className="summary-cards-wrapper">
+          <div className="summary-card-inner-scroll">
+            <SummaryCard 
+              title="Total Amount (Paid)" 
+              icon={PaidIcon} 
+              value={`₱${(summary?.total_amount_completed || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+              subText="Total revenue from requests"
+            />
+            <SummaryCard 
+              title="Total Transactions" 
+              icon={TotalTransactionsIcon} 
+              value={summary?.total_transactions || 0}
+              subText={startDate || endDate ? "Transactions in selected period" : "All time transactions"}
+            />
+            <SummaryCard 
+              title="Total Admin Fee" 
+              icon={AdminFeeIcon} 
+              value={`₱${totalAdminFee.toLocaleString()}`}
+              subText="Accumulated fees"
+            />
+            <SummaryCard 
+              title="Unpaid Requests" 
+              icon={UnpaidIcon} 
+              value={summary?.total_unpaid || 0}
+              subText="Pending payments"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content / Table */}
+      <div className="transaction-table-wrapper">
+        <div className="transactions-list-header">
+          <h2 className="transactions-list-title">Transaction List</h2>
+          
+          <div className="transactions-controls">
+            <div className="search-input-wrapper">
+              <SearchIcon className="search-icon" />
+              <input 
+                className="header-search" 
+                placeholder="Search..." 
+                value={search} 
+                onChange={(e) => setSearch(e.target.value)} 
+              />
+            </div>
+            
+            <select className="sort-select" value={sortOrder} onChange={(e) => setSortOrder(e.target.value)}>
+              <option value="desc">Newest First</option>
+              <option value="asc">Oldest First</option>
+            </select>
+
+            <select className="export" defaultValue="" onChange={(e) => {
+              if (e.target.value === 'csv') downloadCSV();
+              if (e.target.value === 'pdf') downloadPDF();
+              e.target.value = "";
+            }}>
+              <option value="" disabled hidden>Export</option>
+              <option value="csv">CSV</option>
+              <option value="pdf">PDF</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="transactions-table-container">
+          <table className="transactions-table">
+            <thead>
+              <tr>
+                <th>Request ID</th>
+                <th>User</th>
+                <th>Amount</th>
+                <th>Payment Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {transactions.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="px-4 py-8 text-center text-gray-500">No transactions found</td>
+                </tr>
+              )}
+              {transactions.map((tx) => (
+                <tr key={tx.request_id}>
+                  <td className="td-request-id">
+                    <a href={`/admin/requests?request_id=${tx.request_id}`}>#{tx.request_id}</a>
+                  </td>
+                  <td className="td-user-info">
+                    <div className="font-medium">{tx.full_name}</div>
+                    <div className="text-gray-500 text-xs">{tx.student_id}</div>
+                  </td>
+                  <td className="td-amount">
+                    ₱{parseFloat(tx.amount).toFixed(2)}
+                  </td>
+                  <td className="td-date">
+                    {tx.payment_date ? new Date(tx.payment_date).toLocaleDateString() : '-'}
+                  </td>
+                  <td className="td-status">
+                    <span className={`status-badge ${
+                      tx.paid ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                    }`}>
+                      {tx.paid ? 'Paid' : 'Unpaid'}
+                    </span>
+                  </td>
+                  <td className="td-actions">
+                    <button 
+                      className={`btn-invoice ${!tx.paid ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      onClick={() => downloadInvoice(tx)} 
+                      disabled={!tx.paid}
+                    >
+                      Invoice
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="transactions-pagination">
+          <button 
+            className="pagination-btn" 
+            onClick={() => setPage(Math.max(1, page - 1))} 
+            disabled={page === 1}
+          >
+            Prev
+          </button>
+          <span className="pagination-info">Page {page} of {totalPages} ({total} items)</span>
+          <button 
+            className="pagination-btn" 
+            onClick={() => setPage(Math.min(totalPages, page + 1))} 
+            disabled={page === totalPages}
+          >
+            Next
+          </button>
+        </div>
       </div>
     </div>
   );
