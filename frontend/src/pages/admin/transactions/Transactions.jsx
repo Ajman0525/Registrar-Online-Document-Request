@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import './Transactions.css';
 import TotalRequestsIcon from "../../../components/icons/TotalRequestsIcon";
 import ProcessedIcon from '../../../components/icons/ProcessedIcon';
@@ -25,18 +25,24 @@ const SummaryCard = ({ title, icon: Icon, value, subText, trend }) => (
 );
 
 function Transactions() {
+  // Helper to get initial state from sessionStorage
+  const getStoredState = (key, defaultValue) => {
+    const stored = sessionStorage.getItem(key);
+    return stored ? JSON.parse(stored) : defaultValue;
+  };
+
   const navigate = useNavigate();
-  const [transactions, setTransactions] = useState([]);
-  const [page, setPage] = useState(1);
+  const [transactions, setTransactions] = useState(() => getStoredState('tx_transactions', []));
+  const [page, setPage] = useState(() => getStoredState('tx_page', 1));
   const [limit] = useState(10);
-  const [total, setTotal] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
-  const [summary, setSummary] = useState({ total_amount_completed: 0, total_transactions: 0 });
-  const [search, setSearch] = useState('');
-  const [sortOrder, setSortOrder] = useState('desc');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [range, setRange] = useState('all');
+  const [total, setTotal] = useState(() => getStoredState('tx_total', 0));
+  const [totalPages, setTotalPages] = useState(() => getStoredState('tx_totalPages', 1));
+  const [summary, setSummary] = useState(() => getStoredState('tx_summary', { total_amount_completed: 0, total_transactions: 0 }));
+  const [search, setSearch] = useState(() => getStoredState('tx_search', ''));
+  const [sortOrder, setSortOrder] = useState(() => getStoredState('tx_sortOrder', 'desc'));
+  const [startDate, setStartDate] = useState(() => getStoredState('tx_startDate', ''));
+  const [endDate, setEndDate] = useState(() => getStoredState('tx_endDate', ''));
+  const [range, setRange] = useState(() => getStoredState('tx_range', 'all'));
   const totalAdminFee = transactions.reduce((total, t) => total + (t.admin_fee || 0), 0);
 
   /* Fetch transactions and summary */
@@ -44,6 +50,20 @@ function Transactions() {
     fetchTransactions();
     fetchSummary();
   }, [page, limit, search, sortOrder, startDate, endDate]);
+
+  /* Save state to sessionStorage */
+  useEffect(() => {
+    sessionStorage.setItem('tx_transactions', JSON.stringify(transactions));
+    sessionStorage.setItem('tx_page', JSON.stringify(page));
+    sessionStorage.setItem('tx_total', JSON.stringify(total));
+    sessionStorage.setItem('tx_totalPages', JSON.stringify(totalPages));
+    sessionStorage.setItem('tx_summary', JSON.stringify(summary));
+    sessionStorage.setItem('tx_search', JSON.stringify(search));
+    sessionStorage.setItem('tx_sortOrder', JSON.stringify(sortOrder));
+    sessionStorage.setItem('tx_startDate', JSON.stringify(startDate));
+    sessionStorage.setItem('tx_endDate', JSON.stringify(endDate));
+    sessionStorage.setItem('tx_range', JSON.stringify(range));
+  }, [transactions, page, total, totalPages, summary, search, sortOrder, startDate, endDate, range]);
 
   /* Fetch transactions */
   /* Returns paginated list of transactions based on filters */
@@ -281,16 +301,16 @@ function Transactions() {
                 <th>Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white divide-y divide-gray-200 py-4">
               {transactions.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-gray-500">No transactions found</td>
+                  <td colSpan={5} className="px-4 py-2 text-center text-gray-500">No transactions found</td>
                 </tr>
               )}
               {transactions.map((tx) => (
                 <tr key={tx.request_id}>
                   <td className="td-request-id">
-                    <a href={`/admin/requests?request_id=${tx.request_id}`}>#{tx.request_id}</a>
+                    <Link to={`/admin/requests?request_id=${tx.request_id}`}>#{tx.request_id}</Link>
                   </td>
                   <td className="td-user-info">
                     <div className="font-medium">{tx.full_name}</div>
