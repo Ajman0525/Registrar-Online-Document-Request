@@ -88,6 +88,7 @@ def check_id():
 def check_name():
     firstname = request.json.get("firstname")
     lastname = request.json.get("lastname")
+    requester_whatsapp_number= request.json.get("whatsapp_number")
 
     # Returns dict with exists, has_liability, phone_number, student_id, full_name
     result = AuthenticationUser.check_student_name_exists(firstname, lastname)
@@ -95,15 +96,15 @@ def check_name():
     if not result["exists"]:
         return jsonify({"status": "name_mismatch", "message": "Provided name does not match records."}), 400
 
-    # if result["has_liability"]:
-    #     return jsonify({
-    #         "status": "has_liability",
-    #         "message": "Student has outstanding liabilities"
-    #     }), 200
+    if requester_whatsapp_number:
+        phone = requester_whatsapp_number
+        current_app.logger.info(f"Using requester's WhatsApp number {phone} for OTP.")
 
-    # Generate OTP + hash it
+    else:
+        phone = result["phone_number"]
+        current_app.logger.info(f"Sending OTP to registered student number {phone}")
+
     otp, otp_hash = AuthenticationUser.generate_otp()
-    phone = result["phone_number"]
     full_name = result.get("full_name", f"{firstname} {lastname}")
 
     # Save OTP hash, student ID and full name in session

@@ -117,7 +117,7 @@ function RequestInBehalf({ onNext, onBack, maskedPhone, setMaskedPhone, goBackTo
             const verifyResponse = await fetch("/user/check-name", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ firstname: Firstname, lastname: Lastname })
+                body: JSON.stringify({ firstname: Firstname, lastname: Lastname, whatsapp_number: WhatsappNo })
             });
 
             const verifyData = await verifyResponse.json();
