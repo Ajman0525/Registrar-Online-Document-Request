@@ -1,9 +1,12 @@
+
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import "./Request.css";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
 import ButtonLink from "../../../components/common/ButtonLink";
 import ContentBox from "../../../components/user/ContentBox";
+import ConfirmModal from "../../../components/user/ConfirmModal";
 import { getCSRFToken } from "../../../utils/csrf";
+
 
 
 function UploadRequirements({
@@ -17,6 +20,8 @@ function UploadRequirements({
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [pendingFileToDelete, setPendingFileToDelete] = useState(null);
   const inputRefs = useRef({});
   const [requirementsList, setRequirementsList] = useState([]);
 
@@ -104,14 +109,27 @@ function UploadRequirements({
     onFileSelect && onFileSelect(req_id, file);
   };
 
+
   // Delete file
   const handleDeleteFile = (req_id) => {
     const key = String(req_id);
-    if (!window.confirm("Delete this file?")) return;
+    setPendingFileToDelete(req_id);
+    setShowConfirmModal(true);
+  };
 
-    onFileRemove && onFileRemove(req_id);
+  const confirmDeleteFile = () => {
+    if (pendingFileToDelete !== null) {
+      const key = String(pendingFileToDelete);
+      onFileRemove && onFileRemove(pendingFileToDelete);
+      if (inputRefs.current[key]) inputRefs.current[key].value = "";
+    }
+    setShowConfirmModal(false);
+    setPendingFileToDelete(null);
+  };
 
-    if (inputRefs.current[key]) inputRefs.current[key].value = "";
+  const cancelDeleteFile = () => {
+    setShowConfirmModal(false);
+    setPendingFileToDelete(null);
   };
 
 
@@ -127,6 +145,7 @@ function UploadRequirements({
     });
   }, [requirementsList.length, uploadedFiles]);
 
+
   // Proceed
   const handleProceedClick = async () => {
     if (requirementsList.length > 0 && !allRequiredUploaded) {
@@ -136,7 +155,6 @@ function UploadRequirements({
 
 
     setUploading(true);
-    await new Promise((res) => setTimeout(res, 500));
     onNext(uploadedFiles);
     setUploading(false);
   };
@@ -244,9 +262,18 @@ function UploadRequirements({
               variant="primary"
               disabled={!allRequiredUploaded || uploading}
             />
+
           </div>
         </div>
       </ContentBox>
+
+      <ConfirmModal
+        isOpen={showConfirmModal}
+        onClose={cancelDeleteFile}
+        onConfirm={confirmDeleteFile}
+        title="Delete File"
+        message="Are you sure you want to delete this file?"
+      />
     </>
   );
 }

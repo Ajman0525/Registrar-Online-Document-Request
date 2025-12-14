@@ -1,15 +1,22 @@
-import { useState, useEffect, useCallback } from "react";
+
+import { useState, useEffect, useCallback, useRef } from "react";
 import Documents from "./Documents";
 import RequestList from "./RequestList";
 import UploadRequirements from "./UploadRequirements";
 import PreferredContact from "./PreferredContact";
+
 import Summary from "./Summary.jsx";
 import SubmitRequest from "./SubmitRequest.jsx";
+import ConfirmModal from "../../../components/user/ConfirmModal";
 import { getCSRFToken } from "../../../utils/csrf";
+
+
 
 function RequestFlow() {
   const [step, setStep] = useState("documents");
   const [trackingId, setTrackingId] = useState("");
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState(null);
 
   // Progress indicator steps
   const steps = [
@@ -22,8 +29,6 @@ function RequestFlow() {
   ];
 
   const currentStepIndex = steps.findIndex(s => s.key === step);
-
-
 
   // Centralized state for all request data
   const [requestData, setRequestData] = useState({
@@ -39,93 +44,6 @@ function RequestFlow() {
     paymentStatus: false,
     remarks: "Request submitted successfully"
   });
-
-
-  // Track which requirements belong to which documents
-  const [documentRequirementMap, setDocumentRequirementMap] = useState({});
-
-  // Fetch document-requirement mapping
-  const fetchDocumentRequirements = useCallback(async (docs) => {
-    if (!docs || docs.length === 0) {
-      setDocumentRequirementMap({});
-      return;
-    }
-
-    try {
-      const docIds = docs.map(doc => doc.doc_id);
-      const response = await fetch("/api/list-requirements", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-TOKEN": getCSRFToken(),
-        },
-        credentials: "include",
-        body: JSON.stringify({ document_ids: docIds }),
-      });
-
-      if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
-
-      const data = await response.json();
-      if (!data.success) throw new Error(data.notification || "Fetch failed");
-
-      // Build mapping: doc_id -> [req_id, req_id, ...]
-      const mapping = {};
-      docs.forEach(doc => {
-        mapping[doc.doc_id] = [];
-      });
-
-      (data.requirements || []).forEach(req => {
-        if (req.doc_ids && Array.isArray(req.doc_ids)) {
-          req.doc_ids.forEach(docId => {
-            if (mapping[docId]) {
-              mapping[docId].push(req.req_id);
-            }
-          });
-        }
-      });
-
-      setDocumentRequirementMap(mapping);
-    } catch (err) {
-      console.error("Error fetching document requirements mapping:", err);
-      setDocumentRequirementMap({});
-    }
-  }, []);
-
-  // Clean up requirements for removed documents
-  const cleanUpRequirementsForRemovedDocuments = useCallback((newDocuments) => {
-    setRequestData(prev => {
-      const currentDocIds = new Set(prev.documents.map(doc => doc.doc_id));
-      const newDocIds = new Set(newDocuments.map(doc => doc.doc_id));
-
-      // Find documents that were removed
-      const removedDocIds = [...currentDocIds].filter(id => !newDocIds.has(id));
-
-      if (removedDocIds.length === 0) {
-        return prev; // No documents removed
-      }
-
-      // Get all requirement IDs that belong to removed documents
-      const requirementIdsToRemove = [];
-      removedDocIds.forEach(docId => {
-        const reqIds = documentRequirementMap[docId] || [];
-        requirementIdsToRemove.push(...reqIds);
-      });
-
-      // Remove uploaded files for these requirements
-      const newRequirements = { ...prev.requirements };
-      requirementIdsToRemove.forEach(reqId => {
-        delete newRequirements[String(reqId)];
-      });
-
-      return {
-        ...prev,
-        requirements: newRequirements
-      };
-    });
-  }, [documentRequirementMap]);
-
-
-
 
   // Safe update function that ensures data types
   const updateRequestData = useCallback((updates) => {
@@ -143,44 +61,30 @@ function RequestFlow() {
 
   // Safe setter specifically for documents - always ensures array
   const setDocuments = useCallback((docsOrUpdater) => {
-    setRequestData(prev => {
-      let newDocs;
-      
-      if (typeof docsOrUpdater === 'function') {
-        // If it's a function, call it with current documents (ensured to be array)
-        const currentDocs = Array.isArray(prev.documents) ? prev.documents : [];
-        newDocs = docsOrUpdater(currentDocs);
-      } else {
-        // If it's a direct value, use it directly
-        newDocs = docsOrUpdater;
-      }
-      
-      // Ensure the result is always an array
-      const safeDocs = Array.isArray(newDocs) ? newDocs : [];
-      
-      return {
-        ...prev,
-        documents: safeDocs
-      };
-    });
-
-    // Clean up requirements for removed documents after state update
-    setTimeout(() => {
-      const newDocs = typeof docsOrUpdater === 'function' ? docsOrUpdater([]) : docsOrUpdater;
-      if (Array.isArray(newDocs)) {
-        cleanUpRequirementsForRemovedDocuments(newDocs);
-        // Also update the document-requirement mapping
-        fetchDocumentRequirements(newDocs);
-      }
-    }, 100);
-  }, [cleanUpRequirementsForRemovedDocuments, fetchDocumentRequirements]);
+    // First determine the new documents array
+    let newDocs;
+    if (typeof docsOrUpdater === 'function') {
+      // Get current documents safely
+      const currentDocs = Array.isArray(requestData.documents) ? requestData.documents : [];
+      newDocs = docsOrUpdater(currentDocs);
+    } else {
+      newDocs = docsOrUpdater;
+    }
+    
+    // Ensure the result is always an array
+    const safeDocs = Array.isArray(newDocs) ? newDocs : [];
+    
+    // Update state with new documents only - preserve requirements
+    setRequestData(prev => ({
+      ...prev,
+      documents: safeDocs
+    }));
+  }, [requestData.documents]);
 
   // Always get safe documents array
   const getDocuments = useCallback(() => {
     return Array.isArray(requestData.documents) ? requestData.documents : [];
   }, [requestData.documents]);
-
-
 
   // Load student data on component mount
   useEffect(() => {
@@ -213,21 +117,6 @@ function RequestFlow() {
     fetchStudentData();
   }, []);
 
-
-
-  // Initialize requirements state when documents change
-  useEffect(() => {
-    if (requestData.documents.length > 0 && Object.keys(requestData.requirements).length === 0) {
-      // Initialize requirements with null values for each document's requirements
-      // This will be populated by the UploadRequirements component when it fetches the requirements
-      setRequestData(prev => ({
-        ...prev,
-        requirements: {}
-      }));
-    }
-  }, [requestData.documents.length]); // Only depend on documents length, not the whole requirements object
-
-
   // Step navigation handlers
   const goNextStep = useCallback(() => {
     switch (step) {
@@ -251,11 +140,41 @@ function RequestFlow() {
     }
   }, [step]);
 
+
+
+
+
+
+
+
   const goBackStep = useCallback(() => {
+    // If modal is showing, don't proceed with navigation
+    if (showConfirmModal) {
+      return;
+    }
+
     switch (step) {
       case "requestList":
-        setStep("documents");
-        break;
+        // Check if there are any uploaded files that would be lost
+        const hasUploadedFiles = Object.values(requestData.requirements).some(
+          file => file instanceof File || (typeof file === "string" && file.trim() !== "")
+        );
+        
+        if (hasUploadedFiles) {
+          // Show modal to confirm - DO NOT change step immediately
+          setShowConfirmModal(true);
+          // Store the navigation action
+          setPendingNavigation({
+            action: "navigateToDocuments",
+            clearFiles: true
+          });
+          // Return without changing step - wait for user confirmation
+          return;
+        } else {
+          // No uploaded files, navigate directly without modal
+          setStep("documents");
+          return;
+        }
       case "uploadRequirements":
         setStep("requestList");
         break;
@@ -271,15 +190,33 @@ function RequestFlow() {
       default:
         break;
     }
-  }, [step]);
+  }, [step, showConfirmModal, requestData.requirements]);
+
+  const handleConfirmEdit = () => {
+    if (pendingNavigation && pendingNavigation.action === "navigateToDocuments") {
+      // Clear all uploaded files
+      setRequestData(prev => ({
+        ...prev,
+        requirements: {}
+      }));
+      // Now change the step
+      setStep("documents");
+    }
+    setShowConfirmModal(false);
+    setPendingNavigation(null);
+  };
+
+  const handleCancelEdit = () => {
+    setShowConfirmModal(false);
+    setPendingNavigation(null);
+  };
 
   // Handle Next from Documents
   const handleDocumentsNext = (docs) => {
+    // Update request data with documents
     updateRequestData({ documents: docs });
     goNextStep();
   };
-
-
 
   // Handle Next from RequestList with updated docs (including quantity)
   const handleRequestListProceed = useCallback((updatedDocs, updatedQuantities) => {
@@ -317,9 +254,6 @@ function RequestFlow() {
       alert("Error processing your request. Please try again.");
     }
   }, [updateRequestData, goNextStep]);
-
-
-
 
   // Handle requirements upload state changes
   const handleRequirementsUpload = (uploadedFiles) => {
@@ -465,8 +399,6 @@ function RequestFlow() {
         </div>
       )}
 
-
-
       {step === "documents" && (
         <Documents
           selectedDocs={getDocuments()}
@@ -512,9 +444,6 @@ function RequestFlow() {
         />
       )}
 
-
-
-
       {step === "uploadRequirements" && (
         <UploadRequirements
           selectedDocs={requestData.documents}
@@ -525,7 +454,6 @@ function RequestFlow() {
           onBack={goBackStep}
         />
       )}
-
 
       {step === "preferredContact" && (
         <PreferredContact
@@ -548,6 +476,7 @@ function RequestFlow() {
         />
       )}
 
+
       {step === "submitRequest" && (
         <SubmitRequest
           selectedDocs={requestData.documents}
@@ -558,8 +487,17 @@ function RequestFlow() {
           onBack={goBackStep}
         />
       )}
+
+      <ConfirmModal
+        isOpen={showConfirmModal}
+        onClose={handleCancelEdit}
+        onConfirm={handleConfirmEdit}
+        title="Confirm Edit Request"
+        message="Warning: Editing your request will clear all uploaded requirement files. Are you sure you want to continue?"
+      />
     </>
   );
 }
 
 export default RequestFlow;
+

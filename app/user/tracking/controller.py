@@ -1,7 +1,7 @@
 from . import tracking_bp
 from ...whatsapp.controller import send_whatsapp_message 
 from flask import jsonify, request, current_app, session
-from flask_jwt_extended import create_access_token, set_access_cookies, get_jwt_identity
+from flask_jwt_extended import create_access_token, set_access_cookies, get_jwt_identity, verify_jwt_in_request
 from .models import Tracking
 from app.utils.decorator import jwt_required_with_role
 from app.user.authentication.models import AuthenticationUser
@@ -45,6 +45,18 @@ def get_tracking_data():
 
     if not tracking_number or not student_id:
         return jsonify({"message": "Please provide both Tracking Number and Student ID."}), 400
+    
+    is_already_authenticated = False
+    try:
+        verify_jwt_in_request(optional=True)
+        current_user = get_jwt_identity()
+        
+        if current_user == student_id:
+            is_already_authenticated = True
+            current_app.logger.info(f"User {student_id} is already authenticated. Skipping OTP.")
+    except Exception:
+        pass
+
     try:
         # Fetch tracking record
         record = Tracking.get_record_by_ids(tracking_number, student_id)
@@ -64,16 +76,16 @@ def get_tracking_data():
         full_name = result.get("full_name") if result else "Valued Customer"
         masked_phone = phone_number[-4:] if phone_number else ""
 
-        # Generate OTP + hash
-        otp, otp_hash = AuthenticationUser.generate_otp()
+        if not is_already_authenticated:
+            otp, otp_hash = AuthenticationUser.generate_otp()
 
         #Save OTP hash in session (temp)
-        AuthenticationUser.save_otp(student_id, otp_hash, session)
+        AuthenticationUser.save_otp(student_id, otp_hash,has_liability=result["has_liability"], session=session)
         session["phone_number"] = result["phone_number"]
         session["tracking_number"] = tracking_number 
         session["full_name"] = full_name
 
-        # DEBUG: Print session data
+            # DEBUG: Print session data
         print(f"[DEBUG] Session after saving OTP: {dict(session)}")
 
         phone = result["phone_number"]

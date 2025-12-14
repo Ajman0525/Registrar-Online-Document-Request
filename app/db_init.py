@@ -80,13 +80,26 @@ def ready_students_table():
        full_name VARCHAR(100) NOT NULL,
        contact_number VARCHAR(20),
        email VARCHAR(100),
-       liability_status BOOLEAN DEFAULT FALSE
+       liability_status BOOLEAN DEFAULT FALSE,
+       firstname VARCHAR(50) NOT NULL,
+       lastname VARCHAR(50) NOT NULL
    )
    """
    execute_query(query)
 
-
-
+def ready_auth_letters_table():
+   query = """
+   CREATE TABLE IF NOT EXISTS auth_letters (
+       id VARCHAR(10) PRIMARY KEY,
+       created_at TIMESTAMP DEFAULT NOW(),
+       firstname VARCHAR(50) NOT NULL,
+       lastname VARCHAR(50) NOT NULL,
+       file_url VARCHAR(255) NOT NULL,
+       number VARCHAR(20) NOT NULL,
+       requester_name VARCHAR(100) NOT NULL
+   )
+   """
+   execute_query(query)
 
 def ready_requirements_table():
    query = """
@@ -228,19 +241,13 @@ def insert_sample_data():
    try:
        # Students
        student_values = [
-           ("2025-1011", "Juan Dela Cruz", "09171234567", "juan@example.com", False),
-           ("2025-1012", "Maria Clara", "09179876543", "maria@example.com", True),
-           ("2025-1013", "Maria Juan", "09179876543", "maria@example.com", True),
-           ("2025-1014", "Maria Mendoza", "09179876543", "maria@example.com", True),
-           ("2025-1015", "Maria Cruz", "09179876543", "maria@example.com", True),
-           ("2025-1017", "Maria Juan", "09179876543", "maria@example.com", False),
-           ("2025-1018", "Maria Mendoza", "09179876543", "maria@example.com", False),
-           ("2025-1019", "Maria Cruz", "09179876543", "maria@example.com", True)
+           ("2025-1011", "Nights Project", "6309518876143", "nightnightproject@gmail.com", True, "Nights", "Project")
+        
        ]
        extras.execute_values(
            cur,
            """
-           INSERT INTO students (student_id, full_name, contact_number, email, liability_status)
+           INSERT INTO students (student_id, full_name, contact_number, email, liability_status, firstname, lastname)
            VALUES %s
            ON CONFLICT (student_id) DO NOTHING
            """,
@@ -380,6 +387,7 @@ def initialize_db():
    ready_students_table()
    ready_requirements_table()
    ready_documents_table()
+   ready_auth_letters_table()
    ready_document_requirements_table()
    ready_requests_table()
    ready_request_documents_table()
@@ -390,8 +398,6 @@ def initialize_db():
    ready_fee_table()
    #insert_sample_data()
    print("Database and tables initialized successfully.")
-
-
 
 
 if __name__ == "__main__":
