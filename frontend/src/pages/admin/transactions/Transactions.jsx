@@ -6,6 +6,8 @@ import ProcessedIcon from '../../../components/icons/ProcessedIcon';
 import AdminFeeIcon from "../../../components/icons/AdminFeeIcon";
 import PaidIcon from "../../../components/icons/PaidIcon";
 import SearchIcon from "../../../components/icons/SearchIcon";
+import CalendarIcon from "../../../components/icons/CalendarIcon";
+import SortIcon from "../../../components/icons/SortIcon";
 
 const SummaryCard = ({ title, icon: Icon, value, subText, trend }) => (
   <div className="summary-card">
@@ -43,6 +45,7 @@ function Transactions() {
   const [startDate, setStartDate] = useState(() => getStoredState('tx_startDate', ''));
   const [endDate, setEndDate] = useState(() => getStoredState('tx_endDate', ''));
   const [range, setRange] = useState(() => getStoredState('tx_range', 'all'));
+  const [showDateFilter, setShowDateFilter] = useState(false);
   const totalAdminFee = transactions.reduce((total, t) => total + (t.admin_fee || 0), 0);
 
   /* Fetch transactions and summary */
@@ -174,8 +177,8 @@ function Transactions() {
   /* Helper to get timeframe string */
   function getTimeframeString() {
     if (!startDate && !endDate) return '';
-    const start = startDate ? new Date(`${startDate}T00:00:00`).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '';
-    const end = endDate ? new Date(`${endDate}T00:00:00`).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '';
+    const start = startDate ? new Date(`${startDate}T00:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+    const end = endDate ? new Date(`${endDate}T00:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
     
     if (start && end) return `${start} - ${end}`;
     return `${start || end}`;
@@ -241,29 +244,66 @@ function Transactions() {
         <div className="header-content">
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <h1>Transactions Management</h1>
-            <span style={{ fontSize: '0.85rem', color: '#666', marginTop: '5px' }}>
-              {getTimeframeString()}
-            </span>
           </div>
         </div>
 
-        <select className="date-select" value={range} onChange={(e) => applyDateRange(e.target.value)}>
-          <option value="7">Last 7 Days</option>
-          <option value="30">Last 30 Days</option>
-          <option value="month">This Month</option>
-          <option value="year">This Year</option>
-          <option value="all">All Time</option>
-        </select>
+        <div className="header-actions">
+          <div className="date-filter-container">
+            <button className="date-filter-btn" onClick={() => setShowDateFilter(!showDateFilter)}>
+              <CalendarIcon className="calendar-icon" width="16" height="16" style={{ marginRight: '8px' }} />
+              <span>{range === 'all' && !startDate ? 'All Time' : getTimeframeString() || 'Select Date Range'}</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </button>
+            
+            {showDateFilter && (
+              <div className="date-filter-popup">
+                <div className="date-inputs-row">
+                  <div className="date-field">
+                    <label>Start Date</label>
+                    <input 
+                      type="date" 
+                      value={startDate} 
+                      onChange={(e) => {
+                        setStartDate(e.target.value);
+                        setRange('custom');
+                      }} 
+                    />
+                  </div>
+                  <div className="date-field">
+                    <label>End Date</label>
+                    <input 
+                      type="date" 
+                      value={endDate} 
+                      onChange={(e) => {
+                        setEndDate(e.target.value);
+                        setRange('custom');
+                      }} 
+                    />
+                  </div>
+                </div>
+                <div className="predefined-ranges">
+                  <button className="range-option" onClick={() => { applyDateRange('7'); setShowDateFilter(false); }}>Last 7 Days</button>
+                  <button className="range-option" onClick={() => { applyDateRange('30'); setShowDateFilter(false); }}>Last 30 Days</button>
+                  <button className="range-option" onClick={() => { applyDateRange('month'); setShowDateFilter(false); }}>This Month</button>
+                  <button className="range-option" onClick={() => { applyDateRange('year'); setShowDateFilter(false); }}>This Year</button>
+                  <button className="range-option" onClick={() => { applyDateRange('all'); setShowDateFilter(false); }}>All Time</button>
+                </div>
+              </div>
+            )}
+          </div>
 
-        <select className="export" defaultValue="" onChange={(e) => {
-              if (e.target.value === 'csv') downloadCSV();
-              if (e.target.value === 'pdf') downloadPDF();
-              e.target.value = "";
-            }}>
-              <option value="" disabled hidden>Export</option>
-              <option value="csv">CSV</option>
-              <option value="pdf">PDF</option>
-            </select>
+          <select className="export" defaultValue="" onChange={(e) => {
+                if (e.target.value === 'csv') downloadCSV();
+                if (e.target.value === 'pdf') downloadPDF();
+                e.target.value = "";
+              }}>
+                <option value="" disabled hidden>Export</option>
+                <option value="csv">CSV</option>
+                <option value="pdf">PDF</option>
+          </select>
+        </div>
       </div>
 
       {/* Summary Cards */}
@@ -314,10 +354,13 @@ function Transactions() {
               />
             </div>
             
-            <select className="sort-select" value={sortOrder} onChange={(e) => setSortOrder(e.target.value)}>
-              <option value="desc">Newest First</option>
-              <option value="asc">Oldest First</option>
-            </select>
+            <div className="sort-select-wrapper">
+              <SortIcon className="sort-icon" width="16" height="16" />
+              <select className="sort-select-input" value={sortOrder} onChange={(e) => setSortOrder(e.target.value)}>
+                <option value="desc">Newest First</option>
+                <option value="asc">Oldest First</option>
+              </select>
+            </div>
           </div>
         </div>
 
