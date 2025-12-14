@@ -272,6 +272,7 @@ def ready_admin_settings_table():
     """
    execute_query(query)
 
+
 def ready_others_docs_table():
    query = """
    CREATE TABLE IF NOT EXISTS others_docs (
@@ -280,11 +281,18 @@ def ready_others_docs_table():
        student_id VARCHAR(20) REFERENCES students(student_id) ON DELETE CASCADE,
        document_name VARCHAR(500) NOT NULL,
        document_description VARCHAR(1000),
+       is_done BOOLEAN DEFAULT FALSE,
        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
    )
    """
    execute_query(query)
+
+   # Add is_done column if it doesn't exist (for existing tables)
+   alter_query = """
+   ALTER TABLE others_docs ADD COLUMN IF NOT EXISTS is_done BOOLEAN DEFAULT FALSE
+   """
+   execute_query(alter_query)
 
 
 # ==========================

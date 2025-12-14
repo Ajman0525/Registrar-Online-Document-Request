@@ -618,9 +618,10 @@ class ManageRequestModel:
             files = cur.fetchall()
             request_data["uploaded_files"] = [{"requirement": file[0], "file_path": file[1]} for file in files]
 
+
             # Fetch others documents (custom documents)
             cur.execute("""
-                SELECT id, document_name, document_description, created_at
+                SELECT id, document_name, document_description, created_at, is_done
                 FROM others_docs
                 WHERE request_id = %s
                 ORDER BY created_at ASC
@@ -631,7 +632,8 @@ class ManageRequestModel:
                     "id": doc[0], 
                     "name": doc[1], 
                     "description": doc[2], 
-                    "created_at": doc[3].strftime("%Y-%m-%d %H:%M:%S") if doc[3] else None
+                    "created_at": doc[3].strftime("%Y-%m-%d %H:%M:%S") if doc[3] else None,
+                    "is_done": doc[4]
                 } 
                 for doc in others_docs
             ]
@@ -663,6 +665,7 @@ class ManageRequestModel:
             return False
         finally:
             cur.close()
+
 
     @staticmethod
     def toggle_document_completion(request_id, doc_id, admin_id):
@@ -706,6 +709,52 @@ class ManageRequestModel:
         except Exception as e:
             conn.rollback()
             print(f"Error toggling document completion for request {request_id}, doc {doc_id}: {e}")
+            return False, str(e)
+        finally:
+            cur.close()
+
+    @staticmethod
+    def toggle_others_document_completion(request_id, doc_id, admin_id):
+        """Toggle the is_done status of an others document in a request."""
+        conn = g.db_conn
+        cur = conn.cursor()
+        try:
+            # First, get the current status
+            cur.execute("""
+                SELECT is_done
+                FROM others_docs
+                WHERE id = %s AND request_id = %s
+            """, (doc_id, request_id))
+            result = cur.fetchone()
+            
+            if not result:
+                return False, "Others document not found"
+            
+            current_status = result[0]
+            new_status = not current_status
+            
+            # Update the status
+            cur.execute("""
+                UPDATE others_docs
+                SET is_done = %s
+                WHERE id = %s AND request_id = %s
+            """, (new_status, doc_id, request_id))
+            
+            if cur.rowcount > 0:
+                # Log the action
+                cur.execute("""
+                    INSERT INTO logs (admin_id, action, details, request_id)
+                    VALUES (%s, %s, %s, %s)
+                """, (admin_id, 'Others Document Status Toggled', 
+                      f'Toggled others document {doc_id} completion status to {"completed" if new_status else "not completed"} for request {request_id}', 
+                      request_id))
+                conn.commit()
+                return True, new_status
+            else:
+                return False, "Failed to update others document status"
+        except Exception as e:
+            conn.rollback()
+            print(f"Error toggling others document completion for request {request_id}, doc {doc_id}: {e}")
             return False, str(e)
         finally:
             cur.close()

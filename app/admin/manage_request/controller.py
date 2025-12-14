@@ -409,6 +409,7 @@ def get_single_request(request_id):
 
 
 
+
 @manage_request_bp.route("/api/admin/requests/<request_id>/documents/<doc_id>/status", methods=["PUT"])
 @jwt_required_with_role(role)
 def toggle_document_status(request_id, doc_id):
@@ -423,6 +424,28 @@ def toggle_document_status(request_id, doc_id):
         if success:
             return jsonify({
                 "message": "Document status toggled successfully",
+                "is_done": result
+            }), 200
+        else:
+            return jsonify({"error": result}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@manage_request_bp.route("/api/admin/requests/<request_id>/others_documents/<doc_id>/status", methods=["PUT"])
+@jwt_required_with_role(role)
+def toggle_others_document_status(request_id, doc_id):
+    """
+    Toggle the completion status of an others document in a request.
+    """
+    try:
+        # Get admin ID from JWT token
+        admin_id = get_jwt_identity()
+
+        success, result = ManageRequestModel.toggle_others_document_completion(request_id, doc_id, admin_id)
+        if success:
+            return jsonify({
+                "message": "Others document status toggled successfully",
                 "is_done": result
             }), 200
         else:

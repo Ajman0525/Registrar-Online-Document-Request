@@ -8,9 +8,11 @@ import LoadingSpinner from "../../../components/common/LoadingSpinner";
 import "./RequestViewPage.css";
 
 
+
 const RequestViewPage_InProgress = ({ request, onRefresh }) => {
   const navigate = useNavigate();
   const [togglingDocuments, setTogglingDocuments] = useState({});
+  const [togglingOthersDocuments, setTogglingOthersDocuments] = useState({});
   const [assigneeInfo, setAssigneeInfo] = useState(null);
 
   useEffect(() => {
@@ -32,6 +34,7 @@ const RequestViewPage_InProgress = ({ request, onRefresh }) => {
   }, [request?.request_id]); // Use optional chaining for safe dependency checking
 
   if (!request) return <div className="p-8 text-red-500 text-center">No request data provided</div>;
+
 
 
   const toggleDocumentCompletion = async (docId, docName) => {
@@ -65,6 +68,40 @@ const RequestViewPage_InProgress = ({ request, onRefresh }) => {
       console.error('Error toggling document status:', error);
     } finally {
       setTogglingDocuments(prev => ({ ...prev, [docId]: false }));
+    }
+  };
+
+  const toggleOthersDocumentCompletion = async (docId, docName) => {
+    try {
+      setTogglingOthersDocuments(prev => ({ ...prev, [docId]: true }));
+      
+
+      const csrfToken = getCSRFToken();
+      const response = await fetch(`/api/admin/requests/${request.request_id}/others_documents/${docId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': csrfToken
+        },
+        credentials: 'include'
+      });
+
+
+      if (response.ok) {
+        const data = await response.json();
+        // Update the local state
+        if (onRefresh) {
+          onRefresh();
+        }
+      } else {
+        const errorData = await response.json();
+        console.error('Failed to toggle others document status:', errorData.error);
+        alert('Failed to toggle others document status: ' + (errorData.error || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Error toggling others document status:', error);
+    } finally {
+      setTogglingOthersDocuments(prev => ({ ...prev, [docId]: false }));
     }
   };
 
@@ -127,6 +164,7 @@ const RequestViewPage_InProgress = ({ request, onRefresh }) => {
           )}
         </section>
 
+
         {/* Others Documents */}
         <section className="section-block">
           <h2>Others Documents</h2>
@@ -135,7 +173,16 @@ const RequestViewPage_InProgress = ({ request, onRefresh }) => {
             request.others_documents.map((doc, index) => (
               <div key={index} className="others-document-row">
                 <div className="document-info">
-                  <span className="document-name">{doc.name}</span>
+                  <input 
+                    type="checkbox"
+                    checked={doc.is_done || false}
+                    onChange={() => toggleOthersDocumentCompletion(doc.id, doc.name)}
+                    disabled={togglingOthersDocuments[doc.id]}
+                    className="document-checkbox"
+                  />
+                  <span className={`document-name ${doc.is_done ? 'completed' : ''}`}>
+                    {doc.name}
+                  </span>
                   {doc.description && (
                     <span className="document-description">{doc.description}</span>
                   )}
@@ -143,6 +190,9 @@ const RequestViewPage_InProgress = ({ request, onRefresh }) => {
                 <div className="document-timestamp">
                   <small>Created: {doc.created_at}</small>
                 </div>
+                {togglingOthersDocuments[doc.id] && (
+                  <div className="loading-spinner-small">⟳</div>
+                )}
               </div>
             ))
           ) : (
