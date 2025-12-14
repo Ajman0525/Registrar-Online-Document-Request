@@ -254,6 +254,16 @@ function Transactions() {
           <option value="year">This Year</option>
           <option value="all">All Time</option>
         </select>
+
+        <select className="export" defaultValue="" onChange={(e) => {
+              if (e.target.value === 'csv') downloadCSV();
+              if (e.target.value === 'pdf') downloadPDF();
+              e.target.value = "";
+            }}>
+              <option value="" disabled hidden>Export</option>
+              <option value="csv">CSV</option>
+              <option value="pdf">PDF</option>
+            </select>
       </div>
 
       {/* Summary Cards */}
@@ -307,16 +317,6 @@ function Transactions() {
             <select className="sort-select" value={sortOrder} onChange={(e) => setSortOrder(e.target.value)}>
               <option value="desc">Newest First</option>
               <option value="asc">Oldest First</option>
-            </select>
-
-            <select className="export" defaultValue="" onChange={(e) => {
-              if (e.target.value === 'csv') downloadCSV();
-              if (e.target.value === 'pdf') downloadPDF();
-              e.target.value = "";
-            }}>
-              <option value="" disabled hidden>Export</option>
-              <option value="csv">CSV</option>
-              <option value="pdf">PDF</option>
             </select>
           </div>
         </div>
