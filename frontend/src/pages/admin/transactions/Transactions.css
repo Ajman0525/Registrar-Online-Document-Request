@@ -325,7 +325,7 @@
 }
 
 .td-request-id {
-  padding: 1rem;
+  padding: 0.5rem 1rem;
   white-space: nowrap;
   font-size: 0.875rem;
   font-weight: 500;
@@ -333,14 +333,14 @@
 }
 
 .td-user-info {
-  padding: 1rem;
+  padding: 0.5rem 1rem;
   white-space: nowrap;
   font-size: 0.875rem;
   color: #111827;
 }
 
 .td-amount {
-  padding: 1rem;
+  padding: 0.5rem 1rem;
   white-space: nowrap;
   font-size: 0.875rem;
   font-weight: 600;
@@ -348,19 +348,19 @@
 }
 
 .td-date {
-  padding: 1rem;
+  padding: 0.5rem 1rem;
   white-space: nowrap;
   font-size: 0.875rem;
   color: #6b7280;
 }
 
 .td-status {
-  padding: 1rem;
+  padding: 0.5rem 1rem;
   white-space: nowrap;
 }
 
 .td-actions {
-  padding: 1rem;
+  padding: 0.5rem 1rem;
   white-space: nowrap;
   font-size: 0.875rem;
   color: #6b7280;
