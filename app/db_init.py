@@ -136,6 +136,7 @@ def ready_requests_table():
        payment_status BOOLEAN DEFAULT FALSE,
        total_cost NUMERIC(10,2) DEFAULT 0.00,
        requested_at TIMESTAMP DEFAULT NOW(),
+       payment_date TIMESTAMP,
        remarks VARCHAR(255),
        order_type varchar(20)
    )
@@ -283,19 +284,19 @@ def insert_sample_data():
 
        # Requests
        request_values = [
-           ("R0000001", "2025-1011", "Juan Dela Cruz", "09171234567", "juan@example.com", "Email", "SUBMITTED", True, 125.00, now, None, "Request submitted successfully"),
+           ("R0000001", "2025-1011", "Juan Dela Cruz", "09171234567", "juan@example.com", "Email", "SUBMITTED", True, 125.00, now, now, "Request submitted successfully"),
            ("R0000002", "2025-1012", "Maria Clara", "09179876543", "maria@example.com", "SMS", "PENDING", False, 75.00, now, None, "Awaiting payment"),
-           ("R0000003", "2025-1013", "Maria Juan", "09179876543", "maria@example.com", "Email", "IN-PROGRESS", True, 150.00, now, None, "Processing documents"),
-           ("R0000004", "2025-1014", "Maria Mendoza", "09179876543", "maria@example.com", "SMS", "DOC-READY", True, 100.00, now, None, "Documents ready for pickup"),
+           ("R0000003", "2025-1013", "Maria Juan", "09179876543", "maria@example.com", "Email", "IN-PROGRESS", True, 150.00, now, now, "Processing documents"),
+           ("R0000004", "2025-1014", "Maria Mendoza", "09179876543", "maria@example.com", "SMS", "DOC-READY", True, 100.00, now, now, "Documents ready for pickup"),
            ("R0000005", "2025-1015", "Maria Cruz", "09179876543", "maria@example.com", "Email", "RELEASED", True, 50.00, now, now, "Released to student"),
            ("R0000006", "2025-1017", "Maria Juan", "09179876543", "maria@example.com", "SMS", "REJECTED", False, 0.00, now, None, "Incomplete requirements"),
            ("R0000007", "2025-1018", "Maria Mendoza", "09179876543", "maria@example.com", "Email", "UNCONFIRMED", False, 0.00, now, None, "Awaiting confirmation"),
-           ("R0000008", "2025-1019", "Maria Cruz", "09179876543", "maria@example.com", "SMS", "SUBMITTED", True, 200.00, now, None, "Request submitted"),
+           ("R0000008", "2025-1019", "Maria Cruz", "09179876543", "maria@example.com", "SMS", "SUBMITTED", True, 200.00, now, now, "Request submitted"),
        ]
        extras.execute_values(
            cur,
            """
-           INSERT INTO requests (request_id, student_id, full_name, contact_number, email, preferred_contact, status, payment_status, total_cost, requested_at, completed_at, remarks)
+           INSERT INTO requests (request_id, student_id, full_name, contact_number, email, preferred_contact, status, payment_status, total_cost, requested_at, payment_date, remarks)
            VALUES %s
            ON CONFLICT (request_id) DO NOTHING
            """,
