@@ -47,7 +47,6 @@ class AuthenticationUser:
                 "phone_number": None
             }
 
-
     @staticmethod
     def check_student_name_exists(firstname, lastname):
         """
@@ -112,28 +111,34 @@ class AuthenticationUser:
         return otp, otp_hash
 
     @staticmethod
-    def save_otp(student_id, otp_hash, session):
+    def save_otp(student_id, otp_hash, has_liability, session):
         """
         Save OTP hash to session (temporary) or database later.
         """
         session["otp"] = otp_hash
         session["student_id"] = student_id
+        session["has_liability"] = has_liability
 
     @staticmethod
     def verify_otp(otp_input, session):
-        """
-        Compare entered OTP hash with stored hash.
-        """
         entered_hash = hashlib.sha256(str(otp_input).encode()).hexdigest()
         stored_hash = session.get("otp")
 
-        if not stored_hash:
-            return False
+        if not stored_hash or entered_hash != stored_hash:
+            return {
+                "verified": False,
+                "has_liability": False
+            }
 
-        return entered_hash == stored_hash
+        return {
+            "verified": True,
+            "has_liability": session.get("has_liability", False),
+            "student_id": session.get("student_id")
+        }
+
     
     @staticmethod
-    def store_authletter(firstname, lastname, file_url, number):
+    def store_authletter(firstname, lastname, file_url, number, requester_name):
         """
         Insert or update the authorization letter record in the DB.
         """
@@ -143,11 +148,11 @@ class AuthenticationUser:
 
             # Upsert: if already exists, replace URL
             cur.execute("""
-                INSERT INTO auth_letters (firstname, lastname, file_url, number)
-                VALUES (%s, %s, %s, %s)
+                INSERT INTO auth_letters (firstname, lastname, file_url, number, requester_name)
+                VALUES (%s, %s, %s, %s, %s)
                 ON CONFLICT (id)
                 DO UPDATE SET file_url = EXCLUDED.file_url
-            """, (firstname, lastname, file_url, number))
+            """, (firstname, lastname, file_url, number, requester_name))
 
             conn.commit()
             cur.close()

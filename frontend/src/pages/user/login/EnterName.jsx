@@ -65,11 +65,11 @@ function EnterName({ onNext, onBack, maskedPhone, setMaskedPhone, goBackToOption
                 return;
             }
 
-            if (data.status === "has_liability") {
-                onNext("liability");
-                setLoading(false);
-                return;
-            }
+            // if (data.status === "has_liability") {
+            //     onNext("liability");
+            //     setLoading(false);
+            //     return;
+            // }
 
             setMaskedPhone(data.masked_phone);
             onNext(); // proceed to OTP

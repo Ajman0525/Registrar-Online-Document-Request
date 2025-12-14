@@ -85,8 +85,19 @@ def ready_students_table():
    """
    execute_query(query)
 
-
-
+def ready_auth_letters_table():
+   query = """
+   CREATE TABLE IF NOT EXISTS auth_letters (
+       id VARCHAR(10) PRIMARY KEY,
+       created_at TIMESTAMP DEFAULT NOW(),
+       firstname VARCHAR(50) NOT NULL,
+       lastname VARCHAR(50) NOT NULL,
+       file_url VARCHAR(255) NOT NULL,
+       number VARCHAR(20) NOT NULL,
+       requester_name VARCHAR(100) NOT NULL
+   )
+   """
+   execute_query(query)
 
 def ready_requirements_table():
    query = """
@@ -438,6 +449,7 @@ def initialize_db():
    ready_students_table()
    ready_requirements_table()
    ready_documents_table()
+   ready_auth_letters_table()
    ready_document_requirements_table()
    ready_requests_table()
    ready_request_documents_table()
