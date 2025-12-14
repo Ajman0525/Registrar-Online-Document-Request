@@ -86,10 +86,10 @@ def get_tracking_data():
         session["full_name"] = full_name
 
             # DEBUG: Print session data
-            print(f"[DEBUG] Session after saving OTP: {dict(session)}")
+        print(f"[DEBUG] Session after saving OTP: {dict(session)}")
 
-            phone = result["phone_number"]
-            send_whatsapp_otp(phone, otp, full_name)
+        phone = result["phone_number"]
+        send_whatsapp_otp(phone, otp, full_name)
 
         # Build response
         response_data = {
