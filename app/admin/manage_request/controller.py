@@ -356,6 +356,7 @@ def unassign_request():
         return jsonify({"error": str(e)}), 500
 
 
+
 @manage_request_bp.route("/api/admin/requests/<request_id>", methods=["GET"])
 @jwt_required_with_role(role)
 def get_single_request(request_id):
@@ -368,5 +369,27 @@ def get_single_request(request_id):
             return jsonify(request_data), 200
         else:
             return jsonify({"error": "Request not found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@manage_request_bp.route("/api/admin/requests/<request_id>/documents/<doc_id>/status", methods=["PUT"])
+@jwt_required_with_role(role)
+def toggle_document_status(request_id, doc_id):
+    """
+    Toggle the completion status of a document in a request.
+    """
+    try:
+        # Get admin ID from JWT token
+        admin_id = get_jwt_identity()
+
+        success, result = ManageRequestModel.toggle_document_completion(request_id, doc_id, admin_id)
+        if success:
+            return jsonify({
+                "message": "Document status toggled successfully",
+                "is_done": result
+            }), 200
+        else:
+            return jsonify({"error": result}), 404
     except Exception as e:
         return jsonify({"error": str(e)}), 500

@@ -43,25 +43,26 @@ const RequestViewPage_Flow = () => {
   }, [requestId]);
 
 
+
   // Status mapping - determine which component to load based on status
-  const getStatusComponent = (status, requestData) => {
+  const getStatusComponent = (status, requestData, refreshFunction) => {
     const normalizedStatus = status;
     
     switch (normalizedStatus) {
       case "PENDING":
-        return <RequestViewPage_Pending request={requestData} onRefresh={refreshRequest} />;
+        return <RequestViewPage_Pending request={requestData} onRefresh={refreshFunction} />;
       
       case "IN-PROGRESS":
-        return <RequestViewPage_InProgress request={requestData} onRefresh={refreshRequest} />;
+        return <RequestViewPage_InProgress request={requestData} onRefresh={refreshFunction} />;
       
       case "completed":
       case "ready":
       case "completed_ready":
-        return <RequestViewPage_InProgress request={requestData} onRefresh={refreshRequest} />; // Can use same component with different styling
+        return <RequestViewPage_InProgress request={requestData} onRefresh={refreshFunction} />; // Can use same component with different styling
       
       default:
         // Default to pending component if status is unknown
-        return <RequestViewPage_Pending request={requestData} onRefresh={refreshRequest} />;
+        return <RequestViewPage_Pending request={requestData} onRefresh={refreshFunction} />;
     }
   };
 
@@ -97,9 +98,10 @@ const RequestViewPage_Flow = () => {
 
   return (
     <div className="request-flow-container">
+
       {/* Dynamic component loading based on status */}
       <div className="request-content">
-        {getStatusComponent(status, request)}
+        {getStatusComponent(status, request, refreshRequest)}
       </div>
     </div>
   );

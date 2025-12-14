@@ -6,6 +6,8 @@ import LoadingSpinner from "../../../components/common/LoadingSpinner";
 import "./RequestViewPage.css";
 
 
+
+
 const RequestViewPage_Pending = ({ request, onRefresh }) => {
   const navigate = useNavigate();
 
@@ -15,6 +17,8 @@ const RequestViewPage_Pending = ({ request, onRefresh }) => {
     <div className="request-view-wrapper">
       <div className="left-panel-card">
         <h1 className="request-username">{request.full_name}</h1>
+        <p className="student-id">{request.student_id || "N/A"}</p>
+
 
         {/* Selected Documents */}
         <section className="section-block">
@@ -22,7 +26,12 @@ const RequestViewPage_Pending = ({ request, onRefresh }) => {
           <hr />
           {request.documents?.length ? (
             request.documents.map((doc, index) => (
-              <p key={index}>{doc.name} {doc.quantity}x</p>
+              <div key={index} className="document-row">
+                <span>{doc.name} {doc.quantity}x</span>
+                {doc.requires_payment_first && (
+                  <span className="payment-required-badge">Payment Required</span>
+                )}
+              </div>
             ))
           ) : (
             <p>No selected documents</p>
@@ -41,6 +50,23 @@ const RequestViewPage_Pending = ({ request, onRefresh }) => {
             <p>No uploaded files</p>
           )}
         </section>
+
+        {/* Authorization Letter for Outsiders */}
+        {request.requester_type === 'Outsider' && request.authorization_letter && (
+          <section className="section-block">
+            <h2>Authorization Letter</h2>
+            <hr />
+            <div className="auth-letter-info">
+              <p><strong>Requested by:</strong> {request.authorization_letter.requester_name}</p>
+              <button 
+                className="view-auth-letter-btn"
+                onClick={() => window.open(request.authorization_letter.file_url, '_blank')}
+              >
+                View Authorization Letter
+              </button>
+            </div>
+          </section>
+        )}
 
         {/* Preferred Contact */}
         <section className="section-block">
@@ -71,13 +97,29 @@ const RequestViewPage_Pending = ({ request, onRefresh }) => {
           </div>
 
           <div className="details-item">
-            <span>Authorization Letter</span>
-            <span>{request.authorization_letter ? "View Letter" : "None"}</span>
+            <span>Request ID</span>
+            <span>{request.request_id}</span>
           </div>
 
           <div className="details-item">
-            <span>Request ID</span>
-            <span>{request.request_id}</span>
+            <span>College Code</span>
+            <span>{request.college_code || "N/A"}</span>
+          </div>
+
+
+          <div className="details-item">
+            <span>Requester</span>
+            <span className={`requester-type ${request.requester_type === 'Outsider' ? 'outsider' : 'student'}`}>
+              {request.requester_type || "Student"}
+            </span>
+          </div>
+
+
+          <div className="details-item">
+            <span>Payment</span>
+            <span className={`payment-status ${request.payment_status ? 'paid' : 'unpaid'}`}>
+              {request.payment_status ? "Paid" : "Unpaid"}
+            </span>
           </div>
 
           <div className="details-item">
@@ -88,11 +130,6 @@ const RequestViewPage_Pending = ({ request, onRefresh }) => {
           <div className="details-item">
             <span>Payment Option</span>
             <span>{request.payment_option || "Unconfirmed"}</span>
-          </div>
-
-          <div className="details-item">
-            <span>Proof of Payment</span>
-            <span>{request.payment_status ? "Confirmed" : "Unconfirmed"}</span>
           </div>
 
           <div className="details-item">

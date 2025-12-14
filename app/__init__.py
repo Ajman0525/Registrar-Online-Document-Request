@@ -22,7 +22,7 @@ db_pool = None
 def create_app(test_config=None):
     
     #initialize the database (create tables if not exist)
-    #initialize_and_populate()
+    initialize_and_populate()
     load_dotenv()
 
     #in production

@@ -176,9 +176,9 @@ def ready_request_documents_table():
    """
    execute_query(query)
 
-# Add status column if it doesn't exist
+   # Add is_done column if it doesn't exist
    alter_query = """
-   ALTER TABLE request_documents ADD COLUMN IF NOT EXISTS status VARCHAR(15) DEFAULT 'IN-PROGRESS' 
+   ALTER TABLE request_documents ADD COLUMN IF NOT EXISTS is_done BOOLEAN DEFAULT FALSE
    """
    execute_query(alter_query)
 

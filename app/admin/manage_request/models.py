@@ -67,18 +67,20 @@ class ManageRequestModel:
             """, params)
             total_count = cur.fetchone()[0]
 
+
+
             # --------------------------
             # 4. Bulk fetch documents
             # --------------------------
             cur.execute(f"""
-                SELECT rd.request_id, d.doc_name, rd.quantity, d.cost
+                SELECT rd.request_id, rd.doc_id, d.doc_name, rd.quantity, d.cost, rd.is_done
                 FROM request_documents rd
                 JOIN documents d ON rd.doc_id = d.doc_id
                 WHERE rd.request_id IN ({placeholders})
             """, request_ids)
             docs_map = defaultdict(list)
-            for rid, name, qty, cost in cur.fetchall():
-                docs_map[rid].append({"name": name, "quantity": qty, "cost": cost})
+            for rid, doc_id, name, qty, cost, is_done in cur.fetchall():
+                docs_map[rid].append({"doc_id": doc_id, "name": name, "quantity": qty, "cost": cost, "is_done": is_done})
 
             # --------------------------
             # 5. Bulk fetch requirements
@@ -511,6 +513,9 @@ class ManageRequestModel:
         finally:
             cur.close()
 
+
+
+
     @staticmethod
     def get_request_by_id(request_id):
         """Fetch a single request by ID with all details."""
@@ -518,7 +523,7 @@ class ManageRequestModel:
         cur = conn.cursor()
         try:
             cur.execute("""
-                SELECT request_id, student_id, full_name, contact_number, email, preferred_contact, status, requested_at, remarks, total_cost, payment_status
+                SELECT request_id, student_id, full_name, contact_number, email, preferred_contact, status, requested_at, remarks, total_cost, payment_status, college_code
                 FROM requests
                 WHERE request_id = %s
             """, (request_id,))
@@ -538,18 +543,40 @@ class ManageRequestModel:
                 "requested_at": req[7].strftime("%Y-%m-%d %H:%M:%S") if req[7] else None,
                 "remarks": req[8],
                 "total_cost": req[9],
-                "payment_status": req[10]
+                "payment_status": req[10],
+                "college_code": req[11]
             }
 
-            # Fetch requested documents with cost
+            # Check if request exists in auth_letters table to determine requester type
             cur.execute("""
-                SELECT d.doc_name, rd.quantity, d.cost
+                SELECT id, file_url, requester_name
+                FROM auth_letters
+                WHERE id = %s
+            """, (request_id,))
+            auth_letter = cur.fetchone()
+            
+            if auth_letter:
+                request_data["requester_type"] = "Outsider"
+                request_data["authorization_letter"] = {
+                    "id": auth_letter[0],
+                    "file_url": auth_letter[1],
+                    "requester_name": auth_letter[2]
+                }
+            else:
+                request_data["requester_type"] = "Student"
+                request_data["authorization_letter"] = None
+
+
+
+            # Fetch requested documents with cost and payment requirements
+            cur.execute("""
+                SELECT rd.doc_id, d.doc_name, rd.quantity, d.cost, d.requires_payment_first, rd.is_done
                 FROM request_documents rd
                 JOIN documents d ON rd.doc_id = d.doc_id
                 WHERE rd.request_id = %s
             """, (request_id,))
             docs = cur.fetchall()
-            request_data["documents"] = [{"name": doc[0], "quantity": doc[1], "cost": doc[2]} for doc in docs]
+            request_data["documents"] = [{"doc_id": doc[0], "name": doc[1], "quantity": doc[2], "cost": doc[3], "requires_payment_first": doc[4], "is_done": doc[5]} for doc in docs]
 
             # Fetch requirements
             cur.execute("""
@@ -580,6 +607,7 @@ class ManageRequestModel:
         finally:
             cur.close()
 
+
     @staticmethod
     def unassign_request_from_admin(request_id, admin_id):
         """Unassign a request from an admin."""
@@ -596,5 +624,51 @@ class ManageRequestModel:
             conn.rollback()
             print(f"Error unassigning request {request_id} from admin {admin_id}: {e}")
             return False
+        finally:
+            cur.close()
+
+    @staticmethod
+    def toggle_document_completion(request_id, doc_id, admin_id):
+        """Toggle the is_done status of a document in a request."""
+        conn = g.db_conn
+        cur = conn.cursor()
+        try:
+            # First, get the current status
+            cur.execute("""
+                SELECT is_done
+                FROM request_documents
+                WHERE request_id = %s AND doc_id = %s
+            """, (request_id, doc_id))
+            result = cur.fetchone()
+            
+            if not result:
+                return False, "Document not found"
+            
+            current_status = result[0]
+            new_status = not current_status
+            
+            # Update the status
+            cur.execute("""
+                UPDATE request_documents
+                SET is_done = %s
+                WHERE request_id = %s AND doc_id = %s
+            """, (new_status, request_id, doc_id))
+            
+            if cur.rowcount > 0:
+                # Log the action
+                cur.execute("""
+                    INSERT INTO logs (admin_id, action, details, request_id)
+                    VALUES (%s, %s, %s, %s)
+                """, (admin_id, 'Document Status Toggled', 
+                      f'Toggled document {doc_id} completion status to {"completed" if new_status else "not completed"} for request {request_id}', 
+                      request_id))
+                conn.commit()
+                return True, new_status
+            else:
+                return False, "Failed to update document status"
+        except Exception as e:
+            conn.rollback()
+            print(f"Error toggling document completion for request {request_id}, doc {doc_id}: {e}")
+            return False, str(e)
         finally:
             cur.close()
