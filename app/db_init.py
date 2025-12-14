@@ -319,7 +319,7 @@ def initialize_db():
    ready_logs_table()
    ready_admins_table()
    ready_open_request_restriction_table()
-   insert_sample_data()
+   #insert_sample_data()
    print("Database and tables initialized successfully.")
 
 
