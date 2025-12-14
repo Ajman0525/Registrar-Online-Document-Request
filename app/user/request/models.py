@@ -245,6 +245,7 @@ class Request:
                   preferred_contact, payment_status, total_cost, remarks, order_type))
             
             conn.commit()
+
             print(f"Request {request_id} submitted successfully")
             return True
 
@@ -253,6 +254,69 @@ class Request:
             conn.rollback()
             return False
 
+        finally:
+            cur.close()
+            db_pool.putconn(conn)
+
+
+    @staticmethod
+    def get_active_requests_by_student(student_id):
+        """
+        Fetch all active requests for a student (status != 'RELEASED').
+        Returns a list of requests with their documents and current status.
+        
+        Args:
+            student_id (str): The student ID to query
+            
+        Returns:
+            list: List of dictionaries containing request details
+        """
+        conn = db_pool.getconn()
+        cur = conn.cursor()
+
+        try:
+            # Fetch all active requests for the student
+            cur.execute("""
+                SELECT 
+                    r.request_id,
+                    r.status,
+                    r.total_cost,
+                    r.remarks,
+                    r.requested_at,
+                    STRING_AGG(
+                        CONCAT(dl.doc_name, ' (', rd.quantity, ')'), 
+                        ', ' ORDER BY dl.doc_name
+                    ) as documents,
+                    COUNT(rd.doc_id) as document_count
+                FROM requests r
+                LEFT JOIN request_documents rd ON r.request_id = rd.request_id
+                LEFT JOIN documents dl ON rd.doc_id = dl.doc_id
+                WHERE r.student_id = %s AND r.status != 'RELEASED'
+                GROUP BY r.request_id, r.status, r.total_cost, r.remarks, r.requested_at
+                ORDER BY r.requested_at DESC
+            """, (student_id,))
+            
+            rows = cur.fetchall()
+            
+            active_requests = []
+            for row in rows:
+                request_data = {
+                    "request_id": row[0],
+                    "status": row[1],
+                    "total_cost": float(row[2]) if row[2] else 0.0,
+                    "remarks": row[3] or "",
+                    "requested_at": row[4].strftime("%Y-%m-%d %H:%M:%S") if row[4] else "",
+                    "documents": row[5] or "No documents",
+                    "document_count": row[6]
+                }
+                active_requests.append(request_data)
+            
+            return active_requests
+            
+        except Exception as e:
+            print(f"Error fetching active requests for student {student_id}: {e}")
+            return []
+            
         finally:
             cur.close()
             db_pool.putconn(conn)

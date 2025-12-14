@@ -196,6 +196,43 @@ def complete_request():
             "error": str(e)
         }), 500
 
+
+
+
+@request_bp.route("/api/check-active-requests", methods=["GET"])
+@jwt_required_with_role(role)
+def check_active_requests():
+    """
+    Check for active requests for the logged-in student.
+    Returns all requests where status != 'RELEASED'.
+    """
+    try:
+        # Get student ID from session
+        student_id = session.get("student_id")
+        
+        if not student_id:
+
+            return jsonify({
+                "status": "error",
+                "message": "Student ID not found in session"
+            }), 400
+
+        # Fetch active requests for the student
+        active_requests = Request.get_active_requests_by_student(student_id)
+
+        return jsonify({
+            "status": "success",
+            "active_requests": active_requests,
+            "count": len(active_requests)
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": "An unexpected error occurred while fetching active requests."
+        }), 500
+
+
 @request_bp.route("/api/clear-session", methods=["POST"])
 @jwt_required_with_role(role)
 def logout_user():

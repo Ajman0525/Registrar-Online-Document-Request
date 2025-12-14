@@ -1,15 +1,19 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Documents from "./Documents";
 import RequestList from "./RequestList";
 import UploadRequirements from "./UploadRequirements";
 import PreferredContact from "./PreferredContact";
+import PendingRequests from "./PendingRequests";
 import Summary from "./Summary.jsx";
 import SubmitRequest from "./SubmitRequest.jsx";
 import { getCSRFToken } from "../../../utils/csrf";
 
 function RequestFlow() {
-  const [step, setStep] = useState("documents");
+  const [step, setStep] = useState("checkActiveRequests");
   const [trackingId, setTrackingId] = useState("");
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState(null);
+  const [hasActiveRequests, setHasActiveRequests] = useState(false);
 
   // Progress indicator steps
   const steps = [
@@ -86,7 +90,6 @@ function RequestFlow() {
 
       setDocumentRequirementMap(mapping);
     } catch (err) {
-      console.error("Error fetching document requirements mapping:", err);
       setDocumentRequirementMap({});
     }
   }, []);
@@ -180,8 +183,6 @@ function RequestFlow() {
     return Array.isArray(requestData.documents) ? requestData.documents : [];
   }, [requestData.documents]);
 
-
-
   // Load student data on component mount
   useEffect(() => {
     const fetchStudentData = async () => {
@@ -206,7 +207,6 @@ function RequestFlow() {
           }));
         }
       } catch (error) {
-        console.error("Error fetching student data:", error);
       }
     };
 
@@ -226,11 +226,54 @@ function RequestFlow() {
       }));
     }
   }, [requestData.documents.length]); // Only depend on documents length, not the whole requirements object
+  
+  // Check for active requests on component mount
+  useEffect(() => {
+    const checkActiveRequests = async () => {
+      try {
+        const response = await fetch("/api/check-active-requests", {
+          method: "GET",
+          headers: {
+            "X-CSRF-TOKEN": getCSRFToken(),
+          },
+          credentials: "include",
+        });
+
+        const data = await response.json();
+      
+        if (data.status === "success") {
+          const hasActive = data.active_requests && data.active_requests.length > 0;
+          setHasActiveRequests(hasActive);
+          
+         
+          // If active requests exist, go to pending requests page
+          // If no active requests, go directly to documents
+          if (hasActive) {
+            setStep("pendingRequests");
+          } else {
+            setStep("documents");
+          }
+        } else {
+          // If error checking active requests, proceed to documents
+
+          setStep("documents");
+        }
+      } catch (error) {
+        // If error, proceed to documents
+        setStep("documents");
+      }
+    };
+
+    checkActiveRequests();
+  }, []);
 
 
   // Step navigation handlers
   const goNextStep = useCallback(() => {
     switch (step) {
+      case "pendingRequests":
+        setStep("documents");
+        break;
       case "documents":
         setStep("requestList");
         break;
@@ -251,8 +294,43 @@ function RequestFlow() {
     }
   }, [step]);
 
+  // Handler for when user wants to proceed to new request from pending requests
+  const handleProceedToNewRequest = useCallback(() => {
+    setStep("documents");
+  }, []);
+
+  // Handler for when user wants to go back to login
+  const handleBackToLogin = useCallback(async () => {
+    try {
+      await fetch("/api/clear-session", {
+        method: "POST",
+        headers: {
+          "X-CSRF-TOKEN": getCSRFToken(),
+        },
+        credentials: "include",
+      });
+      // Redirect to login page or reload the page
+      window.location.reload();
+    } catch (error) {
+      // Force reload even if logout fails
+      window.location.reload();
+    }
+  }, []);
+
+
+
+
+
+
+
+
+
   const goBackStep = useCallback(() => {
     switch (step) {
+      case "pendingRequests":
+        // From pending requests, go back to check active requests (which will redirect appropriately)
+        setStep("checkActiveRequests");
+        break;
       case "requestList":
         setStep("documents");
         break;
@@ -313,7 +391,6 @@ function RequestFlow() {
       
       goNextStep();
     } catch (error) {
-      console.error("Error handling request list proceed:", error);
       alert("Error processing your request. Please try again.");
     }
   }, [updateRequestData, goNextStep]);
@@ -439,34 +516,46 @@ function RequestFlow() {
         alert(`Error: ${data.notification}`);
       }
     } catch (error) {
-      console.error("Error completing request:", error);
       alert("An error occurred while completing the request.");
     }
   };
 
+
   return (
     <>
-      {/* Progress Indicator - only for non-documents steps */}
-      {step !== "documents" && (
-        <div className="request-progress-container">
-          <div className="request-progress-bar">
-            {steps.map((stepInfo, index) => (
-              <div
-                key={stepInfo.key}
-                className={`progress-step ${index <= currentStepIndex ? 'active' : ''} ${index < currentStepIndex ? 'completed' : ''}`}
-              >
-                <div className="step-circle">
-                  {index < currentStepIndex ? '✓' : index + 1}
-                </div>
-                <div className="step-label">{stepInfo.label}</div>
-              </div>
-            ))}
-          </div>
+      {step === "checkActiveRequests" && (
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <p>Checking for active requests...</p>
         </div>
+      )}
+      
+      {step === "pendingRequests" && (
+        <PendingRequests
+          onProceedToNewRequest={handleProceedToNewRequest}
+          onBackToLogin={handleBackToLogin}
+        />
       )}
 
 
-
+      {/* Progress Indicator - only for non-documents, non-checkActiveRequests, and non-pendingRequests steps */}
+            {step !== "documents" && step !== "checkActiveRequests" && step !== "pendingRequests" && (
+              <div className="request-progress-container">
+                <div className="request-progress-bar">
+                  {steps.map((stepInfo, index) => (
+                    <div
+                      key={stepInfo.key}
+                      className={`progress-step ${index <= currentStepIndex ? 'active' : ''} ${index < currentStepIndex ? 'completed' : ''}`}
+                    >
+                      <div className="step-circle">
+                        {index < currentStepIndex ? '✓' : index + 1}
+                      </div>
+                      <div className="step-label">{stepInfo.label}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
       {step === "documents" && (
         <Documents
           selectedDocs={getDocuments()}
