@@ -104,13 +104,12 @@ class Tracking:
             db_pool.putconn(conn)
 
     @staticmethod
-    def update_payment_status(tracking_number, student_id):
+    def update_payment_status(tracking_number):
         """
         Updates the payment_status of a request to TRUE.
 
         Args:
             tracking_number (str): The request_id of the record.
-            student_id (str): The student_id to validate ownership.
 
         Returns:
             bool: True if the update was successful, False otherwise.
@@ -121,8 +120,8 @@ class Tracking:
             cur.execute("""
                 UPDATE requests
                 SET payment_status = TRUE
-                WHERE request_id = %s AND student_id = %s
-            """, (tracking_number, student_id))
+                WHERE request_id = %s
+            """, (tracking_number,))
             conn.commit()
             return cur.rowcount > 0  # Returns True if a row was updated
         except Exception as e:
