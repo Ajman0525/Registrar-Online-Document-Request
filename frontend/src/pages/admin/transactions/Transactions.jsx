@@ -36,7 +36,7 @@ function Transactions() {
   const navigate = useNavigate();
   const [transactions, setTransactions] = useState(() => getStoredState('tx_transactions', []));
   const [page, setPage] = useState(() => getStoredState('tx_page', 1));
-  const [limit] = useState(10);
+  const [limit, setLimit] = useState(() => getStoredState('tx_limit', 10));
   const [total, setTotal] = useState(() => getStoredState('tx_total', 0));
   const [totalPages, setTotalPages] = useState(() => getStoredState('tx_totalPages', 1));
   const [summary, setSummary] = useState(() => getStoredState('tx_summary', { total_amount_completed: 0, total_transactions: 0 }));
@@ -46,6 +46,8 @@ function Transactions() {
   const [endDate, setEndDate] = useState(() => getStoredState('tx_endDate', ''));
   const [range, setRange] = useState(() => getStoredState('tx_range', 'all'));
   const [showDateFilter, setShowDateFilter] = useState(false);
+  const [showLimitMenu, setShowLimitMenu] = useState(false);
+  const [showSortMenu, setShowSortMenu] = useState(false);
   const totalAdminFee = transactions.reduce((total, t) => total + (t.admin_fee || 0), 0);
 
   /* Fetch transactions and summary */
@@ -58,6 +60,7 @@ function Transactions() {
   useEffect(() => {
     sessionStorage.setItem('tx_transactions', JSON.stringify(transactions));
     sessionStorage.setItem('tx_page', JSON.stringify(page));
+    sessionStorage.setItem('tx_limit', JSON.stringify(limit));
     sessionStorage.setItem('tx_total', JSON.stringify(total));
     sessionStorage.setItem('tx_totalPages', JSON.stringify(totalPages));
     sessionStorage.setItem('tx_summary', JSON.stringify(summary));
@@ -66,7 +69,7 @@ function Transactions() {
     sessionStorage.setItem('tx_startDate', JSON.stringify(startDate));
     sessionStorage.setItem('tx_endDate', JSON.stringify(endDate));
     sessionStorage.setItem('tx_range', JSON.stringify(range));
-  }, [transactions, page, total, totalPages, summary, search, sortOrder, startDate, endDate, range]);
+  }, [transactions, page, limit, total, totalPages, summary, search, sortOrder, startDate, endDate, range]);
 
   /* Fetch transactions */
   /* Returns paginated list of transactions based on filters */
@@ -248,7 +251,15 @@ function Transactions() {
         </div>
 
         <div className="header-actions">
-          <div className="date-filter-container">
+          <div 
+            className="date-filter-container"
+            tabIndex={0}
+            onBlur={(e) => {
+              if (!e.currentTarget.contains(e.relatedTarget)) {
+                setShowDateFilter(false);
+              }
+            }}
+          >
             <button className="date-filter-btn" onClick={() => setShowDateFilter(!showDateFilter)}>
               <CalendarIcon className="calendar-icon" width="16" height="16" style={{ marginRight: '8px' }} />
               <span>{range === 'all' && !startDate ? 'All Time' : getTimeframeString() || 'Select Date Range'}</span>
@@ -354,12 +365,61 @@ function Transactions() {
               />
             </div>
             
-            <div className="sort-select-wrapper">
+            <div 
+              className="sort-select-wrapper" 
+              onClick={() => setShowSortMenu(!showSortMenu)}
+              tabIndex={0}
+              onBlur={(e) => {
+                if (!e.currentTarget.contains(e.relatedTarget)) {
+                  setShowSortMenu(false);
+                }
+              }}
+            >
               <SortIcon className="sort-icon" width="16" height="16" />
-              <select className="sort-select-input" value={sortOrder} onChange={(e) => setSortOrder(e.target.value)}>
-                <option value="desc">Newest First</option>
-                <option value="asc">Oldest First</option>
-              </select>
+              <span className="sort-select-text">
+                {sortOrder === 'desc' ? 'Newest First' : 'Oldest First'}
+              </span>
+              
+              {showSortMenu && (
+                <div className="sort-dropdown-menu">
+                  <div className={`sort-option ${sortOrder === 'desc' ? 'selected' : ''}`} onClick={() => setSortOrder('desc')}>Newest First</div>
+                  <div className={`sort-option ${sortOrder === 'asc' ? 'selected' : ''}`} onClick={() => setSortOrder('asc')}>Oldest First</div>
+                </div>
+              )}
+            </div>
+
+            <div className="limit-controls-group">
+              <span>Show</span>
+              <div 
+                className="limit-select-wrapper" 
+                onClick={() => setShowLimitMenu(!showLimitMenu)}
+                tabIndex={0}
+                onBlur={(e) => {
+                  if (!e.currentTarget.contains(e.relatedTarget)) {
+                    setShowLimitMenu(false);
+                  }
+                }}
+              >
+                <span className="limit-select-text" style={{ fontWeight: 'normal' }}>{limit}</span>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`limit-select-arrow ${showLimitMenu ? 'rotate' : ''}`}>
+                  <path d="M6 9l6 6 6-6" />
+                </svg>
+                
+                {showLimitMenu && (
+                  <div className="limit-dropdown-menu">
+                    {[10, 20, 50, 100].map((opt) => (
+                      <div 
+                        key={opt}
+                        className={`limit-option ${limit === opt ? 'selected' : ''}`} 
+                        onClick={() => { setLimit(opt); setPage(1); }}
+                      >
+                        {opt}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <span>entries</span>
             </div>
           </div>
         </div>
