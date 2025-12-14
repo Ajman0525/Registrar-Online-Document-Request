@@ -76,12 +76,27 @@ def update_request_status(request_id):
 
         # Get admin ID from JWT token
         admin_id = get_jwt_identity()
+        request_data = ManageRequestModel.get_request_by_id(request_id)
+        if not request_data:
+            return jsonify({"error": "Request not found"}), 404
+        
+        phone = request_data.get("contact_number")
+        full_name = request_data.get("full_name")
 
         success = ManageRequestModel.update_request_status(request_id, new_status, admin_id, payment_status)
+        
         if success:
+            if phone:
+                send_whatsapp_status_update(phone, full_name, request_id, new_status)
+            
+            else:
+                print(f"[Status Update] No phone number available to send WhatsApp status update for request {request_id}")
+
             return jsonify({"message": "Status updated successfully"}), 200
+        
         else:
             return jsonify({"error": "Request not found"}), 404
+            
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
