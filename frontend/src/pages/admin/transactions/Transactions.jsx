@@ -49,6 +49,12 @@ function Transactions() {
   const [showLimitMenu, setShowLimitMenu] = useState(false);
   const [showSortMenu, setShowSortMenu] = useState(false);
   const totalAdminFee = transactions.reduce((total, t) => total + (t.admin_fee || 0), 0);
+  const toISODate = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
 
   /* Fetch transactions and summary */
   useEffect(() => {
@@ -134,32 +140,56 @@ function Transactions() {
 
   /* Apply date range filters */
   /* Sets startDate and endDate based on predefined ranges */
+  /* 7: last 7 days, 30: last 30 days, month: current month, year: current year, all: no filter */
   function applyDateRange(selectedRange) {
     setRange(selectedRange);
     const now = new Date();
+
     let start = '';
     let end = '';
+
     switch (selectedRange) {
-      case '7':
-        start = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-        end = now.toISOString().slice(0, 10);
+      case '7': {
+        const s = new Date(now);
+        s.setDate(now.getDate() - 6);
+        start = toISODate(s);
+        end = toISODate(now);
         break;
-      case '30':
-        start = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-        end = now.toISOString().slice(0, 10);
+      }
+
+      case '30': {
+        const s = new Date(now);
+        s.setDate(now.getDate() - 29);
+        start = toISODate(s);
+        end = toISODate(now);
         break;
-      case 'month':
-        start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
-        end = now.toISOString().slice(0, 10);
+      }
+
+      case 'month': {
+        // First day of current month
+        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+        // Last day of current month
+        const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+        start = toISODate(firstDay);
+        end = toISODate(lastDay);
         break;
-      case 'year':
-        start = new Date(now.getFullYear(), 0, 1).toISOString().slice(0, 10);
-        end = now.toISOString().slice(0, 10);
+      }
+
+      case 'year': {
+        const firstDay = new Date(now.getFullYear(), 0, 1);
+        const lastDay = new Date(now.getFullYear(), 11, 31);
+
+        start = toISODate(firstDay);
+        end = toISODate(lastDay);
         break;
+      }
+
       default:
         start = '';
         end = '';
     }
+
     setStartDate(start);
     setEndDate(end);
   }
@@ -428,11 +458,11 @@ function Transactions() {
           <table className="transactions-table">
             <thead>
               <tr>
-                <th>Request ID</th>
-                <th>User</th>
-                <th>Student ID</th>
-                <th>Amount</th>
-                <th>Payment Date</th>
+                <th className="th-request-id">Request ID</th>
+                <th className="th-user">User</th>
+                <th className="th-student-id">Student ID</th>
+                <th className="th-amount">Amount</th>
+                <th className="th-date">Payment Date</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200 py-4">
@@ -447,7 +477,7 @@ function Transactions() {
                     <Link to={`/admin/requests?request_id=${tx.request_id}`}>{tx.request_id}</Link>
                   </td>
                   <td className="td-user-name">
-                    <div className="font-medium">{tx.full_name}</div>
+                    {tx.full_name}
                   </td>
                   <td className="td-student-id">{tx.student_id}</td>
                   <td className="td-amount">

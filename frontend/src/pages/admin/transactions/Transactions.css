@@ -464,7 +464,9 @@
 }
 
 .transactions-table {
-  min-width: 100%;
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
 }
 
 .transactions-table thead {
@@ -491,6 +493,26 @@
 
 .transactions-table tr:hover {
   background-color: #f9fafb;
+}
+
+.th-request-id {
+  width: 10%;
+}
+
+.th-user {
+  width: 35%;
+}
+
+.th-student-id {
+  width: 12%;
+}
+
+.th-amount {
+  width: 10%;
+}
+
+.th-date {
+  width: 33%;
 }
 
 /* --- Search Bar in Toolbar --- */
@@ -535,6 +557,8 @@
   font-weight: 500;
   color: #2563eb;
   text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .td-request-id a {
@@ -547,13 +571,18 @@
   white-space: nowrap;
   font-size: 0.875rem;
   color: #111827;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .td-student-id {
   padding: 0.5rem 1rem;
   white-space: nowrap;
   font-size: 0.875rem;
+  font-weight: 500;
   color: #111827;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .td-amount {
@@ -562,6 +591,8 @@
   font-size: 0.875rem;
   font-weight: 600;
   color: var(--color-black);
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .td-date {
@@ -569,6 +600,8 @@
   white-space: nowrap;
   font-size: 0.875rem;
   color: var(--color-black);
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* --- Pagination --- */
@@ -781,7 +814,7 @@
     width: 15%; /* Request ID */
   }
 
-  .td-user-info,
+  .td-user-name,
   .transactions-table th:nth-child(2) {
     width: 30%; /* User Name */
   }
