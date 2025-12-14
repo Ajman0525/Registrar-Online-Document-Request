@@ -87,6 +87,22 @@
     max-width: 450px;
 }
 
+.remarks-title{
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    color: var(--color-text-black);
+    font-size: 17px;
+}
+
+.remarks-text{
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    color: var(--color-secondary);
+    align-items: center;
+}
+
 .input-section{
     display: flex;
     flex-direction: column;
