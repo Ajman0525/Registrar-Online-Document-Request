@@ -5,3 +5,4 @@ import SearchIcon from "../icons/SearchIcon";
 import LogoutIcon from "../icons/LogoutIcon";
 import ProfileIcon from "../icons/ProfileIcon";
 import "../../pages/admin/Dashboard.css";
+
