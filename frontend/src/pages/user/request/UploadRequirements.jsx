@@ -1,11 +1,13 @@
 
-import React, { useState, useEffect, useMemo, useRef } from "react";
+
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import "./Request.css";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
 import ButtonLink from "../../../components/common/ButtonLink";
 import ContentBox from "../../../components/user/ContentBox";
 import ConfirmModal from "../../../components/user/ConfirmModal";
 import { getCSRFToken } from "../../../utils/csrf";
+
 
 
 
@@ -24,10 +26,29 @@ function UploadRequirements({
   const [pendingFileToDelete, setPendingFileToDelete] = useState(null);
   const inputRefs = useRef({});
   const [requirementsList, setRequirementsList] = useState([]);
+  
+  // Cache requirements to prevent unnecessary API calls
+  const requirementsCache = useRef(new Map());
 
-  // Fetch requirements from API
+  // Memoize document IDs to prevent unnecessary re-fetches
+  const documentIds = useMemo(() => {
+    return selectedDocs.map((doc) => doc.doc_id).sort();
+  }, [selectedDocs]);
+
+  const cacheKey = useMemo(() => {
+    return documentIds.join(',');
+  }, [documentIds]);
+
+  // Fetch requirements from API with caching
   useEffect(() => {
     const fetchRequirements = async () => {
+      // Check cache first
+      if (requirementsCache.current.has(cacheKey)) {
+        setRequirementsList(requirementsCache.current.get(cacheKey));
+        setLoading(false);
+        return;
+      }
+
       if (!selectedDocs || selectedDocs.length === 0) {
         setRequirementsList([]);
         setLoading(false);
@@ -38,8 +59,6 @@ function UploadRequirements({
         setLoading(true);
         setError("");
 
-        const docIds = selectedDocs.map((doc) => doc.doc_id);
-
         const response = await fetch("/api/list-requirements", {
           method: "POST",
           headers: {
@@ -47,7 +66,7 @@ function UploadRequirements({
             "X-CSRF-TOKEN": getCSRFToken(),
           },
           credentials: "include",
-          body: JSON.stringify({ document_ids: docIds }),
+          body: JSON.stringify({ document_ids: documentIds }),
         });
 
         if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
@@ -55,7 +74,11 @@ function UploadRequirements({
         const data = await response.json();
         if (!data.success) throw new Error(data.notification || "Fetch failed");
 
-        setRequirementsList(data.requirements || []);
+        const requirements = data.requirements || [];
+        setRequirementsList(requirements);
+        
+        // Cache the results
+        requirementsCache.current.set(cacheKey, requirements);
       } catch (err) {
         console.error("Error fetching requirements:", err);
         setError(err.message || "Failed to load requirements");
@@ -66,7 +89,7 @@ function UploadRequirements({
     };
 
     fetchRequirements();
-  }, [selectedDocs]);
+  }, [cacheKey, documentIds]);
 
 
 
@@ -202,12 +225,6 @@ function UploadRequirements({
                     <div className="file-upload-info">
                       <div>
                         <span className="requirement-text">{requirement_name}</span>
-                        <br />
-                        {doc_names?.length ? (
-                          <small className="doc-reference">
-                            Required for: {doc_names.join(", ")}
-                          </small>
-                        ) : null}
                       </div>
 
                       <input
