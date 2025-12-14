@@ -325,7 +325,7 @@
 }
 
 .td-request-id {
-  padding: 0.5rem 1rem;
+  padding: 0.75rem 1rem;
   white-space: nowrap;
   font-size: 0.875rem;
   font-weight: 500;
@@ -338,7 +338,14 @@
   color: inherit;
 }
 
-.td-user-info {
+.td-user-name {
+  padding: 0.5rem 1rem;
+  white-space: nowrap;
+  font-size: 0.875rem;
+  color: #111827;
+}
+
+.td-student-id {
   padding: 0.5rem 1rem;
   white-space: nowrap;
   font-size: 0.875rem;
@@ -358,22 +365,6 @@
   white-space: nowrap;
   font-size: 0.875rem;
   color: var(--color-black);
-}
-
-.td-actions {
-  padding: 0.5rem 1rem;
-  white-space: nowrap;
-  font-size: 0.875rem;
-  color: var(--color-text-subtext);
-}
-
-.btn-invoice {
-  color: #4f46e5;
-  font-weight: 500;
-}
-
-.btn-invoice:hover {
-  color: #312e81;
 }
 
 /* --- Pagination --- */
@@ -453,12 +444,6 @@
   .dashboard-header-wrapper, .summary-cards-content, .transactions-pagination, 
   .search-input-wrapper, button, select, .admin-sidebar, .transactions-list-header,
   .app-title, .timestamp, .transactions-controls { 
-    display: none !important; 
-  }
-
-  /* Remove the Actions column */
-  .td-actions, 
-  .th-actions { 
     display: none !important; 
   }
 

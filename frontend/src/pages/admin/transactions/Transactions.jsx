@@ -184,7 +184,7 @@ function Transactions() {
   /* Downloads the current transactions list as a csv file */
   function downloadCSV() {
     const csvRows = [];
-    const headers = ['Request ID', 'User', 'ID Number', 'Amount', 'Payment Date'];
+    const headers = ['Request ID', 'User', 'Student ID', 'Amount', 'Payment Date'];
     /* Add the headers row to the csv row array */
     csvRows.push(headers.join(','));
 
@@ -215,23 +215,6 @@ function Transactions() {
   /* Downloads the current transactions list as a pdf file */
   function downloadPDF() {
     window.print();
-  }
-
-  /* Downloads invoice for a specific transaction */
-  function downloadInvoice(tx) {
-    const invoiceWindow = window.open('', '_blank');
-    if (invoiceWindow) {
-      const formattedDate = formatPaymentDate(tx.payment_date) || '-';
-      invoiceWindow.document.title = `Invoice ${tx.transaction_id}`;
-      invoiceWindow.document.body.innerHTML = `
-        <h1>Invoice: ${tx.transaction_id}</h1>
-        <p>Request ID: ${tx.request_id}</p>
-        <p>User: ${tx.full_name} (${tx.student_id})</p>
-        <p>Amount: ₱${tx.amount.toFixed(2)}</p>
-        <p>Payment Date: ${formattedDate}</p>
-      `;
-      invoiceWindow.print();
-    }
   }
 
   return (
@@ -339,9 +322,9 @@ function Transactions() {
               <tr>
                 <th>Request ID</th>
                 <th>User</th>
+                <th>Student ID</th>
                 <th>Amount</th>
                 <th>Payment Date</th>
-                <th className="th-actions">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200 py-4">
@@ -355,24 +338,15 @@ function Transactions() {
                   <td className="td-request-id">
                     <Link to={`/admin/requests?request_id=${tx.request_id}`}>{tx.request_id}</Link>
                   </td>
-                  <td className="td-user-info">
+                  <td className="td-user-name">
                     <div className="font-medium">{tx.full_name}</div>
-                    <div className="text-gray-500 text-xs">{tx.student_id}</div>
                   </td>
+                  <td className="td-student-id">{tx.student_id}</td>
                   <td className="td-amount">
                     ₱{parseFloat(tx.amount).toFixed(2)}
                   </td>
                   <td className="td-date">
                     {formatPaymentDate(tx.payment_date) || '-'}
-                  </td>
-                  <td className="td-actions">
-                    <button 
-                      className={`btn-invoice ${!tx.paid ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      onClick={() => downloadInvoice(tx)} 
-                      disabled={!tx.paid}
-                    >
-                      Invoice
-                    </button>
                   </td>
                 </tr>
               ))}
