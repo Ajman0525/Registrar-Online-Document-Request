@@ -14,8 +14,9 @@ class AuthenticationUser:
         try:
             conn = get_connection()
             cur = conn.cursor()
+
             cur.execute(
-                "SELECT full_name, contact_number, liability_status FROM students WHERE student_id = %s",
+                "SELECT full_name, contact_number, liability_status, college_code FROM students WHERE student_id = %s",
                 (student_id,)
             )
             row = cur.fetchone()
@@ -27,15 +28,17 @@ class AuthenticationUser:
                     "exists": False,
                     "full_name": None,
                     "has_liability": False,
-                    "phone_number": None
+                    "phone_number": None,
+                    "college_code": None
                 }
 
-            full_name, contact_number, liability_status = row
+            full_name, contact_number, liability_status, college_code = row
             return {
                 "exists": True,
                 "full_name": full_name,
                 "has_liability": liability_status,
-                "phone_number": contact_number
+                "phone_number": contact_number,
+                "college_code": college_code
             }
 
         except Exception as e:
@@ -63,8 +66,9 @@ class AuthenticationUser:
             cur = conn.cursor()
 
             # Case-insensitive search using LOWER() function
+
             cur.execute(
-                "SELECT student_id, contact_number, liability_status, firstname, lastname FROM students WHERE LOWER(firstname) = LOWER(%s) AND LOWER(lastname) = LOWER(%s)",
+                "SELECT student_id, contact_number, liability_status, firstname, lastname, college_code FROM students WHERE LOWER(firstname) = LOWER(%s) AND LOWER(lastname) = LOWER(%s)",
                 (firstname, lastname)
             )
             row = cur.fetchone()
@@ -78,17 +82,19 @@ class AuthenticationUser:
                     "has_liability": False,
                     "phone_number": None,
                     "student_id": None,
-                    "full_name": None
+                    "full_name": None,
+                    "college_code": None
                 }
 
-            student_id, contact_number, liability_status, db_firstname, db_lastname = row
+            student_id, contact_number, liability_status, db_firstname, db_lastname, college_code = row
             full_name = f"{db_firstname} {db_lastname}"
             return {
                 "exists": True,
                 "has_liability": liability_status,
                 "phone_number": contact_number,
                 "student_id": student_id,
-                "full_name": full_name
+                "full_name": full_name,
+                "college_code": college_code
             }
 
         except Exception as e:

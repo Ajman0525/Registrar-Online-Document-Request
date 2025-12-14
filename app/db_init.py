@@ -72,6 +72,7 @@ def execute_query(query, params=None):
 # ==========================
 
 
+
 #dummy student table
 def ready_students_table():
    query = """
@@ -82,7 +83,8 @@ def ready_students_table():
        email VARCHAR(100),
        liability_status BOOLEAN DEFAULT FALSE,
        firstname VARCHAR(50) NOT NULL,
-       lastname VARCHAR(50) NOT NULL
+       lastname VARCHAR(50) NOT NULL,
+       college_code VARCHAR(20) NOT NULL
    )
    """
    execute_query(query)
@@ -136,6 +138,7 @@ def ready_document_requirements_table():
    execute_query(query)
 
 
+
 def ready_requests_table():
    query = """
    CREATE TABLE IF NOT EXISTS requests (
@@ -150,7 +153,8 @@ def ready_requests_table():
        total_cost NUMERIC(10,2) DEFAULT 0.00,
        requested_at TIMESTAMP DEFAULT NOW(),
        remarks VARCHAR(255),
-       order_type varchar(20)
+       order_type varchar(20),
+       college_code VARCHAR(20) NOT NULL
    )
    """
    execute_query(query)
@@ -229,15 +233,16 @@ def insert_sample_data():
    conn = get_connection()
    cur = conn.cursor()
    try:
+
        # Students
        student_values = [
-           ("2025-1011", "Nights Project", "6309518876143", "nightnightproject@gmail.com", True, "Nights", "Project")
+           ("2025-1011", "Nights Project", "6309518876143", "nightnightproject@gmail.com", True, "Nights", "Project", "CCS")
         
        ]
        extras.execute_values(
            cur,
            """
-           INSERT INTO students (student_id, full_name, contact_number, email, liability_status, firstname, lastname)
+           INSERT INTO students (student_id, full_name, contact_number, email, liability_status, firstname, lastname, college_code)
            VALUES %s
            ON CONFLICT (student_id) DO NOTHING
            """,

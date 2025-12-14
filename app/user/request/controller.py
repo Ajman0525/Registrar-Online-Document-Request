@@ -59,12 +59,15 @@ def get_request_page_data():
         #Fetch student info
         student_data = Request.get_student_data(student_id)
 
+
         student_name = student_data.get("full_name")
         student_contact = student_data.get("contact_number")
         student_email = student_data.get("email")
+        student_college_code = student_data.get("college_code")
         
         # Step 2: Fetch documents available for request
         documents = DocumentList.get_all_documents()
+
 
 
         # Step 3: send the needed data to React
@@ -74,7 +77,8 @@ def get_request_page_data():
                 "student_id": student_id,
                 "student_name": student_name,
                 "student_contact": student_contact,
-                "email": student_email
+                "email": student_email,
+                "college_code": student_college_code
             },
             "documents": documents
         })
@@ -156,14 +160,17 @@ def complete_request():
         request_id = Request.generate_unique_request_id()
         session["request_id"] = request_id
     
+
     student_id = session.get("student_id")
     student_name = student_info.get("full_name")
     student_contact = student_info.get("contact_number")
     student_email = student_info.get("email")
+    student_college_code = student_info.get("college_code")
     
     try:
+
         # Step 2: Store student info in the database
-        Request.submit_request(request_id, student_id, student_name, student_contact, student_email, preferred_contact, payment_status, total_price, remarks)
+        Request.submit_request(request_id, student_id, student_name, student_contact, student_email, preferred_contact, payment_status, total_price, student_college_code, remarks)
         
         # Step 3: Save documents if provided
         if documents_data:

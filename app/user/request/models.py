@@ -17,8 +17,9 @@ class Request:
         cur = conn.cursor()
 
         try:
+
             cur.execute("""
-                SELECT student_id, full_name, contact_number, email, liability_status
+                SELECT student_id, full_name, contact_number, email, liability_status, college_code
                 FROM students
                 WHERE student_id = %s
             """, (student_id,))
@@ -33,7 +34,8 @@ class Request:
                 "full_name": row[1],
                 "contact_number": row[2],
                 "email": row[3],
-                "liability_status": bool(row[4])
+                "liability_status": bool(row[4]),
+                "college_code": row[5]
             }
 
             print(f"Fetched student data: {student_data}")  
@@ -214,8 +216,9 @@ class Request:
             cur.close()
             db_pool.putconn(conn)
         
+
     @staticmethod
-    def submit_request(request_id, student_id, full_name, contact_number, email, preferred_contact, payment_status, total_cost, remarks=None, order_type="ONLINE"):
+    def submit_request(request_id, student_id, full_name, contact_number, email, preferred_contact, payment_status, total_cost, college_code, remarks=None, order_type=None):
         """
         Submit a complete request with all student information and details.
         This method consolidates multiple database operations into one transaction.
@@ -228,8 +231,8 @@ class Request:
             cur.execute("""
                 INSERT INTO requests (
                     request_id, student_id, full_name, contact_number, email,
-                    preferred_contact, payment_status, total_cost, remarks, order_type, status
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'PENDING')
+                    preferred_contact, payment_status, total_cost, remarks, order_type, status, college_code
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'PENDING', %s)
                 ON CONFLICT (request_id) DO UPDATE SET
                     student_id = EXCLUDED.student_id,
                     full_name = EXCLUDED.full_name,
@@ -240,9 +243,10 @@ class Request:
                     total_cost = EXCLUDED.total_cost,
                     remarks = EXCLUDED.remarks,
                     order_type = EXCLUDED.order_type,
+                    college_code = EXCLUDED.college_code,
                     status = 'PENDING'
             """, (request_id, student_id, full_name, contact_number, email, 
-                  preferred_contact, payment_status, total_cost, remarks, order_type))
+                  preferred_contact, payment_status, total_cost, remarks, order_type, college_code))
             
             conn.commit()
 
@@ -275,6 +279,7 @@ class Request:
         cur = conn.cursor()
 
         try:
+
             # Fetch all active requests for the student
             cur.execute("""
                 SELECT 
@@ -283,6 +288,7 @@ class Request:
                     r.total_cost,
                     r.remarks,
                     r.requested_at,
+                    r.college_code,
                     STRING_AGG(
                         CONCAT(dl.doc_name, ' (', rd.quantity, ')'), 
                         ', ' ORDER BY dl.doc_name
@@ -292,12 +298,13 @@ class Request:
                 LEFT JOIN request_documents rd ON r.request_id = rd.request_id
                 LEFT JOIN documents dl ON rd.doc_id = dl.doc_id
                 WHERE r.student_id = %s AND r.status != 'RELEASED'
-                GROUP BY r.request_id, r.status, r.total_cost, r.remarks, r.requested_at
+                GROUP BY r.request_id, r.status, r.total_cost, r.remarks, r.requested_at, r.college_code
                 ORDER BY r.requested_at DESC
             """, (student_id,))
             
             rows = cur.fetchall()
             
+
             active_requests = []
             for row in rows:
                 request_data = {
@@ -306,8 +313,9 @@ class Request:
                     "total_cost": float(row[2]) if row[2] else 0.0,
                     "remarks": row[3] or "",
                     "requested_at": row[4].strftime("%Y-%m-%d %H:%M:%S") if row[4] else "",
-                    "documents": row[5] or "No documents",
-                    "document_count": row[6]
+                    "college_code": row[5],
+                    "documents": row[6] or "No documents",
+                    "document_count": row[7]
                 }
                 active_requests.append(request_data)
             

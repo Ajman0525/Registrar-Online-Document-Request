@@ -29,6 +29,7 @@ function RequestFlow() {
 
 
 
+
   // Centralized state for all request data
   const [requestData, setRequestData] = useState({
     documents: [], // {doc_id, doc_name, cost, quantity}
@@ -36,7 +37,8 @@ function RequestFlow() {
     studentInfo: {
       full_name: "",
       contact_number: "",
-      email: ""
+      email: "",
+      college_code: ""
     },
     preferredContact: "",
     totalPrice: 0,
@@ -196,13 +198,15 @@ function RequestFlow() {
         });
         const data = await response.json();
 
+
         if (data.status === "success" && data.student_data) {
           setRequestData(prev => ({
             ...prev,
             studentInfo: {
               full_name: data.student_data.student_name || "",
               contact_number: data.student_data.student_contact || "",
-              email: data.student_data.email || ""
+              email: data.student_data.email || "",
+              college_code: data.student_data.college_code || ""
             }
           }));
         }
