@@ -224,18 +224,18 @@ class DashboardModel:
 
             # Document Ready (DOC-READY)
             cur.execute("""
-                SELECT request_id, full_name, completed_at
+                SELECT request_id, full_name, requested_at
                 FROM requests
-                WHERE status = 'DOC-READY' AND completed_at IS NOT NULL
-                ORDER BY completed_at DESC
+                WHERE status = 'DOC-READY' AND requested_at IS NOT NULL
+                ORDER BY requested_at DESC
                 LIMIT 5
             """)
-            for request_id, full_name, completed_at in cur.fetchall():
+            for request_id, full_name, requested_at in cur.fetchall():
                 notifications.append({
                     "id": request_id,
                     "type": "Document Ready",
                     "message": f"Document for Request #{request_id} by {full_name} is ready.",
-                    "time": completed_at.strftime("%H:%M %d/%m/%Y")
+                    "time": requested_at.strftime("%H:%M %d/%m/%Y")
                 })
 
 

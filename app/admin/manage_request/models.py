@@ -163,15 +163,15 @@ class ManageRequestModel:
             if payment_status is not None:
                 cur.execute("""
                     UPDATE requests
-                    SET status = %s, payment_status = %s, completed_at = CASE WHEN %s IN ('RELEASED', 'REJECTED') THEN NOW() ELSE completed_at END
+                    SET status = %s, payment_status = %s
                     WHERE request_id = %s
-                """, (new_status, payment_status, new_status, request_id))
+                """, (new_status, payment_status, request_id))
             else:
                 cur.execute("""
                     UPDATE requests
-                    SET status = %s, completed_at = CASE WHEN %s IN ('RELEASED', 'REJECTED') THEN NOW() ELSE completed_at END
+                    SET status = %s
                     WHERE request_id = %s
-                """, (new_status, new_status, request_id))
+                """, (new_status, request_id))
 
             if cur.rowcount > 0 and admin_id:
                 # Log the status change
