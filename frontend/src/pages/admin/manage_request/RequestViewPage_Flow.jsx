@@ -55,14 +55,10 @@ const RequestViewPage_Flow = () => {
       case "IN-PROGRESS":
         return <RequestViewPage_InProgress request={requestData} onRefresh={refreshFunction} />;
       
-      case "completed":
-      case "ready":
-      case "completed_ready":
-        return <RequestViewPage_InProgress request={requestData} onRefresh={refreshFunction} />; // Can use same component with different styling
-      
       default:
         // Default to pending component if status is unknown
-        return <RequestViewPage_Pending request={requestData} onRefresh={refreshFunction} />;
+        return <RequestViewPage_InProgress request={requestData} onRefresh={refreshFunction} />; // Can use same component with different styling
+      
     }
   };
 

@@ -1,6 +1,7 @@
 
 
 
+
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getCSRFToken } from "../../../utils/csrf";
@@ -14,6 +15,13 @@ const RequestViewPage_InProgress = ({ request, onRefresh }) => {
   const [togglingDocuments, setTogglingDocuments] = useState({});
   const [togglingOthersDocuments, setTogglingOthersDocuments] = useState({});
   const [assigneeInfo, setAssigneeInfo] = useState(null);
+  
+  // Modal state management
+  const [showDocReadyModal, setShowDocReadyModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showReleaseModal, setShowReleaseModal] = useState(false);
+  const [loading, setLoading] = useState(false);
+
 
   useEffect(() => {
     // Add null check inside useEffect to prevent errors
@@ -32,6 +40,125 @@ const RequestViewPage_InProgress = ({ request, onRefresh }) => {
 
     fetchAssigneeInfo();
   }, [request?.request_id]); // Use optional chaining for safe dependency checking
+
+  // Check if all documents are completed
+  const areAllDocumentsCompleted = () => {
+    if (!request) return false;
+    
+    // Check selected documents
+    const selectedDocs = request.documents || [];
+    const selectedDocsCompleted = selectedDocs.length === 0 || selectedDocs.every(doc => doc.is_done);
+    
+    // Check others documents
+    const othersDocs = request.others_documents || [];
+    const othersDocsCompleted = othersDocs.length === 0 || othersDocs.every(doc => doc.is_done);
+    
+    return selectedDocsCompleted && othersDocsCompleted;
+  };
+
+
+
+
+
+  // Get button state and handler
+  const getButtonState = () => {
+    const allCompleted = areAllDocumentsCompleted();
+
+    // Robust payment status checking - handle different data types
+    const isPaid = request.payment_status === true
+                 
+    const isUnpaid = request.payment_status === false 
+                  
+
+    // Priority 1: DOC-READY and Unpaid -> Show "Paid" button
+    if (request.status === "DOC-READY" && isUnpaid) {
+      return {
+        showRequestChanges: true,
+        showPaymentButton: true,
+        paymentButtonText: "Paid",
+        paymentButtonHandler: () => setShowPaymentModal(true),
+        paymentButtonDisabled: false,
+        paymentButtonClassName: "btn-primary"
+      };
+    }
+    
+    // Priority 2: DOC-READY and Paid -> Show "RELEASE" button  
+    if (request.status === "DOC-READY" && isPaid) {
+      return {
+        showRequestChanges: false,
+        showPaymentButton: true,
+        paymentButtonText: "RELEASE",
+        paymentButtonHandler: () => setShowReleaseModal(true),
+        paymentButtonDisabled: false,
+        paymentButtonClassName: "btn-success"
+      };
+    }
+    
+    // Priority 3: All documents completed (but not DOC-READY) -> Show "All Done" button
+    if (allCompleted && request.status !== "DOC-READY") {
+      return {
+        showRequestChanges: true,
+        showPaymentButton: true,
+        paymentButtonText: "All Done",
+        paymentButtonHandler: () => setShowDocReadyModal(true),
+        paymentButtonDisabled: false,
+        paymentButtonClassName: "btn-primary"
+      };
+    }
+    // Default case - no buttons should show
+    return {
+      showRequestChanges: false,
+      showPaymentButton: false
+    };
+  };
+
+  // Handle status updates
+  const updateRequestStatus = async (newStatus, paymentStatus = null) => {
+    try {
+      setLoading(true);
+      
+      const csrfToken = getCSRFToken();
+      const response = await fetch(`/api/admin/requests/${request.request_id}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': csrfToken
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          status: newStatus,
+          payment_status: paymentStatus
+        })
+      });
+
+      if (response.ok) {
+        if (onRefresh) onRefresh();
+        setShowDocReadyModal(false);
+        setShowPaymentModal(false);
+        setShowReleaseModal(false);
+      } else {
+        const errorData = await response.json();
+        alert('Failed to update status: ' + (errorData.error || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Error updating status:', error);
+      alert('Failed to update status');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDocReadyConfirm = () => {
+    updateRequestStatus("DOC-READY");
+  };
+
+  const handlePaymentConfirm = () => {
+    updateRequestStatus("DOC-READY", true);
+  };
+
+  const handleReleaseConfirm = () => {
+    updateRequestStatus("RELEASED");
+  };
 
   if (!request) return <div className="p-8 text-red-500 text-center">No request data provided</div>;
 
@@ -300,11 +427,121 @@ const RequestViewPage_InProgress = ({ request, onRefresh }) => {
           </div>
         </div>
 
+
+
+
         <div className="details-buttons">
-          <button className="btn-warning">Request Changes</button>
-          <button className="btn-primary">Proceed To Payment</button>
+          {(() => {
+            const buttonState = getButtonState();
+            return (
+              <>
+                {buttonState.showRequestChanges && (
+                  <button 
+                    className={`btn-warning ${areAllDocumentsCompleted() ? 'disabled' : ''}`}
+                    disabled={areAllDocumentsCompleted()}
+                  >
+                    Request Changes
+                  </button>
+                )}
+                {buttonState.showPaymentButton && (
+                  <button 
+                    className={buttonState.paymentButtonClassName}
+                    onClick={buttonState.paymentButtonHandler}
+                    disabled={buttonState.paymentButtonDisabled || loading}
+                  >
+                    {loading ? "Processing..." : buttonState.paymentButtonText}
+                  </button>
+                )}
+              </>
+            );
+          })()}
         </div>
+
       </div>
+
+      {/* Doc Ready Confirmation Modal */}
+      {showDocReadyModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full">
+            <h2 className="text-2xl font-bold mb-4">Confirm Document Ready</h2>
+            <p className="mb-4 text-gray-600">
+              Are you sure you want to mark this request as DOC-READY? This will change the request status from IN-PROGRESS to DOC-READY.
+            </p>
+            <div className="mt-6 flex justify-end space-x-2">
+              <button
+                onClick={() => setShowDocReadyModal(false)}
+                className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+                disabled={loading}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDocReadyConfirm}
+                disabled={loading}
+                className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:bg-gray-300"
+              >
+                {loading ? "Processing..." : "Confirm"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Payment Confirmation Modal */}
+      {showPaymentModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full">
+            <h2 className="text-2xl font-bold mb-4">Confirm Payment</h2>
+            <p className="mb-4 text-gray-600">
+              Are you sure you want to mark this request as paid? This will set the payment status to true.
+            </p>
+            <div className="mt-6 flex justify-end space-x-2">
+              <button
+                onClick={() => setShowPaymentModal(false)}
+                className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+                disabled={loading}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handlePaymentConfirm}
+                disabled={loading}
+                className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:bg-gray-300"
+              >
+                {loading ? "Processing..." : "Confirm Payment"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Release Confirmation Modal */}
+      {showReleaseModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full">
+            <h2 className="text-2xl font-bold mb-4">Confirm Release</h2>
+            <p className="mb-4 text-gray-600">
+              Are you sure you want to release this request? This will change the request status to RELEASED.
+            </p>
+            <div className="mt-6 flex justify-end space-x-2">
+              <button
+                onClick={() => setShowReleaseModal(false)}
+                className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+                disabled={loading}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleReleaseConfirm}
+                disabled={loading}
+                className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:bg-gray-300"
+              >
+                {loading ? "Processing..." : "Confirm Release"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

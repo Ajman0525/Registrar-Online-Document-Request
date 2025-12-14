@@ -270,8 +270,35 @@
   cursor: pointer;
 }
 
+
 .btn-primary:hover {
   background: #025aa5;
+}
+
+.btn-success {
+  background: #28a745;
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-success:hover {
+  background: #218838;
+}
+
+/* Disabled button states */
+.btn-warning.disabled,
+.btn-warning:disabled {
+  background: #adb5bd;
+  cursor: not-allowed;
+}
+
+.btn-primary:disabled,
+.btn-success:disabled {
+  background: #adb5bd;
+  cursor: not-allowed;
 }
 
 /* Flow Component Styles */
