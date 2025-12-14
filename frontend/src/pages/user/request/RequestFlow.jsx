@@ -6,7 +6,9 @@ import PreferredContact from "./PreferredContact";
 import PendingRequests from "./PendingRequests";
 import Summary from "./Summary.jsx";
 import SubmitRequest from "./SubmitRequest.jsx";
+
 import ConfirmModal from "../../../components/user/ConfirmModal";
+import LoadingSpinner from "../../../components/common/LoadingSpinner";
 import { getCSRFToken } from "../../../utils/csrf";
 
 
@@ -459,11 +461,9 @@ function RequestFlow() {
 
   return (
     <>
+
       {step === "checkActiveRequests" && (
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
-          <p>Checking for active requests...</p>
-        </div>
+        <LoadingSpinner message="Checking for active requests..." />
       )}
       
       {step === "pendingRequests" && (
