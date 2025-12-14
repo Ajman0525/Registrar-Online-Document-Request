@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
-import SettingsIcon from "../components/SettingsIcon";
-import NotificationIcon from "../components/NotificationIcon";
-import SearchIcon from "../components/SearchIcon";
-import LogoutIcon from "../components/LogoutIcon";
+import SettingsIcon from "../icons/SettingsIcon";
+import NotificationIcon from "../icons/NotificationIcon";
+import SearchIcon from "../icons/SearchIcon";
+import LogoutIcon from "../icons/LogoutIcon";
+import ProfileIcon from "../icons/ProfileIcon";
 import "../../pages/admin/Dashboard.css";
