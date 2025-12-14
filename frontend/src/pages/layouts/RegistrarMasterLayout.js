@@ -35,11 +35,13 @@ function RegistrarMasterLayout() {
       <Sidebar />
 
       <main className="registrar-content-area">
-        <Header
-          title="Welcome, Administrator."
-          onLogout={handleLogout}
-          notifications={[]}
-        />
+        <div className="registrar-header-container">
+          <Header
+            title="Welcome, Administrator."
+            onLogout={handleLogout}
+            notifications={[]}
+          />
+        </div>
         <div className="registrar-page-content">
           <Outlet />
         </div>
