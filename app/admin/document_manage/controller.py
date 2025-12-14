@@ -5,10 +5,12 @@ import psycopg2
 @document_management_bp.route('/get-documents', methods=['GET'])
 def get_documents():
     try:
-        # Use connection from the pool
         conn = g.db_conn
         cursor = conn.cursor()
-        cursor.execute("SELECT doc_id, doc_name, description, logo_link, cost FROM documents;")
+        cursor.execute("""
+            SELECT doc_id, doc_name, description, logo_link, cost, requires_payment_first
+            FROM documents;
+        """)
         documents = cursor.fetchall()
         cursor.close()
 
@@ -18,7 +20,8 @@ def get_documents():
                 "doc_name": doc[1],
                 "description": doc[2],
                 "logo_link": doc[3],
-                "cost": float(doc[4])
+                "cost": float(doc[4]),
+                "requires_payment_first": doc[5]
             }
             for doc in documents
         ]
@@ -74,13 +77,13 @@ def get_documents_with_requirements():
         cursor = conn.cursor()
 
         # Fetch all documents - INCLUDING the hidden field
-        cursor.execute("SELECT doc_id, doc_name, description, logo_link, cost, hidden FROM documents;")
+        cursor.execute("SELECT doc_id, doc_name, description, logo_link, cost, hidden, requires_payment_first FROM documents;")
         documents = cursor.fetchall()
 
         document_list = []
 
         for doc in documents:
-            doc_id, doc_name, description, logo_link, cost, hidden = doc
+            doc_id, doc_name, description, logo_link, cost, hidden, requires_payment_first = doc
 
             # Fetch requirement names for this document
             cursor.execute("""
@@ -99,7 +102,8 @@ def get_documents_with_requirements():
                 "logo_link": logo_link,
                 "cost": float(cost),
                 "requirements": req_names,
-                "hidden": hidden  
+                "hidden": hidden, 
+                "requires_payment_first": requires_payment_first
             })
 
         cursor.close()
@@ -119,8 +123,9 @@ def add_document():
         description = data.get("description")
         cost = data.get("cost")
         requirements = data.get("requirements", [])
+        requires_payment_first = data.get("requires_payment_first", False)
 
-        if not all([doc_name, description, cost]):
+        if not doc_name or not description or cost is None:
             return jsonify({"error": "Missing required fields"}), 400
 
         cursor.execute("SELECT doc_id FROM documents ORDER BY doc_id DESC LIMIT 1;")
@@ -128,9 +133,9 @@ def add_document():
         new_doc_id = f"DOC{int(last_doc[0].replace('DOC', '')) + 1:04d}" if last_doc else "DOC0001"
 
         cursor.execute("""
-            INSERT INTO documents (doc_id, doc_name, description, cost)
-            VALUES (%s, %s, %s, %s);
-        """, (new_doc_id, doc_name, description, cost))
+            INSERT INTO documents (doc_id, doc_name, description, cost, requires_payment_first)
+            VALUES (%s, %s, %s, %s, %s);
+        """, (new_doc_id, doc_name, description, cost, requires_payment_first))
 
         for req_name in requirements:
             cursor.execute("SELECT req_id FROM requirements WHERE requirement_name = %s;", (req_name,))
@@ -176,13 +181,14 @@ def edit_document(doc_id):
         description = data.get("description")
         cost = data.get("cost")
         requirements = data.get("requirements", [])
+        requires_payment_first = data.get("requires_payment_first", False)
 
         # update the main document info
         cursor.execute("""
             UPDATE documents
-            SET doc_name = %s, description = %s, cost = %s
+            SET doc_name = %s, description = %s, cost = %s, requires_payment_first = %s
             WHERE doc_id = %s;
-        """, (doc_name, description, cost, doc_id))
+        """, (doc_name, description, cost, doc_id, requires_payment_first))
 
         # clear old requirements
         cursor.execute("DELETE FROM document_requirements WHERE doc_id = %s;", (doc_id,))

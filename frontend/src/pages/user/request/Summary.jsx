@@ -1,9 +1,12 @@
 
+
 import React, { useState } from "react";
 import "./Request.css";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
 import ButtonLink from "../../../components/common/ButtonLink";
 import ContentBox from "../../../components/user/ContentBox";
+import { getCSRFToken } from "../../../utils/csrf";
+
 
 
 function Summary({
@@ -11,6 +14,7 @@ function Summary({
   uploadedFiles = {},
   preferredContactInfo = {},
   contactInfo = {},
+  paymentCompleted = false,
   onNext = () => {},
   onBack = () => {},
 }) {
@@ -62,6 +66,7 @@ function Summary({
     }
   };
 
+
   // Calculate total price - ensure doc.cost is used correctly
   const totalPrice = selectedDocs.reduce((sum, doc) => {
     const cost = doc.cost || 0;
@@ -69,10 +74,136 @@ function Summary({
     return sum + (cost * quantity);
   }, 0);
 
-  const handleComplete = () => {
+  // Calculate price for documents requiring immediate payment
+  const immediatePaymentDocs = selectedDocs.filter(doc => doc.requires_payment_first);
+  const immediatePaymentPrice = immediatePaymentDocs.reduce((sum, doc) => {
+    const cost = doc.cost || 0;
+    const quantity = doc.quantity || 1;
+    return sum + (cost * quantity);
+  }, 0);
+
+
+  // Check if any documents require immediate payment
+  const hasImmediatePayment = immediatePaymentDocs.length > 0;
+
+
+  // Check if payment completion is required before allowing submission
+  const isPaymentRequired = hasImmediatePayment;
+  
+  // Check if submission is allowed based on payment status
+  const canSubmit = !isPaymentRequired || paymentCompleted;
+
+
+
+  const handleComplete = async () => {
     setCompleting(true);
-    // Directly call onNext, parent handles the submission logic
-    onNext();
+    
+    try {
+      // If payment is required, first create the request to get tracking ID
+      if (isPaymentRequired) {
+        await createRequestAndProceedToPayment();
+      } else {
+        // No payment required, proceed directly to final submission
+        onNext();
+      }
+    } catch (error) {
+      console.error('Error completing request:', error);
+      setCompleting(false);
+      alert('Error completing request. Please try again.');
+    }
+  };
+
+  const createRequestAndProceedToPayment = async () => {
+    try {
+      // Convert File objects to base64 for submission
+      const requirements = Object.entries(uploadedFiles).map(([req_id, file]) => {
+        if (file instanceof File) {
+          return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+              const result = reader.result;
+              const base64 = result.split(',')[1];
+              resolve({
+                requirement_id: req_id,
+                filename: file.name,
+                content_type: file.type,
+                alreadyUploaded: false,
+                file_data: base64
+              });
+            };
+            reader.readAsDataURL(file);
+          });
+        } else if (typeof file === "string" && file) {
+          return {
+            requirement_id: req_id,
+            filename: file.split("/").pop(),
+            content_type: "application/octet-stream",
+            alreadyUploaded: true,
+            file_data: file
+          };
+        } else {
+          return {
+            requirement_id: req_id,
+            filename: "",
+            content_type: "application/octet-stream",
+            alreadyUploaded: false,
+            file_data: null
+          };
+        }
+      });
+
+      const requirementsData = await Promise.all(requirements);
+
+      const submissionData = {
+        student_info: contactInfo,
+        documents: selectedDocs.map(doc => ({
+          doc_id: doc.doc_id,
+          quantity: doc.quantity || 1,
+          doc_name: doc.doc_name || "",
+          description: doc.description || "",
+          cost: doc.cost || 0,
+          isCustom: doc.isCustom || false
+        })),
+        requirements: requirementsData,
+        total_price: totalPrice,
+        preferred_contact: preferredContactInfo.method || "SMS",
+        payment_status: false, // Will be updated after payment
+        remarks: "Request submitted, pending payment"
+      };
+
+      const response = await fetch("/api/complete-request", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-TOKEN": getCSRFToken(),
+        },
+        credentials: "include",
+        body: JSON.stringify(submissionData),
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        // Request created successfully, now proceed to payment
+        console.log("Request created with ID:", data.request_id);
+        // Store tracking ID in sessionStorage for payment processing
+        sessionStorage.setItem('current_request_id', data.request_id);
+        
+        // Proceed to payment gateway
+        onNext('payNow');
+      } else {
+        throw new Error(data.notification || 'Failed to create request');
+      }
+    } catch (error) {
+      console.error('Error creating request:', error);
+      throw error;
+    }
+  };
+
+  const handlePayNow = () => {
+    setCompleting(true);
+    // Navigate to payment gateway
+    onNext('payNow');
   };
 
   return (
@@ -145,6 +276,7 @@ function Summary({
 
         </div>
 
+
         {authLetterData && (
           <div className="summary-row">
             <label className="summary-label">Authorization Letter</label>
@@ -170,6 +302,40 @@ function Summary({
                   <img src="/assets/EyeIcon.svg" alt="View" className="view-icon" />
                   View Authorization Letter
                 </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {hasImmediatePayment && (
+          <div className="summary-row">
+            <label className="summary-label">Immediate Payment Required</label>
+            <hr />
+            <div className="summary-info-box">
+              <div className="immediate-payment-notice">
+                <div className="payment-notice-header">
+                  <img src="/assets/UnpaidIcon.svg" alt="Payment Required" className="payment-icon" />
+                  <span className="payment-notice-title">Payment Required for Processing</span>
+                </div>
+                <div className="payment-notice-content">
+                  <p>The following documents require immediate payment before processing can begin:</p>
+                  <div className="payment-docs-list">
+                    {immediatePaymentDocs.map((doc, idx) => (
+                      <div key={idx} className="payment-doc-item">
+                        <span className="payment-doc-name">{doc.doc_name}</span>
+                        <span className="payment-doc-price">Php {(doc.cost * (doc.quantity || 1)).toFixed(2)}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="payment-total">
+                    <strong>Immediate Payment Total: Php {immediatePaymentPrice.toFixed(2)}</strong>
+                  </div>
+                </div>
+
+
+                <div className="payment-action-buttons">
+                  <span className="payment-note">Click "Complete Request" below to proceed to payment</span>
+                </div>
               </div>
             </div>
           </div>
@@ -207,6 +373,7 @@ function Summary({
           </div>
         </div>
 
+
         <div className="action-buttons">
           <ButtonLink
             placeholder="Back"
@@ -214,12 +381,19 @@ function Summary({
             variant="secondary"
             disabled={completing}
           />
+
+
           <ButtonLink
-            placeholder={completing ? "Completing..." : "Complete"}
+            placeholder={completing ? "Completing..." : isPaymentRequired ? "Complete Request & Pay" : "Complete Request"}
             onClick={handleComplete}
             variant="primary"
             disabled={completing}
           />
+          {isPaymentRequired && (
+            <div className="payment-info-message">
+              You will be redirected to complete payment after request creation
+            </div>
+          )}
         </div>
       </ContentBox>
     </>
