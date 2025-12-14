@@ -239,7 +239,12 @@ function Transactions() {
       {/* Header */}
       <div className="dashboard-header-wrapper">
         <div className="header-content">
-          <h1>Transactions Management</h1>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <h1>Transactions Management</h1>
+            <span style={{ fontSize: '0.85rem', color: '#666', marginTop: '5px' }}>
+              {getTimeframeString()}
+            </span>
+          </div>
         </div>
 
         <select className="date-select" value={range} onChange={(e) => applyDateRange(e.target.value)}>

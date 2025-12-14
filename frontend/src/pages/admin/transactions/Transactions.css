@@ -574,21 +574,26 @@
   /* Adjust specific column widths to fit on page */
   .td-request-id, 
   .transactions-table th:nth-child(1) {
-    width: 20%; /* Request ID */
+    width: 10%; /* Request ID */
   }
 
   .td-user-info,
   .transactions-table th:nth-child(2) {
-    width: 30%; /* User Info */
+    width: 30%; /* User Name */
   }
 
   .td-amount,
   .transactions-table th:nth-child(3) {
-    width: 20%; /* Amount */
+    width: 10%; /* Student ID */
+  }
+
+  .td-amount,
+  .transactions-table th:nth-child(4) {
+    width: 10%; /* Amount */
   }
 
   .td-date,
-  .transactions-table th:nth-child(4) {
+  .transactions-table th:nth-child(5) {
     width: 30%; /* Date */
   }
 

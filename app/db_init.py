@@ -209,7 +209,7 @@ def ready_fee_table():
    query = """
    CREATE TABLE IF NOT EXISTS fee (
        key VARCHAR(50) PRIMARY KEY,
-       value FLOAT NOT NULL
+       value NUMERIC NOT NULL
    )
    """
    execute_query(query)
