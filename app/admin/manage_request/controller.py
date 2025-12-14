@@ -1,6 +1,6 @@
 from . import manage_request_bp
 from ...whatsapp.controller import send_whatsapp_message
-from flask import jsonify, request, g
+from flask import jsonify, request, g, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.utils.decorator import jwt_required_with_role
 from .models import ManageRequestModel
@@ -9,6 +9,28 @@ from .models import ManageRequestModel
 # Admin role
 role = "admin"
 
+def send_whatsapp_status_update(phone, full_name, request_id, status_update):
+    template_name = "status_update"
+
+    components = [
+        {
+            "type": "body",
+            "parameters": [
+                {"type": "text", "text": str(full_name)},
+                {"type": "text", "text": str(request_id)}
+            ]
+        }
+    ]
+
+    print(f"[Status Update] Attempting to send WhatsApp Status Update to {phone}")
+
+    result = send_whatsapp_message(phone, template_name, components)
+
+    if "error" in result:
+        current_app.logger.error(f"WhatsApp send failed for Status Update to {phone}: {result['error']}")
+        return {"status": "failed", "message": "Failed to send Status Update via WhatsApp"}
+
+    return {"status": "success"}
 
 @manage_request_bp.route("/api/admin/requests", methods=["GET"])
 @jwt_required_with_role(role)
