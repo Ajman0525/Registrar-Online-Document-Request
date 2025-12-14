@@ -11,11 +11,11 @@ role = "admin"
 
 def send_whatsapp_status_update(phone, full_name, request_id, status_update):
     status_template_map = {
-        "PENDING": "odr_request_submitted", 
-        "IN-PROGRESS": "odr_processing_request", 
-        "DOC-READY": "odr_document_processed", 
-        "RELEASED": "odr_document_released", 
-        "REJECTED" : "odr_request_submitted" # The Whatsapp template for REJECTED status is still pending for approval, using the submitted template as a placeholder
+        "PENDING": "odr_request_submitted_v2", 
+        "IN-PROGRESS": "odr_processing_request_v2", 
+        "DOC-READY": "odr_document_processed_v3", 
+        "RELEASED": "odr_document_released_v2", 
+        "REJECTED" : "odr_request_submitted_v2" # The Whatsapp template for REJECTED status is still pending for approval, using the submitted template as a placeholder
     }
 
     template_name = status_template_map.get(status_update)
