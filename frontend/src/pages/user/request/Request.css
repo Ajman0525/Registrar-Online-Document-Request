@@ -266,6 +266,7 @@ html {
     transition: 0.3s ease;
 }
 
+
 /* Document selection outline */
 .document-card {
     cursor: pointer;
@@ -277,6 +278,77 @@ html {
     outline-offset: -4px;
     box-shadow: 0 0 10px rgba(0, 176, 80, 0.3);
     transform: scale(1.02);
+}
+
+/* Others card styling */
+.others-doc-card {
+    position: relative;
+    width: 250px;
+    height: 300px;
+    background-color: #f8f9fa;
+    border: 2px dashed #007bff;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.others-doc-card:hover {
+    background-color: #e7f3ff;
+    border-color: #0056b3;
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 123, 255, 0.15);
+}
+
+.others-card-content {
+    text-align: center;
+    padding: 20px;
+}
+
+.others-card-content h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #007bff;
+    margin: 0 0 8px 0;
+}
+
+.others-card-content p {
+    font-size: 0.9rem;
+    color: #666;
+    margin: 0 0 16px 0;
+    line-height: 1.4;
+}
+
+.plus-icon {
+    font-size: 2rem;
+    color: #007bff;
+    font-weight: bold;
+    display: block;
+    line-height: 1;
+}
+
+/* Responsive design for others card */
+@media (max-width: 768px) {
+    .others-doc-card {
+        width: 200px;
+        height: 250px;
+    }
+
+    .others-card-content h3 {
+        font-size: 1.25rem;
+    }
+
+    .others-card-content p {
+        font-size: 0.8rem;
+    }
+
+    .plus-icon {
+        font-size: 1.5rem;
+    }
 }
 
 /* Submit button */
@@ -723,6 +795,7 @@ width: 100%;
   color: var(--color-black);
   font-weight: 600;
 }
+
 
 .auth-view-btn {
   align-self: flex-start;

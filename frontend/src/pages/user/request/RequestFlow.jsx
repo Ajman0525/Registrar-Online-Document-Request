@@ -20,7 +20,9 @@ function RequestFlow() {
   const [trackingId, setTrackingId] = useState("");
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState(null);
+
   const [hasActiveRequests, setHasActiveRequests] = useState(false);
+  const [availableDocuments, setAvailableDocuments] = useState([]);
 
   const [userType, setUserType] = useState(null); // null = unknown, 'student' or 'outsider'
 
@@ -135,7 +137,8 @@ function RequestFlow() {
     return Array.isArray(requestData.documents) ? requestData.documents : [];
   }, [requestData.documents]);
 
-  // Load student data on component mount
+
+  // Load student data and documents on component mount
   useEffect(() => {
     const fetchStudentData = async () => {
       try {
@@ -148,7 +151,6 @@ function RequestFlow() {
         });
         const data = await response.json();
 
-
         if (data.status === "success" && data.student_data) {
           setRequestData(prev => ({
             ...prev,
@@ -160,10 +162,15 @@ function RequestFlow() {
             }
           }));
         }
+        
+        // Store available documents for Documents component
+        if (data.documents) {
+          setAvailableDocuments(data.documents);
+        }
       } catch (error) {
+        console.error("Error fetching student data:", error);
       }
     };
-
 
     fetchStudentData();
   }, []);
@@ -482,11 +489,16 @@ function RequestFlow() {
 
       const requirementsData = await Promise.all(requirements);
 
+
       const submissionData = {
         student_info: requestData.studentInfo,
         documents: requestData.documents.map(doc => ({
           doc_id: doc.doc_id,
-          quantity: doc.quantity || 1
+          quantity: doc.quantity || 1,
+          doc_name: doc.doc_name || "",
+          description: doc.description || "",
+          cost: doc.cost || 0,
+          isCustom: doc.isCustom || false
         })),
         requirements: requirementsData,
         total_price: requestData.totalPrice,
@@ -595,8 +607,10 @@ function RequestFlow() {
                 </div>
               </div>
             )}
+
       {step === "documents" && (
         <Documents
+          availableDocuments={availableDocuments}
           selectedDocs={getDocuments()}
           setSelectedDocs={setDocuments}
           onNext={handleDocumentsNext}

@@ -172,11 +172,19 @@ def complete_request():
         # Step 2: Store student info in the database
         Request.submit_request(request_id, student_id, student_name, student_contact, student_email, preferred_contact, payment_status, total_price, student_college_code, remarks)
         
+
         # Step 3: Save documents if provided
         if documents_data:
             documents_saved = save_documents_to_db(request_id, documents_data)
             if not documents_saved:
                 raise Exception("Failed to save documents to database")
+        
+        # Step 3.1: Save custom documents if provided
+        custom_documents = [doc for doc in documents_data if doc.get("isCustom", False)]
+        if custom_documents:
+            custom_docs_saved = save_custom_documents_to_db(request_id, student_id, custom_documents)
+            if not custom_docs_saved:
+                raise Exception("Failed to save custom documents to database")
         
         # Step 4: Handle requirement files upload to Supabase
         if requirements_data:
@@ -260,6 +268,8 @@ def logout_user():
     return response
 
 
+
+
 def save_documents_to_db(request_id, documents_data):
     """
     Helper function to save selected documents to database.
@@ -328,6 +338,31 @@ def upload_requirement_files_to_supabase(request_id, requirements_data):
         
         return True, "No files to upload", []
         
+
     except Exception as e:
         print(f"Error uploading requirement files: {e}")
         return False, f"Error uploading files: {str(e)}", []
+
+def save_custom_documents_to_db(request_id, student_id, custom_documents):
+    """
+    Helper function to save custom documents to database.
+    Args:
+        request_id (str): The request ID
+        student_id (str): The student ID
+        custom_documents (list): List of custom document objects
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    try:
+        # Extract custom document data
+        custom_docs_data = []
+        for doc in custom_documents:
+            custom_docs_data.append({
+                "doc_name": doc.get("doc_name", ""),
+                "description": doc.get("description", "")
+            })
+        
+        return Request.store_custom_documents(request_id, student_id, custom_docs_data)
+    except Exception as e:
+        print(f"Error saving custom documents: {e}")
+        return False

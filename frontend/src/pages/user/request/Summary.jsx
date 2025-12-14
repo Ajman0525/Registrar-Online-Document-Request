@@ -84,12 +84,23 @@ function Summary({
           <label className="selected-documents-label">Selected Documents</label>
           <hr />
           <div className="summary-info-box">
+
             {selectedDocs.length === 0 ? (
               <p>No documents selected</p>
             ) : (
               selectedDocs.map((doc, idx) => (
-                <div key={idx} className="summary-item">
-                  {doc.doc_name} {doc.quantity && doc.quantity > 1 ? `${doc.quantity}x` : ''}
+                <div key={idx} className={`summary-item ${doc.isCustom ? 'custom-doc-item' : ''}`}>
+                  <div className="doc-name">
+                    {doc.doc_name} {doc.quantity && doc.quantity > 1 ? `${doc.quantity}x` : ''}
+                  </div>
+                  {doc.isCustom && doc.description && (
+                    <div className="custom-doc-description">
+                      {doc.description}
+                    </div>
+                  )}
+                  {doc.isCustom && (
+                    <div className="custom-doc-badge">Custom Document</div>
+                  )}
                 </div>
               ))
             )}

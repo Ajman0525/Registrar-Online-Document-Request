@@ -263,11 +263,14 @@ class Request:
             db_pool.putconn(conn)
 
 
+
+
     @staticmethod
     def get_active_requests_by_student(student_id):
         """
         Fetch all active requests for a student (status != 'RELEASED').
         Returns a list of requests with their documents and current status.
+        Also includes custom documents from others_docs table.
         
         Args:
             student_id (str): The student ID to query
@@ -280,7 +283,15 @@ class Request:
 
         try:
 
-            # Fetch all active requests for the student
+
+
+
+
+
+
+
+
+            # Fetch all active requests for the student with documents and custom documents
             cur.execute("""
                 SELECT 
                     r.request_id,
@@ -289,24 +300,63 @@ class Request:
                     r.remarks,
                     r.requested_at,
                     r.college_code,
-                    STRING_AGG(
-                        CONCAT(dl.doc_name, ' (', rd.quantity, ')'), 
-                        ', ' ORDER BY dl.doc_name
-                    ) as documents,
-                    COUNT(rd.doc_id) as document_count
+                    COALESCE(doc_docs.documents, 'No documents') as documents,
+                    COALESCE(doc_docs.regular_doc_count, 0) as regular_doc_count
                 FROM requests r
-                LEFT JOIN request_documents rd ON r.request_id = rd.request_id
-                LEFT JOIN documents dl ON rd.doc_id = dl.doc_id
+
+
+
+
+
+                LEFT JOIN (
+                    SELECT 
+                        rd.request_id,
+                        STRING_AGG(
+                            DISTINCT CONCAT(dl.doc_name, ' (', rd.quantity, ')'),
+                            ', ' ORDER BY CONCAT(dl.doc_name, ' (', rd.quantity, ')')
+                        ) AS documents,
+                        SUM(rd.quantity) AS regular_doc_count
+                    FROM request_documents rd
+                    INNER JOIN documents dl ON rd.doc_id = dl.doc_id
+                    GROUP BY rd.request_id
+                ) doc_docs ON r.request_id = doc_docs.request_id
+
                 WHERE r.student_id = %s AND r.status != 'RELEASED'
-                GROUP BY r.request_id, r.status, r.total_cost, r.remarks, r.requested_at, r.college_code
                 ORDER BY r.requested_at DESC
             """, (student_id,))
             
             rows = cur.fetchall()
             
-
             active_requests = []
             for row in rows:
+                request_id = row[0]
+                
+                # Fetch custom documents for this request
+                cur.execute("""
+                    SELECT id, document_name, document_description, created_at
+                    FROM others_docs
+                    WHERE request_id = %s
+                    ORDER BY created_at ASC
+                """, (request_id,))
+                
+                custom_docs_rows = cur.fetchall()
+                custom_documents = []
+                
+                for custom_row in custom_docs_rows:
+                    custom_documents.append({
+                        "id": custom_row[0],
+                        "doc_name": custom_row[1],
+                        "description": custom_row[2],
+                        "created_at": custom_row[3].strftime("%Y-%m-%d %H:%M:%S") if custom_row[3] else ""
+                    })
+                
+
+                # Calculate total document count (regular + custom)
+                regular_doc_count = row[7] or 0
+                custom_doc_count = len(custom_documents)
+                total_doc_count = regular_doc_count + custom_doc_count
+                
+
                 request_data = {
                     "request_id": row[0],
                     "status": row[1],
@@ -315,16 +365,112 @@ class Request:
                     "requested_at": row[4].strftime("%Y-%m-%d %H:%M:%S") if row[4] else "",
                     "college_code": row[5],
                     "documents": row[6] or "No documents",
-                    "document_count": row[7]
+                    "document_count": total_doc_count,  # Use total count (regular + custom)
+                    "regular_doc_count": int(regular_doc_count),  # Regular documents count only
+                    "custom_documents": custom_documents
                 }
                 active_requests.append(request_data)
             
+
             return active_requests
             
         except Exception as e:
             print(f"Error fetching active requests for student {student_id}: {e}")
             return []
             
+        finally:
+            cur.close()
+            db_pool.putconn(conn)
+
+    @staticmethod
+    def store_custom_documents(request_id, student_id, custom_documents):
+        """
+        Store custom documents in the others_docs table.
+        
+        Args:
+            request_id (str): The request ID
+            student_id (str): The student ID
+            custom_documents (list): List of custom document objects with doc_name and description
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        if not custom_documents:
+            return True
+
+        conn = db_pool.getconn()
+        cur = conn.cursor()
+
+        try:
+            insert_values = []
+            for doc in custom_documents:
+                if isinstance(doc, dict) and 'doc_name' in doc and 'description' in doc:
+                    insert_values.append((
+                        request_id, 
+                        student_id, 
+                        doc['doc_name'], 
+                        doc['description']
+                    ))
+
+            if not insert_values:
+                return False
+
+            cur.executemany("""
+                INSERT INTO others_docs (request_id, student_id, document_name, document_description)
+                VALUES (%s, %s, %s, %s)
+            """, insert_values)
+
+            conn.commit()
+            return True
+
+        except Exception as e:
+            print(f"Error storing custom documents: {e}")
+            conn.rollback()
+            return False
+
+        finally:
+            cur.close()
+            db_pool.putconn(conn)
+
+    @staticmethod
+    def get_custom_documents(request_id):
+        """
+        Fetch custom documents for a specific request.
+        
+        Args:
+            request_id (str): The request ID
+            
+        Returns:
+            list: List of custom document dictionaries
+        """
+        conn = db_pool.getconn()
+        cur = conn.cursor()
+
+        try:
+            cur.execute("""
+                SELECT id, document_name, document_description, created_at
+                FROM others_docs
+                WHERE request_id = %s
+                ORDER BY created_at ASC
+            """, (request_id,))
+            
+            rows = cur.fetchall()
+            
+            custom_docs = []
+            for row in rows:
+                custom_docs.append({
+                    "id": row[0],
+                    "doc_name": row[1],
+                    "description": row[2],
+                    "created_at": row[3].strftime("%Y-%m-%d %H:%M:%S") if row[3] else ""
+                })
+            
+            return custom_docs
+
+        except Exception as e:
+            print(f"Error fetching custom documents for request {request_id}: {e}")
+            return []
+
         finally:
             cur.close()
             db_pool.putconn(conn)

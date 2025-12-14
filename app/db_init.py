@@ -92,7 +92,7 @@ def ready_students_table():
 def ready_auth_letters_table():
    query = """
    CREATE TABLE IF NOT EXISTS auth_letters (
-       id VARCHAR(10) PRIMARY KEY,
+       id VARCHAR(200) PRIMARY KEY,
        created_at TIMESTAMP DEFAULT NOW(),
        firstname VARCHAR(50) NOT NULL,
        lastname VARCHAR(50) NOT NULL,
@@ -130,8 +130,8 @@ def ready_documents_table():
 def ready_document_requirements_table():
    query = """
    CREATE TABLE IF NOT EXISTS document_requirements (
-       doc_id VARCHAR(10) REFERENCES documents(doc_id) ON DELETE CASCADE,
-       req_id VARCHAR(10) REFERENCES requirements(req_id) ON DELETE CASCADE,
+       doc_id VARCHAR(200) REFERENCES documents(doc_id) ON DELETE CASCADE,
+       req_id VARCHAR(200) REFERENCES requirements(req_id) ON DELETE CASCADE,
        PRIMARY KEY (doc_id, req_id)
    )
    """
@@ -165,7 +165,7 @@ def ready_request_documents_table():
    query = """
    CREATE TABLE IF NOT EXISTS request_documents (
        request_id VARCHAR(15) REFERENCES requests(request_id) ON DELETE CASCADE,
-       doc_id VARCHAR(10) REFERENCES documents(doc_id) ON DELETE CASCADE,
+       doc_id VARCHAR(200),
        quantity INTEGER DEFAULT 1,
        PRIMARY KEY (request_id, doc_id)
    )
@@ -178,7 +178,7 @@ def ready_request_requirements_links_table():
    query = """
    CREATE TABLE IF NOT EXISTS request_requirements_links (
        request_id VARCHAR(15) REFERENCES requests(request_id) ON DELETE CASCADE,
-       requirement_id VARCHAR(10) REFERENCES requirements(req_id) ON DELETE CASCADE,
+       requirement_id VARCHAR(200) REFERENCES requirements(req_id) ON DELETE CASCADE,
        file_path VARCHAR(255) NOT NULL,
        uploaded_at TIMESTAMP DEFAULT NOW(),
        PRIMARY KEY (request_id, requirement_id)
@@ -210,6 +210,7 @@ def ready_admins_table():
    execute_query(query)
 
 
+
 def ready_open_request_restriction_table():
    query = """
    CREATE TABLE IF NOT EXISTS open_request_restriction (
@@ -217,6 +218,20 @@ def ready_open_request_restriction_table():
        start_time TIME NOT NULL,
        end_time TIME NOT NULL,
        available_days JSONB NOT NULL
+   )
+   """
+   execute_query(query)
+
+def ready_others_docs_table():
+   query = """
+   CREATE TABLE IF NOT EXISTS others_docs (
+       id SERIAL PRIMARY KEY,
+       request_id VARCHAR(15) REFERENCES requests(request_id) ON DELETE CASCADE,
+       student_id VARCHAR(20) REFERENCES students(student_id) ON DELETE CASCADE,
+       document_name VARCHAR(500) NOT NULL,
+       document_description VARCHAR(1000),
+       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
    )
    """
    execute_query(query)
@@ -352,6 +367,7 @@ def insert_sample_data():
 # ==========================
 
 
+
 def initialize_db():
    """Initialize database and all tables."""
    create_database()
@@ -366,6 +382,7 @@ def initialize_db():
    ready_logs_table()
    ready_admins_table()
    ready_open_request_restriction_table()
+   ready_others_docs_table()
    print("Database and tables initialized successfully.")
 
 

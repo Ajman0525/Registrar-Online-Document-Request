@@ -161,10 +161,38 @@ function PendingRequests({ onProceedToNewRequest, onBackToLogin }) {
                 </div>
               </div>
 
+
+
+
+
+
+
               <div className="pr-request-details">
                 <div className="pr-documents-section">
-                  <h4>Documents Requested ({request.document_count}):</h4>
-                  <p className="pr-documents-list">{request.documents}</p>
+                  <h4>Documents Requested ({request.document_count || 0}):</h4>
+
+                  <div className="pr-documents-list">
+                    {(request.regular_doc_count || 0) > 0 && (
+                      <div>
+                        <p className="pr-documents-text"><strong>Regular Documents ({request.regular_doc_count}):</strong></p>
+                        <p className="pr-documents-text">{request.documents}</p>
+                      </div>
+                    )}
+                    {request.custom_documents && request.custom_documents.length > 0 && (
+                      <div className="pr-custom-docs-section">
+                        <p className="pr-custom-docs-title"><strong>Custom Documents ({request.custom_documents.length}):</strong></p>
+                        {request.custom_documents.map((customDoc, index) => (
+                          <p key={customDoc.id || index} className="pr-custom-doc-item">
+                            • {customDoc.doc_name}
+                            {customDoc.description && <span className="pr-custom-doc-desc"> - {customDoc.description}</span>}
+                          </p>
+                        ))}
+                      </div>
+                    )}
+                    {((!request.document_count || request.document_count === 0) && (!request.custom_documents || request.custom_documents.length === 0)) && (
+                      <p className="pr-documents-text">No documents</p>
+                    )}
+                  </div>
                 </div>
 
                 <div className="pr-cost-section">

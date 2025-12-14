@@ -211,6 +211,8 @@
   gap: 20px;
 }
 
+
+
 .pr-documents-section h4,
 .pr-remarks-section h4 {
   margin: 0 0 12px 0;
@@ -230,6 +232,30 @@
   border: 1px solid var(--color-input-border);
   font-size: var(--font-size-regular);
   font-family: var(--font-family-base);
+}
+
+.pr-documents-text {
+  margin: 0 0 8px 0;
+}
+
+.pr-custom-docs-section {
+  margin-top: 8px;
+}
+
+.pr-custom-docs-title {
+  margin: 0 0 8px 0;
+  font-weight: 600;
+  color: var(--color-black);
+}
+
+.pr-custom-doc-item {
+  margin: 0 0 4px 0;
+  color: var(--color-text-subtext);
+}
+
+.pr-custom-doc-desc {
+  color: var(--color-text-subtext);
+  font-style: italic;
 }
 
 .pr-cost-section {
