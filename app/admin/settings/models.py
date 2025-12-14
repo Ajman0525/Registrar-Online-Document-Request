@@ -110,3 +110,35 @@ class Admin:
             return None
         finally:
             cur.close()
+
+class Fee:
+    @staticmethod
+    def get_value(key):
+        """Fetch fee value by key."""
+        conn = g.db_conn
+        cur = conn.cursor()
+        try:
+            cur.execute("SELECT value FROM fee WHERE key = %s", (key,))
+            row = cur.fetchone()
+            return row[0] if row else 0.0
+        finally:
+            cur.close()
+
+    @staticmethod
+    def update_value(key, value):
+        """Update fee value."""
+        conn = g.db_conn
+        cur = conn.cursor()
+        try:
+            cur.execute("""
+                INSERT INTO fee (key, value) VALUES (%s, %s)
+                ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
+            """, (key, value))
+            conn.commit()
+            return True
+        except Exception as e:
+            conn.rollback()
+            print(f"Error updating fee: {e}")
+            return False
+        finally:
+            cur.close()
