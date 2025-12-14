@@ -10,7 +10,15 @@ from .models import ManageRequestModel
 role = "admin"
 
 def send_whatsapp_status_update(phone, full_name, request_id, status_update):
-    template_name = "status_update"
+    status_template_map = {
+        "PENDING": "odr_request_submitted", 
+        "IN-PROGRESS": "odr_processing_request", 
+        "DOC-READY": "odr_document_processed", 
+        "RELEASED": "odr_document_released", 
+        "REJECTED" : "odr_request_submitted" # The Whatsapp template for REJECTED status is still pending for approval, using the submitted template as a placeholder
+    }
+
+    template_name = status_template_map.get(status_update)
 
     components = [
         {
@@ -62,7 +70,7 @@ def update_request_status(request_id):
             return jsonify({"error": "Status is required"}), 400
 
         # Validate status
-        valid_statuses = ["UNCONFIRMED", "SUBMITTED", "PENDING", "IN-PROGRESS", "DOC-READY", "RELEASED", "REJECTED"]
+        valid_statuses = ["PENDING", "IN-PROGRESS", "DOC-READY", "RELEASED", "REJECTED"]
         if new_status not in valid_statuses:
             return jsonify({"error": "Invalid status"}), 400
 
