@@ -40,7 +40,7 @@ class ManageRequestModel:
 
             cur.execute(f"""
                 SELECT r.request_id, r.student_id, r.full_name, r.contact_number, r.email,
-                       r.preferred_contact, r.status, r.requested_at, r.completed_at, r.remarks,
+                       r.preferred_contact, r.status, r.requested_at, r.remarks,
                        r.total_cost, r.payment_status
                 FROM requests r
                 {join_assignments}
@@ -140,7 +140,6 @@ class ManageRequestModel:
                     "preferred_contact": r[5],
                     "status": r[6],
                     "requested_at": r[7].strftime("%Y-%m-%d %H:%M:%S") if r[7] else None,
-                    "completed_at": r[8].strftime("%Y-%m-%d %H:%M:%S") if r[8] else None,
                     "remarks": r[9],
                     "total_cost": r[10],
                     "payment_status": r[11],
@@ -543,7 +542,7 @@ class ManageRequestModel:
         cur = conn.cursor()
         try:
             cur.execute("""
-                SELECT request_id, student_id, full_name, contact_number, email, preferred_contact, status, requested_at, completed_at, remarks, total_cost, payment_status
+                SELECT request_id, student_id, full_name, contact_number, email, preferred_contact, status, requested_at, remarks, total_cost, payment_status
                 FROM requests
                 WHERE request_id = %s
             """, (request_id,))
@@ -561,7 +560,6 @@ class ManageRequestModel:
                 "preferred_contact": req[5],
                 "status": req[6],
                 "requested_at": req[7].strftime("%Y-%m-%d %H:%M:%S") if req[7] else None,
-                "completed_at": req[8].strftime("%Y-%m-%d %H:%M:%S") if req[8] else None,
                 "remarks": req[9],
                 "total_cost": req[10],
                 "payment_status": req[11]
