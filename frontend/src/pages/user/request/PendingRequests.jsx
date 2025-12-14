@@ -89,8 +89,26 @@ function PendingRequests({ onProceedToNewRequest, onBackToLogin }) {
     onProceedToNewRequest();
   };
 
+
   const handleCancelProceed = () => {
     setShowProceedModal(false);
+  };
+
+  const handleBackToLogin = async () => {
+    try {
+      // Clear the session on the server
+      await fetch("/api/clear-session", {
+        method: "POST",
+        headers: {
+          "X-CSRF-TOKEN": getCSRFToken(),
+        },
+        credentials: "include",
+      });
+    } catch (error) {
+      console.error("Error clearing session:", error);
+    }
+    // Navigate to landing page
+    window.location.href = "/user/Landing";
   };
 
 
@@ -113,10 +131,11 @@ function PendingRequests({ onProceedToNewRequest, onBackToLogin }) {
           <div className="pr-error-icon">⚠️</div>
           <h3>Error Loading Requests</h3>
           <p>{error}</p>
+
           <button onClick={fetchActiveRequests} className="pr-retry-button">
             Try Again
           </button>
-          <button onClick={onBackToLogin} className="pr-back-button">
+          <button onClick={handleBackToLogin} className="pr-back-button">
             Back to Login
           </button>
         </div>
@@ -210,11 +229,13 @@ function PendingRequests({ onProceedToNewRequest, onBackToLogin }) {
             </div>
           ))}
 
+
+
           <div className="pr-action-section">
             <button onClick={handleProceedToNewRequest} className="pr-proceed-button">
               Create New Request
             </button>
-            <button onClick={onBackToLogin} className="pr-back-button">
+            <button onClick={handleBackToLogin} className="pr-back-button">
               Back to Login
             </button>
           </div>
