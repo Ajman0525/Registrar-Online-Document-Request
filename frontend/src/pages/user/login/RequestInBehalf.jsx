@@ -110,6 +110,7 @@ function RequestInBehalf({ onNext, onBack, maskedPhone, setMaskedPhone, goBackTo
             return;
         }
 
+
         setLoading(true);
 
         try {
@@ -138,31 +139,37 @@ function RequestInBehalf({ onNext, onBack, maskedPhone, setMaskedPhone, goBackTo
             //     return;
             // }
 
-            // 2. Upload authorization letter
-            const formData = new FormData();
-            formData.append("file", selectedFile);
-            formData.append("firstname", Firstname);
-            formData.append("lastname", Lastname);
-            formData.append("number", WhatsappNo);
-            formData.append("requester_name", requesterName);
+            // 2. Store auth letter data for later upload
+            // Convert file to base64 for storage
+            const fileToBase64 = (file) => {
+                return new Promise((resolve, reject) => {
+                    const fileReader = new FileReader();
+                    fileReader.readAsDataURL(file);
+                    fileReader.onload = () => {
+                        resolve(fileReader.result.split(',')[1]); // Remove data:mime;base64, prefix
+                    };
+                    fileReader.onerror = error => reject(error);
+                });
+            };
 
-            const uploadResponse = await fetch("/user/upload-authletter", {
-                method: "POST",
-                body: formData
-            });
+            const fileData = await fileToBase64(selectedFile);
+            const authLetterData = {
+                fileName: selectedFile.name,
+                fileType: selectedFile.type,
+                fileData: fileData,
+                firstname: Firstname,
+                lastname: Lastname,
+                number: WhatsappNo,
+                requesterName: requesterName
+            };
+            
+            // Store in sessionStorage for use in request flow
+            sessionStorage.setItem("authLetterData", JSON.stringify(authLetterData));
+            console.log("Auth letter data stored for later upload");
 
-            const uploadData = await uploadResponse.json();
-
-            if (!uploadResponse.ok || !uploadData.success) {
-                setError(uploadData.notification || "Failed to upload authorization letter.");
-                triggerShake();
-                setLoading(false);
-                return;
-            }
-
-            console.log("File uploaded:", uploadData.file_url);
-
-            // 3. Proceed to OTP
+            // 3. Set user type and proceed to OTP
+            sessionStorage.setItem("user_type", "outsider");
+            localStorage.setItem("user_type", "outsider");
             setMaskedPhone(verifyData.masked_phone);
             onNext(); // proceed to OTP
 

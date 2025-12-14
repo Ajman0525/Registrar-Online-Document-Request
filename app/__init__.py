@@ -13,17 +13,18 @@ from datetime import timedelta
 from dotenv import load_dotenv
 from app.db_init import initialize_db
 
-from app.db_init import initialize_db
+from app.db_init import initialize_and_populate
+
+
 
 db_pool = None
 
 def create_app(test_config=None):
     
     #initialize the database (create tables if not exist)
-    initialize_db()
+    #initialize_and_populate()
     load_dotenv()
-    
-    
+
     #in production
     app = Flask(__name__, instance_relative_config=True, static_folder="static/react", template_folder="templates")
   

@@ -1,22 +1,31 @@
-
 import { useState, useEffect, useCallback, useRef } from "react";
 import Documents from "./Documents";
 import RequestList from "./RequestList";
 import UploadRequirements from "./UploadRequirements";
 import PreferredContact from "./PreferredContact";
-
+import PendingRequests from "./PendingRequests";
 import Summary from "./Summary.jsx";
 import SubmitRequest from "./SubmitRequest.jsx";
+
 import ConfirmModal from "../../../components/user/ConfirmModal";
+import LoadingSpinner from "../../../components/common/LoadingSpinner";
 import { getCSRFToken } from "../../../utils/csrf";
 
 
 
+
 function RequestFlow() {
-  const [step, setStep] = useState("documents");
+
+  const [step, setStep] = useState("documents"); // Start with documents, will change based on user type
   const [trackingId, setTrackingId] = useState("");
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState(null);
+
+  const [hasActiveRequests, setHasActiveRequests] = useState(false);
+  const [availableDocuments, setAvailableDocuments] = useState([]);
+
+  const [userType, setUserType] = useState(null); // null = unknown, 'student' or 'outsider'
+
 
   // Progress indicator steps
   const steps = [
@@ -30,6 +39,47 @@ function RequestFlow() {
 
   const currentStepIndex = steps.findIndex(s => s.key === step);
 
+
+  // Get user type on component mount
+  useEffect(() => {
+    const getUserType = () => {
+      const localUserType = localStorage.getItem("user_type");
+      const sessionUserType = sessionStorage.getItem("user_type");
+      const storedUserType = localUserType || sessionUserType || "student";
+      setUserType(storedUserType);
+      console.log("User type detected:", storedUserType, "local:", localUserType, "session:", sessionUserType);
+      return storedUserType;
+    };
+
+    // Get initial user type
+    const initialUserType = getUserType();
+
+    // Listen for changes to user_type in both storage types
+    const handleStorageChange = (e) => {
+      if (e.key === "user_type") {
+        const newUserType = getUserType();
+        console.log("User type changed via storage:", newUserType);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+
+    // Also check sessionStorage changes (storage event doesn't fire for sessionStorage)
+    const intervalId = setInterval(() => {
+      const currentUserType = sessionStorage.getItem("user_type") || localStorage.getItem("user_type");
+      if (currentUserType && currentUserType !== initialUserType) {
+        console.log("User type changed via storage:", currentUserType);
+        getUserType();
+      }
+    }, 200); // Check more frequently
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(intervalId);
+    };
+  }, []);
+
   // Centralized state for all request data
   const [requestData, setRequestData] = useState({
     documents: [], // {doc_id, doc_name, cost, quantity}
@@ -37,7 +87,8 @@ function RequestFlow() {
     studentInfo: {
       full_name: "",
       contact_number: "",
-      email: ""
+      email: "",
+      college_code: ""
     },
     preferredContact: "",
     totalPrice: 0,
@@ -86,7 +137,8 @@ function RequestFlow() {
     return Array.isArray(requestData.documents) ? requestData.documents : [];
   }, [requestData.documents]);
 
-  // Load student data on component mount
+
+  // Load student data and documents on component mount
   useEffect(() => {
     const fetchStudentData = async () => {
       try {
@@ -105,9 +157,15 @@ function RequestFlow() {
             studentInfo: {
               full_name: data.student_data.student_name || "",
               contact_number: data.student_data.student_contact || "",
-              email: data.student_data.email || ""
+              email: data.student_data.email || "",
+              college_code: data.student_data.college_code || ""
             }
           }));
+        }
+        
+        // Store available documents for Documents component
+        if (data.documents) {
+          setAvailableDocuments(data.documents);
         }
       } catch (error) {
         console.error("Error fetching student data:", error);
@@ -117,9 +175,78 @@ function RequestFlow() {
     fetchStudentData();
   }, []);
 
+  // Initialize requirements state when documents change
+  useEffect(() => {
+    if (requestData.documents.length > 0 && Object.keys(requestData.requirements).length === 0) {
+      // Initialize requirements with null values for each document's requirements
+      // This will be populated by the UploadRequirements component when it fetches the requirements
+      setRequestData(prev => ({
+        ...prev,
+        requirements: {}
+      }));
+    }
+  }, [requestData.documents.length]); // Only depend on documents length, not the whole requirements object
+
+
+
+
+  // Check for active requests on component mount
+  useEffect(() => {
+    const checkActiveRequests = async () => {
+      try {
+        const response = await fetch("/api/check-active-requests", {
+          method: "GET",
+          headers: {
+            "X-CSRF-TOKEN": getCSRFToken(),
+          },
+          credentials: "include",
+        });
+
+        const data = await response.json();
+      
+        if (data.status === "success") {
+          const hasActive = data.active_requests && data.active_requests.length > 0;
+          setHasActiveRequests(hasActive);
+          
+          // If active requests exist, go to pending requests page
+          // If no active requests, go directly to documents
+          if (hasActive) {
+            setStep("pendingRequests");
+          } else {
+            setStep("documents");
+          }
+        } else {
+          // If error checking active requests, proceed to documents
+          setStep("documents");
+        }
+      } catch (error) {
+        // If error, proceed to documents
+        setStep("documents");
+      }
+    };
+
+    // Only check for regular students (not outsiders)
+    if (userType === "student") {
+      console.log("Regular student detected - checking for active requests");
+      checkActiveRequests();
+    } else if (userType === "outsider") {
+      // Outsiders skip the active requests check entirely
+      console.log("Outsider user detected - skipping active requests check");
+      setStep("documents");
+    } else {
+      // Unknown user type - default to documents
+      console.log("Unknown user type, defaulting to documents:", userType);
+      setStep("documents");
+    }
+  }, [userType]);
+
+
   // Step navigation handlers
   const goNextStep = useCallback(() => {
     switch (step) {
+      case "pendingRequests":
+        setStep("documents");
+        break;
       case "documents":
         setStep("requestList");
         break;
@@ -140,12 +267,28 @@ function RequestFlow() {
     }
   }, [step]);
 
+  // Handler for when user wants to proceed to new request from pending requests
+  const handleProceedToNewRequest = useCallback(() => {
+    setStep("documents");
+  }, []);
 
-
-
-
-
-
+  // Handler for when user wants to go back to login
+  const handleBackToLogin = useCallback(async () => {
+    try {
+      await fetch("/api/clear-session", {
+        method: "POST",
+        headers: {
+          "X-CSRF-TOKEN": getCSRFToken(),
+        },
+        credentials: "include",
+      });
+      // Redirect to login page or reload the page
+      window.location.reload();
+    } catch (error) {
+      // Force reload even if logout fails
+      window.location.reload();
+    }
+  }, []);
 
   const goBackStep = useCallback(() => {
     // If modal is showing, don't proceed with navigation
@@ -154,6 +297,10 @@ function RequestFlow() {
     }
 
     switch (step) {
+      case "pendingRequests":
+        // From pending requests, go back to check active requests (which will redirect appropriately)
+        setStep("checkActiveRequests");
+        break;
       case "requestList":
         // Check if there are any uploaded files that would be lost
         const hasUploadedFiles = Object.values(requestData.requirements).some(
@@ -250,7 +397,6 @@ function RequestFlow() {
       
       goNextStep();
     } catch (error) {
-      console.error("Error handling request list proceed:", error);
       alert("Error processing your request. Please try again.");
     }
   }, [updateRequestData, goNextStep]);
@@ -300,6 +446,7 @@ function RequestFlow() {
     goNextStep();
   };
 
+
   // Handle final submission
   const handleFinalSubmission = async () => {
     try {
@@ -342,11 +489,16 @@ function RequestFlow() {
 
       const requirementsData = await Promise.all(requirements);
 
+
       const submissionData = {
         student_info: requestData.studentInfo,
         documents: requestData.documents.map(doc => ({
           doc_id: doc.doc_id,
-          quantity: doc.quantity || 1
+          quantity: doc.quantity || 1,
+          doc_name: doc.doc_name || "",
+          description: doc.description || "",
+          cost: doc.cost || 0,
+          isCustom: doc.isCustom || false
         })),
         requirements: requirementsData,
         total_price: requestData.totalPrice,
@@ -367,40 +519,98 @@ function RequestFlow() {
 
       const data = await response.json();
       if (data.success) {
-        setTrackingId(data.request_id);
+        const requestId = data.request_id;
+        setTrackingId(requestId);
+
+        // Upload auth letter if it exists (for outsider users)
+        const authLetterData = sessionStorage.getItem("authLetterData");
+        if (authLetterData) {
+          try {
+            const parsedAuthData = JSON.parse(authLetterData);
+            
+            // Convert base64 to blob for upload
+            const byteCharacters = atob(parsedAuthData.fileData);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+              byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: parsedAuthData.fileType });
+
+            const formData = new FormData();
+            formData.append("file", blob, parsedAuthData.fileName);
+            formData.append("firstname", parsedAuthData.firstname);
+            formData.append("lastname", parsedAuthData.lastname);
+            formData.append("number", parsedAuthData.number);
+            formData.append("requester_name", parsedAuthData.requesterName);
+            formData.append("request_id", requestId);
+
+            const authUploadResponse = await fetch("/user/upload-authletter", {
+              method: "POST",
+              body: formData
+            });
+
+            const authUploadData = await authUploadResponse.json();
+            
+            if (authUploadResponse.ok && authUploadData.success) {
+              console.log("Auth letter uploaded successfully with request ID:", requestId);
+              // Clear stored auth letter data after successful upload
+              sessionStorage.removeItem("authLetterData");
+            } else {
+              console.warn("Auth letter upload failed:", authUploadData.notification);
+            }
+          } catch (authError) {
+            console.error("Error uploading auth letter:", authError);
+          }
+        }
+
         goNextStep();
       } else {
         alert(`Error: ${data.notification}`);
       }
     } catch (error) {
-      console.error("Error completing request:", error);
       alert("An error occurred while completing the request.");
     }
   };
 
+
   return (
     <>
-      {/* Progress Indicator - only for non-documents steps */}
-      {step !== "documents" && (
-        <div className="request-progress-container">
-          <div className="request-progress-bar">
-            {steps.map((stepInfo, index) => (
-              <div
-                key={stepInfo.key}
-                className={`progress-step ${index <= currentStepIndex ? 'active' : ''} ${index < currentStepIndex ? 'completed' : ''}`}
-              >
-                <div className="step-circle">
-                  {index < currentStepIndex ? '✓' : index + 1}
-                </div>
-                <div className="step-label">{stepInfo.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
+
+      {step === "checkActiveRequests" && (
+        <LoadingSpinner message="Checking for active requests..." />
       )}
+      
+      {step === "pendingRequests" && (
+        <PendingRequests
+          onProceedToNewRequest={handleProceedToNewRequest}
+          onBackToLogin={handleBackToLogin}
+        />
+      )}
+
+
+      {/* Progress Indicator - only for non-documents, non-checkActiveRequests, and non-pendingRequests steps */}
+            {step !== "documents" && step !== "checkActiveRequests" && step !== "pendingRequests" && (
+              <div className="request-progress-container">
+                <div className="request-progress-bar">
+                  {steps.map((stepInfo, index) => (
+                    <div
+                      key={stepInfo.key}
+                      className={`progress-step ${index <= currentStepIndex ? 'active' : ''} ${index < currentStepIndex ? 'completed' : ''}`}
+                    >
+                      <div className="step-circle">
+                        {index < currentStepIndex ? '✓' : index + 1}
+                      </div>
+                      <div className="step-label">{stepInfo.label}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
       {step === "documents" && (
         <Documents
+          availableDocuments={availableDocuments}
           selectedDocs={getDocuments()}
           setSelectedDocs={setDocuments}
           onNext={handleDocumentsNext}
