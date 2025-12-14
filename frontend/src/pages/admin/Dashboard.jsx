@@ -282,19 +282,6 @@ function Dashboard() {
   if (loading) {
     return (
       <div className="dashboard-content">
-        {/* Header Skeleton */}
-        <div className="dashboard-header-wrapper">
-          <div className="header-content">
-            <div className="skeleton skeleton-title" style={{ width: '300px', height: '32px' }}></div>
-
-            <div className="header-controls">
-              <div className="skeleton skeleton-search" style={{ width: '300px', height: '40px' }}></div>
-              <div className="skeleton skeleton-circle" style={{ width: '40px', height: '40px' }}></div>
-              <div className="skeleton skeleton-profile" style={{ width: '150px', height: '40px' }}></div>
-            </div>
-          </div>
-        </div>
-
         {/* Stat Cards Skeleton */}
         <div className="stat-cards-content">
           <div className="stat-cards-wrapper scroll-hide">
