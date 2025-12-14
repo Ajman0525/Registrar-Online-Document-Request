@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Transactions.css';
-import TotalTransactionsIcon from "../../../components/icons/TotalTransactionsIcon";
+import TotalRequestsIcon from "../../../components/icons/TotalRequestsIcon";
+import ProcessedIcon from '../../../components/icons/ProcessedIcon';
 import AdminFeeIcon from "../../../components/icons/AdminFeeIcon";
-import UnpaidIcon from "../../../components/icons/UnpaidIcons";
 import PaidIcon from "../../../components/icons/PaidIcon";
 import SearchIcon from "../../../components/icons/SearchIcon";
 
@@ -25,6 +25,7 @@ const SummaryCard = ({ title, icon: Icon, value, subText, trend }) => (
 );
 
 function Transactions() {
+  const navigate = useNavigate();
   const [transactions, setTransactions] = useState([]);
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
@@ -56,7 +57,22 @@ function Transactions() {
     if (endDate) params.append('end_date', endDate);
 
     try {
-      /* fetch transactions from the backend */
+      const res = await fetch(`/api/admin/transactions?${params.toString()}`, {
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+      });
+
+      if (res.status === 401) {
+        navigate('/admin/login');
+        return;
+      }
+
+      const data = await res.json();
+      if (data.transactions) {
+        setTransactions(data.transactions);
+        setTotal(data.total);
+        setTotalPages(data.total_pages || 1);
+      }
     } catch (error) {
       console.error("Error fetching transactions:", error);
     }
@@ -72,6 +88,19 @@ function Transactions() {
 
     try {
       /* fetch summary from the backend */
+      const res = await fetch('/api/admin/transactions/summary?'+params.toString(), {
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+      });
+
+      if (res.status === 401) {
+        return;
+      }
+
+      if (res.ok) {
+        const data = await res.json();
+        setSummary(data);
+      }
     } catch (error) {
       console.error("Error fetching summary:", error);
     }
@@ -114,8 +143,28 @@ function Transactions() {
     const csvRows = [];
     const headers = ['Request ID', 'User', 'Amount', 'Payment Date'];
     /* Add the headers row to the csv row array */
+    csvRows.push(headers.join(','));
+
     /* Loop thhrough transactions and add each as a row */
+    transactions.forEach((t) => {
+      csvRows.push(
+        [
+          t.request_id,
+          `"${t.full_name} (${t.student_id})"`,
+          t.amount,
+          t.payment_date || ''
+        ].join(',')
+      );
+    });
     /* Download the csv file */
+    const csvString = csvRows.join('\n');
+    const blob = new Blob([csvString], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'transactions.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
   }
 
   /* Downloads the current transactions list as a pdf file */
@@ -124,8 +173,19 @@ function Transactions() {
   }
 
   /* Downloads invoice for a specific transaction */
-  function downloadInvoice() {
-    
+  function downloadInvoice(tx) {
+    const invoiceWindow = window.open('', '_blank');
+    if (invoiceWindow) {
+      invoiceWindow.document.title = `Invoice ${tx.transaction_id}`;
+      invoiceWindow.document.body.innerHTML = `
+        <h1>Invoice: ${tx.transaction_id}</h1>
+        <p>Request ID: ${tx.request_id}</p>
+        <p>User: ${tx.full_name} (${tx.student_id})</p>
+        <p>Amount: ₱${tx.amount.toFixed(2)}</p>
+        <p>Payment Date: ${tx.payment_date || '-'}</p>
+      `;
+      invoiceWindow.print();
+    }
   }
 
   return (
@@ -150,28 +210,28 @@ function Transactions() {
         <div className="summary-cards-wrapper">
           <div className="summary-card-inner-scroll">
             <SummaryCard 
-              title="Total Amount (Paid)" 
-              icon={PaidIcon} 
-              value={`₱${(summary?.total_amount_completed || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-              subText="Total revenue from requests"
-            />
-            <SummaryCard 
-              title="Total Transactions" 
-              icon={TotalTransactionsIcon} 
+              title="Total Requests" 
+              icon={TotalRequestsIcon} 
               value={summary?.total_transactions || 0}
               subText={startDate || endDate ? "Transactions in selected period" : "All time transactions"}
             />
             <SummaryCard 
-              title="Total Admin Fee" 
+              title="Paid Requests" 
+              icon={PaidIcon} 
+              value={summary?.total_paid || 0}
+              subText="Completed payments"
+            />
+            <SummaryCard 
+              title="Total Amount Paid" 
+              icon={ProcessedIcon} 
+              value={`₱${(summary?.total_amount_completed || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+              subText="Total revenue from requests"
+            />
+            <SummaryCard 
+              title="Total Admin Fee Collected" 
               icon={AdminFeeIcon} 
               value={`₱${totalAdminFee.toLocaleString()}`}
               subText="Accumulated fees"
-            />
-            <SummaryCard 
-              title="Unpaid Requests" 
-              icon={UnpaidIcon} 
-              value={summary?.total_unpaid || 0}
-              subText="Pending payments"
             />
           </div>
         </div>
@@ -218,14 +278,13 @@ function Transactions() {
                 <th>User</th>
                 <th>Amount</th>
                 <th>Payment Date</th>
-                <th>Status</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {transactions.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-gray-500">No transactions found</td>
+                  <td colSpan={5} className="px-4 py-8 text-center text-gray-500">No transactions found</td>
                 </tr>
               )}
               {transactions.map((tx) => (
@@ -242,13 +301,6 @@ function Transactions() {
                   </td>
                   <td className="td-date">
                     {tx.payment_date ? new Date(tx.payment_date).toLocaleDateString() : '-'}
-                  </td>
-                  <td className="td-status">
-                    <span className={`status-badge ${
-                      tx.paid ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                    }`}>
-                      {tx.paid ? 'Paid' : 'Unpaid'}
-                    </span>
                   </td>
                   <td className="td-actions">
                     <button 

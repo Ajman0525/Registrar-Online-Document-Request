@@ -17,12 +17,11 @@ def get_transactions():
 		limit = int(request.args.get('limit', 20))
 		start_date = request.args.get('start_date')
 		end_date = request.args.get('end_date')
-		status = request.args.get('status')
 		search = request.args.get('search')
 		sort = request.args.get('sort', 'desc')
 
 		result = TransactionsModel.get_transactions(
-				page=page, limit=limit, start_date=start_date, end_date=end_date, status=status, search=search, sort=sort
+				page=page, limit=limit, start_date=start_date, end_date=end_date, search=search, sort=sort
 		)
 		return jsonify({
 				'transactions': result['transactions'], 

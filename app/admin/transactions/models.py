@@ -4,12 +4,12 @@ from app import db_pool
 
 class TransactionsModel:
   @staticmethod
-  def get_transactions(page=1, limit=20, start_date=None, end_date=None, status=None, search=None, sort='desc'):
+  def get_transactions(page=1, limit=20, start_date=None, end_date=None, search=None, sort='desc'):
     conn = db_pool.getconn()
     cur = conn.cursor()
     try:
       base_query = """
-        SELECT request_id, student_id, full_name, total_cost, completed_at, status
+        SELECT request_id, student_id, full_name, total_cost, payment_status, payment_date
         FROM requests
         WHERE TRUE
       """
@@ -21,11 +21,7 @@ class TransactionsModel:
       if end_date:
         base_query += " AND requested_at <= %s"
         params.append(end_date)
-      if status:
-        if status.lower() == 'paid':
-          base_query += " AND payment_status = TRUE"
-        elif status.lower() == 'unpaid':
-          base_query += " AND payment_status = FALSE"
+      base_query += " AND payment_status = TRUE"
       if search:
         # Search by request id, student id or full_name
         base_query += " AND (CAST(request_id AS TEXT) ILIKE %s OR student_id ILIKE %s OR full_name ILIKE %s)"
@@ -36,6 +32,8 @@ class TransactionsModel:
       count_query = f"SELECT COUNT(*) FROM ({base_query}) as q"
       cur.execute(count_query, tuple(params))
       total = cur.fetchone()[0]
+
+      total_pages = (total + limit - 1) // limit if limit > 0 else 1
 
       offset = (page - 1) * limit
       paginated_query = f"{base_query} ORDER BY requested_at {sort_order} LIMIT %s OFFSET %s"
@@ -52,13 +50,13 @@ class TransactionsModel:
           'full_name': row[2],
           'amount': float(row[3]) if row[3] else 0.0,
           'paid': bool(row[4]),
-          'payment_date': row[5].isoformat() if row[5] else None,
-          'request_status': row[6]
+          'payment_date': row[5].isoformat() if row[5] else None
         })
 
       return {
         'transactions': results,
-        'total': total
+        'total': total,
+        'total_pages': total_pages
       }
     except Exception as e:
       current_app.logger.error(f"Error fetching transactions: {e}")
@@ -103,9 +101,15 @@ class TransactionsModel:
       cur.execute(query_count, tuple(params))
       total_count = cur.fetchone()[0]
 
+      # Total Paid Requests
+      query_paid_count = f"SELECT COUNT(*) {base_query} AND payment_status = TRUE"
+      cur.execute(query_paid_count, tuple(params))
+      total_paid = cur.fetchone()[0]
+
       return {
         'total_amount_completed': float(total_amount),
-        'total_transactions': total_count
+        'total_transactions': total_count,
+        'total_paid': total_paid
       }
     finally:
       cur.close()
