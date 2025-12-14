@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import html2pdf from 'html2pdf.js';
 import './Transactions.css';
 import TotalRequestsIcon from "../../../components/icons/TotalRequestsIcon";
 import ProcessedIcon from '../../../components/icons/ProcessedIcon';
-import AdminFeeIcon from "../../../components/icons/AdminFeeIcon";
+import AdminFeeIcon from "../../../components/icons/UnpaidIcon";
 import PaidIcon from "../../../components/icons/PaidIcon";
 import SearchIcon from "../../../components/icons/SearchIcon";
 import CalendarIcon from "../../../components/icons/CalendarIcon";
@@ -14,7 +15,7 @@ const SummaryCard = ({ title, icon: Icon, value, subText, trend }) => (
   <div className="summary-card">
     <div className="card-header">
       <div className="card-icon">
-        <Icon className="card-metric-icon" />
+        <Icon className="icon" width="28" height="28" />
       </div>
       <p className="card-title">{title}</p>
     </div>
@@ -245,14 +246,37 @@ function Transactions() {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'transactions.csv';
+
+    let filename = 'Transactions.csv';
+    const timeframe = getTimeframeString();
+    if (timeframe) {
+      filename = `Transactions_${timeframe.replace(/,/g, '').replace(/\s+/g, '_')}.csv`;
+    }
+    a.download = filename;
     a.click();
     window.URL.revokeObjectURL(url);
   }
 
   /* Downloads the current transactions list as a pdf file */
   function downloadPDF() {
-    window.print();
+    const element = document.querySelector('.transactions-page');
+    
+    let filename = 'Transactions.pdf';
+    const timeframe = getTimeframeString();
+    if (timeframe) {
+      filename = `Transactions_${timeframe.replace(/,/g, '').replace(/\s+/g, '_')}.pdf`;
+    }
+
+    const opt = {
+      margin: 0.5,
+      filename: filename,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'cm', format: 'a4', orientation: 'portrait' }
+    };
+
+    // Generate PDF
+    html2pdf().set(opt).from(element).save();
   }
 
   return (

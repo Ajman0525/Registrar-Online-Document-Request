@@ -95,18 +95,13 @@
 
 .card-icon {
   margin-right: 10px;
-  background-color: var(--color-primary, #a41c2c);
-  box-shadow: 0 0 0 8px var(--color-primary, #a41c2c);
-  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.card-metric-icon {
-  width: 20px;
-  height: 20px;
-  color: var(--color-secondary, #F3D358);
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  color: var(--color-secondary);
 }
 
 .card-title {
@@ -711,6 +706,12 @@
     background-color: white !important;
     background: white !important;
   }
+
+  /* Specify font */
+  body, .transactions-page {
+    font-family: Arial, sans-serif;
+  } 
+
 
   /* Hide elements during printing */
   .dashboard-header-wrapper, .summary-cards-content, .transactions-pagination, 
