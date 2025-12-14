@@ -108,7 +108,7 @@ function PendingRequests({ onProceedToNewRequest, onBackToLogin }) {
       console.error("Error clearing session:", error);
     }
     // Navigate to landing page
-    window.location.href = "/user/Landing";
+    window.location.href = "/user/login";
   };
 
 
