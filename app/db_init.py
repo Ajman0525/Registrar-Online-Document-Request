@@ -205,6 +205,15 @@ def ready_open_request_restriction_table():
    """
    execute_query(query)
 
+def ready_fee_table():
+   query = """
+   CREATE TABLE IF NOT EXISTS fee (
+       key VARCHAR(50) PRIMARY KEY,
+       value FLOAT NOT NULL
+   )
+   """
+   execute_query(query)
+
     
  
 
@@ -344,6 +353,12 @@ def insert_sample_data():
            req_req_links_values
        )
 
+       # Insert default admin_fee if it doesn't exist
+       cur.execute(
+           "INSERT INTO fee (key, value) VALUES (%s, %s) ON CONFLICT (key) DO NOTHING",
+           ('admin_fee', '10.00')
+       )
+
        conn.commit()
        print("Sample data inserted successfully.")
    except Exception as e:
@@ -372,6 +387,7 @@ def initialize_db():
    ready_logs_table()
    ready_admins_table()
    ready_open_request_restriction_table()
+   ready_fee_table()
    #insert_sample_data()
    print("Database and tables initialized successfully.")
 

@@ -41,6 +41,13 @@ class TransactionsModel:
       cur.execute(paginated_query, tuple(params))
       rows = cur.fetchall()
 
+      # Fetch current admin fee from settings
+      cur.execute("SELECT value FROM fee WHERE key = 'admin_fee'")
+      fee_row = cur.fetchone()
+      current_admin_fee = float(fee_row[0]) if fee_row else 0.0
+
+      print(f"Admin Fee fetched: {current_admin_fee}")
+
       results = []
       for row in rows:
         results.append({
@@ -50,7 +57,8 @@ class TransactionsModel:
           'full_name': row[2],
           'amount': float(row[3]) if row[3] else 0.0,
           'paid': bool(row[4]),
-          'payment_date': row[5].isoformat() if row[5] else None
+          'payment_date': row[5].isoformat() if row[5] else None,
+          'admin_fee': current_admin_fee
         })
 
       return {
