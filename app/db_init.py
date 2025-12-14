@@ -72,6 +72,7 @@ def execute_query(query, params=None):
 # ==========================
 
 
+
 #dummy student table
 def ready_students_table():
    query = """
@@ -80,13 +81,27 @@ def ready_students_table():
        full_name VARCHAR(100) NOT NULL,
        contact_number VARCHAR(20),
        email VARCHAR(100),
-       liability_status BOOLEAN DEFAULT FALSE
+       liability_status BOOLEAN DEFAULT FALSE,
+       firstname VARCHAR(50) NOT NULL,
+       lastname VARCHAR(50) NOT NULL,
+       college_code VARCHAR(20)
    )
    """
    execute_query(query)
 
-
-
+def ready_auth_letters_table():
+   query = """
+   CREATE TABLE IF NOT EXISTS auth_letters (
+       id VARCHAR(200) PRIMARY KEY,
+       created_at TIMESTAMP DEFAULT NOW(),
+       firstname VARCHAR(50) NOT NULL,
+       lastname VARCHAR(50) NOT NULL,
+       file_url VARCHAR(255) NOT NULL,
+       number VARCHAR(20) NOT NULL,
+       requester_name VARCHAR(100) NOT NULL
+   )
+   """
+   execute_query(query)
 
 def ready_requirements_table():
    query = """
@@ -115,12 +130,13 @@ def ready_documents_table():
 def ready_document_requirements_table():
    query = """
    CREATE TABLE IF NOT EXISTS document_requirements (
-       doc_id VARCHAR(10) REFERENCES documents(doc_id) ON DELETE CASCADE,
-       req_id VARCHAR(10) REFERENCES requirements(req_id) ON DELETE CASCADE,
+       doc_id VARCHAR(200) REFERENCES documents(doc_id) ON DELETE CASCADE,
+       req_id VARCHAR(200) REFERENCES requirements(req_id) ON DELETE CASCADE,
        PRIMARY KEY (doc_id, req_id)
    )
    """
    execute_query(query)
+
 
 
 def ready_requests_table():
@@ -137,7 +153,8 @@ def ready_requests_table():
        total_cost NUMERIC(10,2) DEFAULT 0.00,
        requested_at TIMESTAMP DEFAULT NOW(),
        remarks VARCHAR(255),
-       order_type varchar(20)
+       order_type varchar(20),
+       college_code VARCHAR(20) NOT NULL
    )
    """
    execute_query(query)
@@ -148,7 +165,7 @@ def ready_request_documents_table():
    query = """
    CREATE TABLE IF NOT EXISTS request_documents (
        request_id VARCHAR(15) REFERENCES requests(request_id) ON DELETE CASCADE,
-       doc_id VARCHAR(10) REFERENCES documents(doc_id) ON DELETE CASCADE,
+       doc_id VARCHAR(200),
        quantity INTEGER DEFAULT 1,
        PRIMARY KEY (request_id, doc_id)
    )
@@ -169,7 +186,7 @@ def ready_request_requirements_links_table():
    query = """
    CREATE TABLE IF NOT EXISTS request_requirements_links (
        request_id VARCHAR(15) REFERENCES requests(request_id) ON DELETE CASCADE,
-       requirement_id VARCHAR(10) REFERENCES requirements(req_id) ON DELETE CASCADE,
+       requirement_id VARCHAR(200) REFERENCES requirements(req_id) ON DELETE CASCADE,
        file_path VARCHAR(255) NOT NULL,
        uploaded_at TIMESTAMP DEFAULT NOW(),
        PRIMARY KEY (request_id, requirement_id)
@@ -247,6 +264,20 @@ def ready_admin_settings_table():
        key VARCHAR(100) NOT NULL,
        value TEXT NOT NULL,
        PRIMARY KEY (admin_id, key)
+    )
+    """
+   execute_query(query)
+
+def ready_others_docs_table():
+   query = """
+   CREATE TABLE IF NOT EXISTS others_docs (
+       id SERIAL PRIMARY KEY,
+       request_id VARCHAR(15) REFERENCES requests(request_id) ON DELETE CASCADE,
+       student_id VARCHAR(20) REFERENCES students(student_id) ON DELETE CASCADE,
+       document_name VARCHAR(500) NOT NULL,
+       document_description VARCHAR(1000),
+       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
    )
    """
    execute_query(query)
@@ -281,30 +312,29 @@ def create_performance_indexes():
 
 
 
+
 # ==========================
-# SAMPLE DATA (OPTIONAL)
+# SAMPLE DATA FOR INDEPENDENT TABLES
 # ==========================
 
 
-def insert_sample_data():
+def populate_independent_tables():
+   """Populate all tables except request-related ones."""
    conn = get_connection()
    cur = conn.cursor()
    try:
-       # Students
+       # Students data
        student_values = [
-           ("2025-1011", "Juan Dela Cruz", "09171234567", "juan@example.com", False),
-           ("2025-1012", "Maria Clara", "09179876543", "maria@example.com", True),
-           ("2025-1013", "Maria Juan", "09179876543", "maria@example.com", True),
-           ("2025-1014", "Maria Mendoza", "09179876543", "maria@example.com", True),
-           ("2025-1015", "Maria Cruz", "09179876543", "maria@example.com", True),
-           ("2025-1017", "Maria Juan", "09179876543", "maria@example.com", False),
-           ("2025-1018", "Maria Mendoza", "09179876543", "maria@example.com", False),
-           ("2025-1019", "Maria Cruz", "09179876543", "maria@example.com", True)
+           ("2025-1011", "John Smith", "09171234567", "john.smith@example.com", False, "John", "Smith", "CCS"),
+           ("2025-1012", "Maria Garcia", "09172345678", "maria.garcia@example.com", True, "Maria", "Garcia", "COE"),
+           ("2025-1013", "David Johnson", "09173456789", "david.johnson@example.com", False, "David", "Johnson", "CAS"),
+           ("2025-1014", "Emma Wilson", "09174567890", "emma.wilson@example.com", True, "Emma", "Wilson", "CBA"),
+           ("2025-1015", "Michael Brown", "09175678901", "michael.brown@example.com", False, "Michael", "Brown", "CCS")
        ]
        extras.execute_values(
            cur,
            """
-           INSERT INTO students (student_id, full_name, contact_number, email, liability_status)
+           INSERT INTO students (student_id, full_name, contact_number, email, liability_status, firstname, lastname, college_code)
            VALUES %s
            ON CONFLICT (student_id) DO NOTHING
            """,
@@ -312,118 +342,95 @@ def insert_sample_data():
        )
 
 
-       # Requirements
+       # Requirements data
        req_values = [
-           ("REQ0001", "Valid ID"),
-           ("REQ0002", "Proof of Address"),
-           ("REQ0003", "Recent Photograph")
+           ("REQ0001", "Valid Student ID"),
+           ("REQ0002", "Authorization Letter"),
+           ("REQ0003", "Recent Passport Size Photo"),
+           ("REQ0004", "Birth Certificate (PSA)"),
+           ("REQ0005", "Previous Transcript of Records"),
+           ("REQ0006", "Certificate of Enrollment"),
+           ("REQ0007", "Proof of Payment"),
+           ("REQ0008", "Diploma/Certificate of Completion"),
+           ("REQ0009", "Official Request Form"),
+           ("REQ0010", "Marriage Certificate (if applicable)")
        ]
        cur.executemany(
-           "INSERT INTO requirements (req_id, requirement_name) VALUES (%s, %s) ON CONFLICT DO NOTHING",
+           "INSERT INTO requirements (req_id, requirement_name) VALUES (%s, %s) ON CONFLICT (req_id) DO NOTHING",
            req_values
        )
 
 
-       # Documents
+       # Documents data
        doc_values = [
-           ("DOC0001", "Certificate of Residency", "Issued by Barangay for proof of residence", "https://example.com/logos/residency.png", 50.00),
-           ("DOC0002", "Barangay Clearance", "Clearance certificate for local residents", "https://example.com/logos/clearance.png", 75.00),
-           ("DOC0003", "Business Permit", "Required for business registration", "https://example.com/logos/business.png", 100.00)
+           ("DOC0001", "Official Transcript of Records", "Complete academic record with grades and units earned", "/assets/logos/transcript.png", 100.00, False),
+           ("DOC0002", "Diploma/Certificate of Completion", "Official proof of degree or program completion", "/assets/logos/diploma.png", 150.00, False),
+           ("DOC0003", "Certificate of Enrollment", "Proof of current enrollment status", "/assets/logos/enrollment.png", 50.00, False),
+           ("DOC0004", "Good Moral Certificate", "Character reference for employment or further education", "/assets/logos/moral.png", 75.00, False),
+           ("DOC0005", "Certification of Grades", "Summary of academic performance for specific period", "/assets/logos/grades.png", 60.00, False),
+           ("DOC0006", "Authentication of Documents", "Official verification of document authenticity", "/assets/logos/authentication.png", 80.00, False),
+           ("DOC0007", "Replacement of Lost Diploma", "Duplicate diploma for lost or damaged original", "/assets/logos/replacement.png", 200.00, False),
+           ("DOC0008", "Course Description", "Detailed description of subjects taken", "/assets/logos/course_desc.png", 40.00, False),
+           ("DOC0009", "Ranking Certificate", "Academic ranking among graduating class", "/assets/logos/ranking.png", 65.00, False),
+           ("DOC0010", "Special Order/Citation", "Recognition of academic achievements or awards", "/assets/logos/awards.png", 55.00, False)
        ]
-
-
        cur.executemany(
-           "INSERT INTO documents (doc_id, doc_name, description, logo_link, cost) VALUES (%s, %s, %s, %s, %s) ON CONFLICT DO NOTHING",
+           "INSERT INTO documents (doc_id, doc_name, description, logo_link, cost, hidden) VALUES (%s, %s, %s, %s, %s, %s) ON CONFLICT (doc_id) DO NOTHING",
            doc_values
        )
 
 
        # Document ↔ Requirement mapping
        doc_req_values = [
-           ("DOC0001", "REQ0001"),
-           ("DOC0001", "REQ0002"),
-           ("DOC0002", "REQ0001"),
-           ("DOC0003", "REQ0001"),
-           ("DOC0003", "REQ0003")
+           ("DOC0001", "REQ0001"),  # Official Transcript of Records requires Valid Student ID
+           ("DOC0001", "REQ0009"),  # Official Transcript of Records requires Official Request Form
+           ("DOC0001", "REQ0007"),  # Official Transcript of Records requires Proof of Payment
+           ("DOC0002", "REQ0001"),  # Diploma/Certificate requires Valid Student ID
+           ("DOC0002", "REQ0009"),  # Diploma/Certificate requires Official Request Form
+           ("DOC0002", "REQ0008"),  # Diploma/Certificate requires Diploma/Certificate of Completion
+           ("DOC0002", "REQ0007"),  # Diploma/Certificate requires Proof of Payment
+           ("DOC0003", "REQ0001"),  # Certificate of Enrollment requires Valid Student ID
+           ("DOC0003", "REQ0006"),  # Certificate of Enrollment requires Certificate of Enrollment
+           ("DOC0003", "REQ0009"),  # Certificate of Enrollment requires Official Request Form
+           ("DOC0004", "REQ0001"),  # Good Moral Certificate requires Valid Student ID
+           ("DOC0004", "REQ0003"),  # Good Moral Certificate requires Recent Passport Size Photo
+           ("DOC0004", "REQ0009"),  # Good Moral Certificate requires Official Request Form
+           ("DOC0005", "REQ0001"),  # Certification of Grades requires Valid Student ID
+           ("DOC0005", "REQ0009"),  # Certification of Grades requires Official Request Form
+           ("DOC0005", "REQ0007"),  # Certification of Grades requires Proof of Payment
+           ("DOC0006", "REQ0001"),  # Authentication requires Valid Student ID
+           ("DOC0006", "REQ0009"),  # Authentication requires Official Request Form
+           ("DOC0007", "REQ0001"),  # Replacement Diploma requires Valid Student ID
+           ("DOC0007", "REQ0003"),  # Replacement Diploma requires Recent Passport Size Photo
+           ("DOC0007", "REQ0004"),  # Replacement Diploma requires Birth Certificate (PSA)
+           ("DOC0007", "REQ0009"),  # Replacement Diploma requires Official Request Form
+           ("DOC0007", "REQ0007"),  # Replacement Diploma requires Proof of Payment
+           ("DOC0008", "REQ0001"),  # Course Description requires Valid Student ID
+           ("DOC0008", "REQ0009"),  # Course Description requires Official Request Form
+           ("DOC0009", "REQ0001"),  # Ranking Certificate requires Valid Student ID
+           ("DOC0009", "REQ0009"),  # Ranking Certificate requires Official Request Form
+           ("DOC0010", "REQ0001"),  # Special Order requires Valid Student ID
+           ("DOC0010", "REQ0009")   # Special Order requires Official Request Form
        ]
        cur.executemany(
-           "INSERT INTO document_requirements (doc_id, req_id) VALUES (%s, %s) ON CONFLICT DO NOTHING",
+           "INSERT INTO document_requirements (doc_id, req_id) VALUES (%s, %s) ON CONFLICT (doc_id, req_id) DO NOTHING",
            doc_req_values
        )
 
-
-       # Get current timestamp
-       now = datetime.datetime.now()
-
-       # Requests
-       request_values = [
-           ("R0000001", "2025-1011", "Juan Dela Cruz", "09171234567", "juan@example.com", "Email", "SUBMITTED", True, 125.00, now, None, "Request submitted successfully"),
-           ("R0000002", "2025-1012", "Maria Clara", "09179876543", "maria@example.com", "SMS", "PENDING", False, 75.00, now, None, "Awaiting payment"),
-           ("R0000003", "2025-1013", "Maria Juan", "09179876543", "maria@example.com", "Email", "IN-PROGRESS", True, 150.00, now, None, "Processing documents"),
-           ("R0000004", "2025-1014", "Maria Mendoza", "09179876543", "maria@example.com", "SMS", "DOC-READY", True, 100.00, now, None, "Documents ready for pickup"),
-           ("R0000005", "2025-1015", "Maria Cruz", "09179876543", "maria@example.com", "Email", "RELEASED", True, 50.00, now, now, "Released to student"),
-           ("R0000006", "2025-1017", "Maria Juan", "09179876543", "maria@example.com", "SMS", "REJECTED", False, 0.00, now, None, "Incomplete requirements"),
-           ("R0000007", "2025-1018", "Maria Mendoza", "09179876543", "maria@example.com", "Email", "UNCONFIRMED", False, 0.00, now, None, "Awaiting confirmation"),
-           ("R0000008", "2025-1019", "Maria Cruz", "09179876543", "maria@example.com", "SMS", "SUBMITTED", True, 200.00, now, None, "Request submitted"),
-       ]
-       extras.execute_values(
-           cur,
-           """
-           INSERT INTO requests (request_id, student_id, full_name, contact_number, email, preferred_contact, status, payment_status, total_cost, requested_at, completed_at, remarks)
-           VALUES %s
-           ON CONFLICT (request_id) DO NOTHING
-           """,
-           request_values
-       )
-
-       # Request Documents
-       req_doc_values = [
-           ("R0000001", "DOC0001", 1),
-           ("R0000001", "DOC0002", 2),
-           ("R0000002", "DOC0002", 1),
-           ("R0000003", "DOC0001", 1),
-           ("R0000003", "DOC0003", 1),
-           ("R0000004", "DOC0003", 1),
-           ("R0000005", "DOC0001", 1),
-           ("R0000006", "DOC0002", 1),
-           ("R0000007", "DOC0001", 1),
-           ("R0000008", "DOC0001", 2),
-           ("R0000008", "DOC0002", 1),
-           ("R0000008", "DOC0003", 1),
-       ]
-       cur.executemany(
-           "INSERT INTO request_documents (request_id, doc_id, quantity) VALUES (%s, %s, %s) ON CONFLICT DO NOTHING",
-           req_doc_values
-       )
-
-       # Request Requirements Links (simulate uploaded files)
-       req_req_links_values = [
-           ("R0000001", "REQ0001", "uploads/R0000001_REQ0001_valid_id.pdf"),
-           ("R0000001", "REQ0002", "uploads/R0000001_REQ0002_proof_address.jpg"),
-           ("R0000002", "REQ0001", "uploads/R0000002_REQ0001_valid_id.png"),
-           ("R0000003", "REQ0001", "uploads/R0000003_REQ0001_valid_id.pdf"),
-           ("R0000003", "REQ0002", "uploads/R0000003_REQ0002_proof_address.jpg"),
-           ("R0000003", "REQ0003", "uploads/R0000003_REQ0003_photo.jpg"),
-           ("R0000004", "REQ0001", "uploads/R0000004_REQ0001_valid_id.pdf"),
-           ("R0000004", "REQ0003", "uploads/R0000004_REQ0003_photo.png"),
-           ("R0000005", "REQ0001", "uploads/R0000005_REQ0001_valid_id.pdf"),
-           ("R0000005", "REQ0002", "uploads/R0000005_REQ0002_proof_address.jpg"),
-           ("R0000008", "REQ0001", "uploads/R0000008_REQ0001_valid_id.pdf"),
-           ("R0000008", "REQ0002", "uploads/R0000008_REQ0002_proof_address.jpg"),
-           ("R0000008", "REQ0003", "uploads/R0000008_REQ0003_photo.jpg"),
-       ]
-       cur.executemany(
-           "INSERT INTO request_requirements_links (request_id, requirement_id, file_path) VALUES (%s, %s, %s) ON CONFLICT DO NOTHING",
-           req_req_links_values
-       )
-
        conn.commit()
-       print("Sample data inserted successfully.")
+       print("Independent tables populated successfully.")
    except Exception as e:
-       print(f"Error inserting sample data: {e}")
+       print(f"Error populating independent tables: {e}")
+       conn.rollback()
    finally:
        cur.close()
        conn.close()
+
+
+def insert_sample_data():
+   """Legacy function - kept for compatibility but redirects to new function."""
+   populate_independent_tables()
+
 
 
 
@@ -433,11 +440,14 @@ def insert_sample_data():
 # ==========================
 
 
+
 def initialize_db():
+   """Initialize database and all tables."""
    create_database()
    ready_students_table()
    ready_requirements_table()
    ready_documents_table()
+   ready_auth_letters_table()
    ready_document_requirements_table()
    ready_requests_table()
    ready_request_documents_table()
@@ -448,11 +458,23 @@ def initialize_db():
    ready_max_request_settings_table()
    ready_admin_settings_table()
    ready_open_request_restriction_table()
-   #insert_sample_data()
+   ready_others_docs_table()
    print("Database and tables initialized successfully.")
 
 
+def initialize_and_populate():
+   """Initialize database, tables, and populate independent tables."""
+   initialize_db()
+   populate_independent_tables()
+   print("Database initialized and independent tables populated successfully.")
+
+
+def populate_only():
+   """Populate only independent tables (assumes tables already exist)."""
+   populate_independent_tables()
 
 
 if __name__ == "__main__":
+   # By default, just initialize without populating to avoid duplicate data
+   # Use initialize_and_populate() or populate_only() if you want to add sample data
    initialize_db()

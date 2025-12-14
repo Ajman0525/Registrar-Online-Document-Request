@@ -79,17 +79,17 @@ def get_tracking_data():
         if not is_already_authenticated:
             otp, otp_hash = AuthenticationUser.generate_otp()
 
-            #Save OTP hash in session (temp)
-            AuthenticationUser.save_otp(student_id, otp_hash, session)
-            session["phone_number"] = result["phone_number"]
-            session["tracking_number"] = tracking_number 
-            session["full_name"] = full_name
+        #Save OTP hash in session (temp)
+        AuthenticationUser.save_otp(student_id, otp_hash,has_liability=result["has_liability"], session=session)
+        session["phone_number"] = result["phone_number"]
+        session["tracking_number"] = tracking_number 
+        session["full_name"] = full_name
 
             # DEBUG: Print session data
-            print(f"[DEBUG] Session after saving OTP: {dict(session)}")
+        print(f"[DEBUG] Session after saving OTP: {dict(session)}")
 
-            phone = result["phone_number"]
-            send_whatsapp_otp(phone, otp, full_name)
+        phone = result["phone_number"]
+        send_whatsapp_otp(phone, otp, full_name)
 
         # Build response
         response_data = {

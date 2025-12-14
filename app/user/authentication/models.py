@@ -14,8 +14,9 @@ class AuthenticationUser:
         try:
             conn = get_connection()
             cur = conn.cursor()
+
             cur.execute(
-                "SELECT full_name, contact_number, liability_status FROM students WHERE student_id = %s",
+                "SELECT full_name, contact_number, liability_status, college_code FROM students WHERE student_id = %s",
                 (student_id,)
             )
             row = cur.fetchone()
@@ -27,15 +28,17 @@ class AuthenticationUser:
                     "exists": False,
                     "full_name": None,
                     "has_liability": False,
-                    "phone_number": None
+                    "phone_number": None,
+                    "college_code": None
                 }
 
-            full_name, contact_number, liability_status = row
+            full_name, contact_number, liability_status, college_code = row
             return {
                 "exists": True,
                 "full_name": full_name,
                 "has_liability": liability_status,
-                "phone_number": contact_number
+                "phone_number": contact_number,
+                "college_code": college_code
             }
 
         except Exception as e:
@@ -49,12 +52,12 @@ class AuthenticationUser:
 
 
     @staticmethod
-    def check_student_name_exists(firstname, lastname):
+    def check_student_name_exists(firstname, lastname, skip_liability_check=False):
         """
         Verify if the student exists by matching firstname + lastname (case-insensitive).
         Returns a dict with:
             exists: True/False
-            has_liability: True/False
+            has_liability: True/False (skipped if skip_liability_check=True)
             phone_number: str or None
             student_id: str or None
             full_name: str or None
@@ -64,8 +67,9 @@ class AuthenticationUser:
             cur = conn.cursor()
 
             # Case-insensitive search using LOWER() function
+
             cur.execute(
-                "SELECT student_id, contact_number, liability_status, firstname, lastname FROM students WHERE LOWER(firstname) = LOWER(%s) AND LOWER(lastname) = LOWER(%s)",
+                "SELECT student_id, contact_number, liability_status, firstname, lastname, college_code FROM students WHERE LOWER(firstname) = LOWER(%s) AND LOWER(lastname) = LOWER(%s)",
                 (firstname, lastname)
             )
             row = cur.fetchone()
@@ -79,17 +83,23 @@ class AuthenticationUser:
                     "has_liability": False,
                     "phone_number": None,
                     "student_id": None,
-                    "full_name": None
+                    "full_name": None,
+                    "college_code": None
                 }
 
-            student_id, contact_number, liability_status, db_firstname, db_lastname = row
+            student_id, contact_number, liability_status, db_firstname, db_lastname, college_code = row
             full_name = f"{db_firstname} {db_lastname}"
+            
+            # Skip liability check for outsider users
+            has_liability = False if skip_liability_check else liability_status
+            
             return {
                 "exists": True,
-                "has_liability": liability_status,
+                "has_liability": has_liability,
                 "phone_number": contact_number,
                 "student_id": student_id,
-                "full_name": full_name
+                "full_name": full_name,
+                "college_code": college_code
             }
 
         except Exception as e:
@@ -112,30 +122,37 @@ class AuthenticationUser:
         return otp, otp_hash
 
     @staticmethod
-    def save_otp(student_id, otp_hash, session):
+    def save_otp(student_id, otp_hash, has_liability, session):
         """
         Save OTP hash to session (temporary) or database later.
         """
         session["otp"] = otp_hash
         session["student_id"] = student_id
+        session["has_liability"] = has_liability
 
     @staticmethod
     def verify_otp(otp_input, session):
-        """
-        Compare entered OTP hash with stored hash.
-        """
         entered_hash = hashlib.sha256(str(otp_input).encode()).hexdigest()
         stored_hash = session.get("otp")
 
-        if not stored_hash:
-            return False
+        if not stored_hash or entered_hash != stored_hash:
+            return {
+                "verified": False,
+                "has_liability": False
+            }
 
-        return entered_hash == stored_hash
+        return {
+            "verified": True,
+            "has_liability": session.get("has_liability", False),
+            "student_id": session.get("student_id")
+        }
+
     
+
     @staticmethod
-    def store_authletter(firstname, lastname, file_url, number):
+    def store_authletter(request_id, firstname, lastname, file_url, number, requester_name):
         """
-        Insert or update the authorization letter record in the DB.
+        Insert or update the authorization letter record in the DB using request_id as primary key.
         """
         try:
             conn = db_pool.getconn()
@@ -143,11 +160,11 @@ class AuthenticationUser:
 
             # Upsert: if already exists, replace URL
             cur.execute("""
-                INSERT INTO auth_letters (firstname, lastname, file_url, number)
-                VALUES (%s, %s, %s, %s)
+                INSERT INTO auth_letters (id, firstname, lastname, file_url, number, requester_name)
+                VALUES (%s, %s, %s, %s, %s, %s)
                 ON CONFLICT (id)
                 DO UPDATE SET file_url = EXCLUDED.file_url
-            """, (firstname, lastname, file_url, number))
+            """, (request_id, firstname, lastname, file_url, number, requester_name))
 
             conn.commit()
             cur.close()

@@ -50,12 +50,12 @@ def check_id():
             "message": "Student ID not registered"
         }),404
 
-    # Student has unpaid liabilities, cannot proceed
-    if result["has_liability"]:
-        return jsonify({
-            "status": "has_liability",
-            "message": "Student has outstanding liabilities"
-        }), 200
+    # # Student has unpaid liabilities, cannot proceed
+    # if result["has_liability"]:
+    #     return jsonify({
+    #         "status": "has_liability",
+    #         "message": "Student has outstanding liabilities"
+    #     }), 200
 
     # Generate OTP + hash it
     otp, otp_hash = AuthenticationUser.generate_otp()
@@ -63,10 +63,9 @@ def check_id():
     full_name = result.get("full_name") if result else "Valued Customer"
 
     # Save OTP hash and student ID in session
-    AuthenticationUser.save_otp(student_id, otp_hash, session)
+    AuthenticationUser.save_otp(student_id, otp_hash, has_liability=result["has_liability"], session=session)
     session["phone_number"] = phone
-    session ["full_name"] = full_name 
-    
+    session ["full_name"] = full_name
     # Send OTP via WhatsApp
     whatsapp_result = send_whatsapp_otp(phone, full_name, otp)
     
@@ -85,32 +84,40 @@ def check_id():
 
 
 
+
 @authentication_user_bp.route('/check-name', methods=['POST'])
 def check_name():
     firstname = request.json.get("firstname")
     lastname = request.json.get("lastname")
+    requester_whatsapp_number= request.json.get("whatsapp_number")
+    requester_name = request.json.get("requester_name")
+    
+    # Check if this is an outsider request (has requester_name indicates outsider)
+    is_outsider = bool(requester_name and requester_whatsapp_number)
 
     # Returns dict with exists, has_liability, phone_number, student_id, full_name
-    result = AuthenticationUser.check_student_name_exists(firstname, lastname)
+    # Skip liability check for outsider users
+    result = AuthenticationUser.check_student_name_exists(firstname, lastname, skip_liability_check=is_outsider)
 
     if not result["exists"]:
         return jsonify({"status": "name_mismatch", "message": "Provided name does not match records."}), 400
 
-    if result["has_liability"]:
-        return jsonify({
-            "status": "has_liability",
-            "message": "Student has outstanding liabilities"
-        }), 200
+    if requester_whatsapp_number:
+        full_name = requester_name
+        phone = requester_whatsapp_number
+        current_app.logger.info(f"Using requester's WhatsApp number {phone} for OTP.")
 
-    # Generate OTP + hash it
+    else:
+        full_name = result.get("full_name", f"{firstname} {lastname}")
+        phone = result["phone_number"]
+        current_app.logger.info(f"Sending OTP to registered student number {phone}")
+
     otp, otp_hash = AuthenticationUser.generate_otp()
-    phone = result["phone_number"]
-    full_name = result.get("full_name", f"{firstname} {lastname}")
-
-    # Save OTP hash, student ID and full name in session
-    AuthenticationUser.save_otp(result["student_id"], otp_hash, session)
+    
+    AuthenticationUser.save_otp(result["student_id"], otp_hash, has_liability=result["has_liability"], session=session)
     session["phone_number"] = phone
     session["full_name"] = full_name
+    session["is_outsider"] = is_outsider
 
     # Send OTP via WhatsApp 
     whatsapp_result = send_whatsapp_otp(phone, full_name, otp)
@@ -126,7 +133,6 @@ def check_name():
         "message": "Name verified successfully.",
         "masked_phone": phone[-4:]  
     }), 200
-
 
 @authentication_user_bp.route('/resend-otp', methods=['POST'])
 def resend_otp():
@@ -163,6 +169,7 @@ def resend_otp():
         "masked_phone": phone[-4:] 
     }), 200
 
+
 @authentication_user_bp.route('/verify-otp', methods=['POST'])
 def verify_otp():
     print("=" * 50)
@@ -173,6 +180,7 @@ def verify_otp():
 
     otp = request.json.get("otp")
     student_id = session.get("student_id")
+    is_outsider = session.get("is_outsider", False)
     
     # Check if OTP exists in session
     if "otp" not in session:
@@ -183,11 +191,21 @@ def verify_otp():
         }), 400
     
     # Validate entered OTP
-    valid = AuthenticationUser.verify_otp(otp, session)
-    
-    if not valid:
-        print(f"[ERROR] OTP validation failed. Entered: {otp}")
-        return jsonify({"valid": False, "message": "Invalid OTP"}), 400
+    result = AuthenticationUser.verify_otp(otp, session)
+
+    if not result["verified"]:
+        return jsonify({
+            "valid": False,
+            "message": "Invalid OTP"
+        }), 400
+
+    # Skip liability check for outsider users
+    if result["has_liability"] and not is_outsider:
+        return jsonify({
+            "valid": True,
+            "status": "has_liability",
+            "message": "Student has outstanding liabilities"
+        }), 200
 
     # OTP correct, clear it
     session.pop("otp", None)
@@ -202,7 +220,8 @@ def verify_otp():
     response = jsonify({
         "message": "User login successful",
         "role": user["role"],
-        "valid": True
+        "valid": True,
+        "has_liability": result["has_liability"] if not is_outsider else False
     })
     set_access_cookies(response, access_token)
 
@@ -210,19 +229,28 @@ def verify_otp():
     print("[SUCCESS] OTP verified, JWT token created")
     return response, 200
 
+
 @authentication_user_bp.route("/upload-authletter", methods=["POST"])
 def upload_auth_letter():
     """
-    Uploads an authorization letter for a student before a request exists.
+    Uploads an authorization letter for a student.
     Stores the file in Supabase bucket 'auth_letter_odr' and saves the URL in the DB.
     Expected multipart/form-data:
       - file: the authorization letter
+      - firstname: student's first name
+      - lastname: student's last name  
+      - number: requester's phone number
+      - requester_name: name of person/organization making request
+      - request_id: (optional) request ID to associate with the auth letter
     """
     firstname = request.form.get("firstname")
     lastname = request.form.get("lastname")
     number = request.form.get("number")
+    requester_name = request.form.get("requester_name")
+    request_id = request.form.get("request_id")
 
-    if not firstname or not lastname or not number:
+
+    if not firstname or not lastname or not number or not requester_name:
         return jsonify({"success": False, "notification": "Missing student information."}), 400
 
     if "file" not in request.files:
@@ -252,8 +280,9 @@ def upload_auth_letter():
         # Get public URL
         file_url = supabase.storage.from_("auth_letter_odr").get_public_url(file_path_in_bucket)
 
+
         # Store URL in DB
-        success, message = AuthenticationUser.store_authletter(firstname, lastname, file_url, number)
+        success, message = AuthenticationUser.store_authletter(request_id, firstname, lastname, file_url, number, requester_name)
         status_code = 200 if success else 400
 
         return jsonify({"success": success, "notification": message, "file_url": file_url}), status_code

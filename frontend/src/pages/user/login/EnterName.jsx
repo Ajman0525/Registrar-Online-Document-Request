@@ -65,13 +65,19 @@ function EnterName({ onNext, onBack, maskedPhone, setMaskedPhone, goBackToOption
                 return;
             }
 
-            if (data.status === "has_liability") {
-                onNext("liability");
-                setLoading(false);
-                return;
-            }
+            // if (data.status === "has_liability") {
+            //     onNext("liability");
+            //     setLoading(false);
+            //     return;
+            // }
+
 
             setMaskedPhone(data.masked_phone);
+            
+            // Set user type for regular students
+            sessionStorage.setItem("user_type", "student");
+            localStorage.setItem("user_type", "student");
+            
             onNext(); // proceed to OTP
         } catch (error) {
             setLastnameError("An error occurred. Please try again.");

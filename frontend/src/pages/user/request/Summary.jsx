@@ -1,8 +1,10 @@
+
 import React, { useState } from "react";
 import "./Request.css";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
 import ButtonLink from "../../../components/common/ButtonLink";
 import ContentBox from "../../../components/user/ContentBox";
+
 
 function Summary({
   selectedDocs = [],
@@ -14,6 +16,52 @@ function Summary({
 }) {
   const [completing, setCompleting] = useState(false);
 
+  // Check for authorization letter data
+  const authLetterData = React.useMemo(() => {
+    try {
+      const stored = sessionStorage.getItem("authLetterData");
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  // Handle view file function
+  const handleViewFile = (file, filename) => {
+    if (file instanceof File) {
+      // Create a blob URL for local files
+      const url = URL.createObjectURL(file);
+      window.open(url, '_blank');
+      // Clean up the URL after a delay
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } else if (typeof file === 'string' && file) {
+      // For server files, open the URL directly
+      window.open(file, '_blank');
+    }
+  };
+
+  // Handle view authorization letter
+  const handleViewAuthLetter = () => {
+    if (authLetterData && authLetterData.fileData) {
+      try {
+        // Convert base64 to blob and open
+        const byteCharacters = atob(authLetterData.fileData);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: authLetterData.fileType });
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      } catch (error) {
+        console.error('Error viewing authorization letter:', error);
+        alert('Error opening authorization letter');
+      }
+    }
+  };
+
   // Calculate total price - ensure doc.cost is used correctly
   const totalPrice = selectedDocs.reduce((sum, doc) => {
     const cost = doc.cost || 0;
@@ -23,84 +71,8 @@ function Summary({
 
   const handleComplete = () => {
     setCompleting(true);
-    
-    // Convert File objects to base64 for submission
-    const convertFilesToBase64 = async () => {
-      const requirementsPromises = Object.entries(uploadedFiles).map(async ([req_id, file]) => {
-        if (file instanceof File) {
-          // Convert File to base64
-          const base64Data = await new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => {
-              const result = reader.result;
-              // Remove the data URL prefix (e.g., "data:application/pdf;base64,")
-              const base64 = result.split(',')[1];
-              resolve(base64);
-            };
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-          });
-          
-          return {
-            requirement_id: req_id,
-            filename: file.name,
-            content_type: file.type,
-            alreadyUploaded: false,
-            file_data: base64Data
-          };
-        } else if (typeof file === "string" && file) {
-          // Already uploaded file
-          return {
-            requirement_id: req_id,
-            filename: file.split("/").pop(),
-            content_type: "application/octet-stream",
-            alreadyUploaded: true,
-            file_data: file
-          };
-        } else {
-          // No file
-          return {
-            requirement_id: req_id,
-            filename: "",
-            content_type: "application/octet-stream",
-            alreadyUploaded: false,
-            file_data: null
-          };
-        }
-      });
-      
-      return Promise.all(requirementsPromises);
-    };
-    
-    // Process the data and call onNext
-    convertFilesToBase64().then(requirements => {
-      const student_info = {
-        full_name: contactInfo.full_name || "",
-        contact_number: contactInfo.contact_number || "",
-        email: contactInfo.email || ""
-      };
-      
-      const documents = selectedDocs.map(doc => ({
-        doc_id: doc.doc_id,
-        quantity: doc.quantity || 1
-      }));
-      
-      const submissionData = {
-        student_info,
-        documents,
-        requirements,
-        total_price: totalPrice,
-        preferred_contact: preferredContactInfo.method || "SMS",
-        payment_status: false, // Default to unpaid for now
-        remarks: "Request submitted successfully"
-      };
-      
-      onNext(submissionData);
-    }).catch(error => {
-      console.error("Error converting files:", error);
-      setCompleting(false);
-      alert("An error occurred while processing files. Please try again.");
-    });
+    // Directly call onNext, parent handles the submission logic
+    onNext();
   };
 
   return (
@@ -112,17 +84,29 @@ function Summary({
           <label className="selected-documents-label">Selected Documents</label>
           <hr />
           <div className="summary-info-box">
+
             {selectedDocs.length === 0 ? (
               <p>No documents selected</p>
             ) : (
               selectedDocs.map((doc, idx) => (
-                <div key={idx} className="summary-item">
-                  {doc.doc_name} {doc.quantity && doc.quantity > 1 ? `${doc.quantity}x` : ''}
+                <div key={idx} className={`summary-item ${doc.isCustom ? 'custom-doc-item' : ''}`}>
+                  <div className="doc-name">
+                    {doc.doc_name} {doc.quantity && doc.quantity > 1 ? `${doc.quantity}x` : ''}
+                  </div>
+                  {doc.isCustom && doc.description && (
+                    <div className="custom-doc-description">
+                      {doc.description}
+                    </div>
+                  )}
+                  {doc.isCustom && (
+                    <div className="custom-doc-badge">Custom Document</div>
+                  )}
                 </div>
               ))
             )}
           </div>
         </div>
+
 
         <div className="summary-row">
           <label className="summary-label">Uploaded Files</label>
@@ -131,18 +115,65 @@ function Summary({
             {Object.keys(uploadedFiles).length === 0 ? (
               <p>No files uploaded</p>
             ) : (
-              Object.entries(uploadedFiles).map(([req_id, file]) => (
-                <div key={req_id} className="summary-item">
-                  {file
-                    ? file instanceof File
-                      ? file.name
-                      : file.split("/").pop() // show the filename from the server path
-                    : "No file"}
-                </div>
-              ))
+              Object.entries(uploadedFiles).map(([req_id, file]) => {
+                const fileName = file
+                  ? file instanceof File
+                    ? file.name
+                    : file.split("/").pop() // show the filename from the server path
+                  : "No file";
+                
+                return (
+                  <div key={req_id} className="uploaded-file-item">
+                    <div className="file-info">
+                      <span className="file-name">{fileName}</span>
+                      {file && (
+                        <button 
+                          className="view-file-btn"
+                          onClick={() => handleViewFile(file, fileName)}
+                          title="View file"
+                        >
+                          <img src="/assets/EyeIcon.svg" alt="View" className="view-icon" />
+                          View
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
             )}
           </div>
+
         </div>
+
+        {authLetterData && (
+          <div className="summary-row">
+            <label className="summary-label">Authorization Letter</label>
+            <hr />
+            <div className="summary-info-box">
+              <div className="auth-info">
+                <div className="auth-details">
+                  <div className="summary-item">
+                    <strong>Requester:</strong> {authLetterData.requesterName} 
+                  </div>
+                  <div className="summary-item">
+                    <strong>Requesting For:</strong> {authLetterData.firstname} {authLetterData.lastname} 
+                  </div>
+                  <div className="summary-item">
+                    <strong>Contact Number:</strong> {authLetterData.number}
+                  </div>
+                </div>
+                <button 
+                  className="view-file-btn auth-view-btn"
+                  onClick={handleViewAuthLetter}
+                  title="View authorization letter"
+                >
+                  <img src="/assets/EyeIcon.svg" alt="View" className="view-icon" />
+                  View Authorization Letter
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="summary-row">
           <label className="summary-label">Preferred Contact</label>
@@ -196,3 +227,4 @@ function Summary({
 }
 
 export default Summary;
+
