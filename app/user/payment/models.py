@@ -44,7 +44,12 @@ class Payment:
                     'was_already_paid': previous_payment_status 
                 }
             
-            expected_amount = float(order[0]) if order[0] else 0.0
+            # Fetch admin fee from DB
+            cur.execute("SELECT value FROM fee WHERE key = 'admin_fee'")
+            fee_res = cur.fetchone()
+            admin_fee = float(fee_res[0]) if fee_res else 0.0
+            
+            expected_amount = (float(order[0]) if order[0] else 0.0) + admin_fee
             received_amount = float(amount) if amount else 0.0
             db_student_id = order[2]
             
