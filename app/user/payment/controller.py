@@ -173,3 +173,61 @@ def mark_paid_manual():
     except Exception as e:
         current_app.logger.error(f"[MAYA][BROWSER] mark-paid error: {e}")
         return jsonify({'success': False, 'message': str(e)}), 500
+
+
+
+
+
+@payment_bp.route('/mark-document-paid', methods=['POST'])
+def mark_document_paid():
+    try:
+        data = request.get_json() or {}
+        tracking_number = data.get('trackingNumber') or data.get('tracking_number')
+        amount = data.get('amount')
+        student_id = data.get('studentId')
+        doc_ids = data.get('docIds', [])  # List of document IDs to mark as paid
+
+        current_app.logger.info(f"[MAYA][BROWSER] Mark-document-paid request: tracking={tracking_number}, amount={amount}, student_id={student_id}, docIds={doc_ids}")
+
+        if not tracking_number or student_id is None:
+            return jsonify({'success': False, 'message': 'trackingNumber and studentId are required'}), 400
+
+        if not doc_ids:
+            return jsonify({'success': False, 'message': 'docIds (list of document IDs) are required'}), 400
+
+        # Use the new document-level payment method
+        result = Payment.update_multiple_documents_payment_status(tracking_number, student_id, doc_ids)
+        
+        if result.get("success"):
+            # Send WhatsApp notification
+            user_data = AuthenticationUser.check_student_in_school_system(student_id)
+            
+            if user_data.get("exists"):
+                phone_number = user_data.get("phone_number") 
+                full_name = user_data.get("full_name") if user_data else "Valued Customer"
+                
+                if phone_number:
+                    whatsapp_result = send_whatsapp_payment_confirmation(
+                        phone_number, 
+                        full_name, 
+                        tracking_number
+                    )
+                    
+                    if whatsapp_result.get("status") == "failed":
+                        current_app.logger.error(
+                            f"[MAYA] Failed to send WhatsApp payment confirmation for {tracking_number} to {phone_number}: {whatsapp_result.get('message')}"
+                        )
+                else:
+                    current_app.logger.warning(
+                        f"[MAYA] Phone number missing for student {student_id}."
+                    )
+        else:
+            current_app.logger.warning(
+                f"[MAYA] Document payment update failed for {tracking_number}: {result.get('message')}"
+            )
+        
+        status_code = 200 if result.get('success') else 400
+        return jsonify(result), status_code
+    except Exception as e:
+        current_app.logger.error(f"[MAYA][BROWSER] mark-document-paid error: {e}")
+        return jsonify({'success': False, 'message': str(e)}), 500

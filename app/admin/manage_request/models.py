@@ -40,7 +40,7 @@ class ManageRequestModel:
 
             cur.execute(f"""
                 SELECT r.request_id, r.student_id, r.full_name, r.contact_number, r.email,
-                       r.preferred_contact, r.status, r.requested_at, r.remarks,
+                       r.preferred_contact, r.status, r.requested_at,r.remarks,
                        r.total_cost, r.payment_status
                 FROM requests r
                 {join_assignments}
@@ -140,9 +140,9 @@ class ManageRequestModel:
                     "preferred_contact": r[5],
                     "status": r[6],
                     "requested_at": r[7].strftime("%Y-%m-%d %H:%M:%S") if r[7] else None,
-                    "remarks": r[9],
-                    "total_cost": r[10],
-                    "payment_status": r[11],
+                    "remarks": r[8],
+                    "total_cost": r[9],
+                    "payment_status": r[10],
                     "documents": docs_map[rid],
                     "requirements": reqs_map[rid],
                     "uploaded_files": files_map[rid],
@@ -481,32 +481,8 @@ class ManageRequestModel:
         finally:
             cur.close()
 
-    @staticmethod
-    def get_global_max_assign():
-        """Get the global max assign per account."""
-        conn = g.db_conn
-        cur = conn.cursor()
-        try:
-            cur.execute("SELECT value FROM settings WHERE key = 'global_max_assign'")
-            row = cur.fetchone()
-            return int(row[0]) if row else 10
-        finally:
-            cur.close()
 
-    @staticmethod
-    def set_global_max_assign(max_assign):
-        """Set the global max assign per account."""
-        conn = g.db_conn
-        cur = conn.cursor()
-        try:
-            cur.execute("""
-                INSERT INTO max_request_settings (key, value)
-                VALUES ('global_max_assign', %s)
-                ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
-            """, (str(max_assign),))
-            conn.commit()
-        finally:
-            cur.close()
+
 
     @staticmethod
     def get_admin_max_requests(admin_id):
@@ -560,9 +536,9 @@ class ManageRequestModel:
                 "preferred_contact": req[5],
                 "status": req[6],
                 "requested_at": req[7].strftime("%Y-%m-%d %H:%M:%S") if req[7] else None,
-                "remarks": req[9],
-                "total_cost": req[10],
-                "payment_status": req[11]
+                "remarks": req[8],
+                "total_cost": req[9],
+                "payment_status": req[10]
             }
 
             # Fetch requested documents with cost
