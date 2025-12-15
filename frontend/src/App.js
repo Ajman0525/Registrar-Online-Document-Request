@@ -1,5 +1,6 @@
 
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminWaiting from "./pages/admin/AdminWaiting";
@@ -26,10 +27,13 @@ function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
 
+        <Routes>
+          <Route path="/" element={<Navigate to="user/Landing" replace />} />
+
+          {/* User routes with redirect and layout */}
           <Route path="/user" element={<UserMasterLayout />}>
+            <Route index element={<Navigate to="Landing" replace />} />
             <Route path="Landing" element={<Landing />} />
             <Route path="login" element={<LoginFlow />} />
             <Route path="Request" element={<RequestFlow />} />
@@ -37,6 +41,10 @@ function App() {
             <Route path="Track" element={<Tracking />} />
           </Route>
           
+
+
+
+          {/* Admin routes */}
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin/waiting" element={<AdminWaiting />} />
           
