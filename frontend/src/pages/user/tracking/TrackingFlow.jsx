@@ -29,7 +29,7 @@ function TrackFlow() {
 		console.log("Tracking data received:", data.trackData);
 		setTrackData(data.trackData);
         setMaskedPhone(data.maskedPhone);
-        setStudentId(data.studentId);
+        setStudentId(data.studentId || data.student_id);
 		setCurrentView("otp");
         setLoading(false);
     };
@@ -100,7 +100,7 @@ function TrackFlow() {
     };
 
     const handleRefreshStatus = async () => {
-        if (!trackData?.trackingNumber || !studentId) {
+        if (!trackData?.trackingNumber) {
             setCurrentView('status');
             return;
         }
@@ -115,7 +115,6 @@ function TrackFlow() {
                 credentials: 'include',
                 body: JSON.stringify({ 
                     tracking_number: trackData.trackingNumber, 
-                    student_id: studentId 
                 }),
             });
 

@@ -17,7 +17,7 @@ function EnterTrackId({ onNext }) {
     };
 
     const handleSubmit = async () => {
-        if (!trackingNumber || !studentId) {
+        if (!trackingNumber) {
             triggerError("Please fill in all fields.");
             return;
         }
@@ -97,18 +97,6 @@ function EnterTrackId({ onNext }) {
                             placeholder="e.g., R2134000"
                             value={trackingNumber}
                             onChange={(e) => setTrackingNumber(e.target.value)}
-                            disabled={loading}
-                        />
-                    </div>
-                    <div className="input-wrapper">
-                        <p className="subtext">ID Number</p>
-                        <input
-                            type="text"
-                            className={`box-input ${error && !studentId ? "input-error" : ""} ${shake ? "shake" : ""}`}
-                            placeholder="0000-0000"
-                            value={studentId}
-                            onChange={handleStudentIdChange}
-                            maxLength={9}
                             disabled={loading}
                         />
                     </div>
