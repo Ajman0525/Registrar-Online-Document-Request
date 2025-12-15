@@ -14,7 +14,7 @@ MAYA_SANDBOX_IPS = ['13.229.160.234', '3.1.199.75']
 MAYA_DISABLE_SECURITY = os.getenv('MAYA_DISABLE_SECURITY', 'false').lower() == 'true'
 
 def send_whatsapp_payment_confirmation(phone, full_name, request_id):
-    template_name = "odr_payment_successful"
+    template_name = "odr_payment_successful_v2"
 
     components = [
         {
