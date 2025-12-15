@@ -600,55 +600,6 @@ def populate_logs_table():
        log_values = [
            # System initialization and admin activities
            ("admin1@registrar.edu", "System Initialization", "Database initialized with sample data including students, documents, and requirements", None, now - datetime.timedelta(days=10)),
-           ("admin1@registrar.edu", "Admin Login", "Administrator logged into the system", None, now - datetime.timedelta(days=10)),
-           ("admin2@registrar.edu", "Admin Login", "Staff administrator logged into the system", None, now - datetime.timedelta(days=10)),
-           
-           # Document management activities
-           ("admin1@registrar.edu", "Document Created", "Created new document: Official Transcript of Records with cost ₱100.00", "DOC0001", now - datetime.timedelta(days=9)),
-           ("admin1@registrar.edu", "Document Updated", "Updated document requirements for Diploma/Certificate of Completion", "DOC0002", now - datetime.timedelta(days=9)),
-           ("admin2@registrar.edu", "Document Hidden", "Hidden document: Authentication of Documents for maintenance", "DOC0006", now - datetime.timedelta(days=9)),
-           ("admin1@registrar.edu", "Document Cost Updated", "Updated cost for Replacement of Lost Diploma to ₱200.00", "DOC0007", now - datetime.timedelta(days=9)),
-           
-           # Request management activities
-           ("admin1@registrar.edu", "Request Created", "New request created by student John Smith for Official Transcript of Records", "R0000001", now - datetime.timedelta(days=8)),
-           ("admin2@registrar.edu", "Request Assigned", "Assigned request R0000002 to admin1@registrar.edu", "R0000002", now - datetime.timedelta(days=7)),
-           ("admin1@registrar.edu", "Status Updated", "Updated request R0000002 status from PENDING to IN-PROGRESS", "R0000002", now - datetime.timedelta(days=6)),
-           ("admin1@registrar.edu", "Payment Confirmed", "Payment confirmed for request R0000002 - ₱75.00 received", "R0000002", now - datetime.timedelta(days=6)),
-           ("admin2@registrar.edu", "Status Updated", "Updated request R0000003 status from PENDING to DOC-READY", "R0000003", now - datetime.timedelta(days=5)),
-           ("admin1@registrar.edu", "Document Released", "Released documents for request R0000004", "R0000004", now - datetime.timedelta(days=4)),
-           ("admin2@registrar.edu", "Status Updated", "Updated request R0000004 status from DOC-READY to RELEASED", "R0000004", now - datetime.timedelta(days=4)),
-           
-           # Student management activities
-           ("admin1@registrar.edu", "Student Added", "Added new student: David Johnson (2025-1013) from CAS", None, now - datetime.timedelta(days=8)),
-           ("admin2@registrar.edu", "Student Updated", "Updated contact information for student Emma Wilson", None, now - datetime.timedelta(days=7)),
-           ("admin1@registrar.edu", "Liability Status Updated", "Updated liability status for student Michael Brown to cleared", None, now - datetime.timedelta(days=6)),
-           
-           # Recent activities for testing
-           ("admin1@registrar.edu", "Request Created", "New request created by student Emma Wilson for Good Moral Certificate", "R0000006", now - datetime.timedelta(days=2)),
-           ("admin2@registrar.edu", "Request Assigned", "Assigned request R0000007 to admin1@registrar.edu", "R0000007", now - datetime.timedelta(days=2)),
-           ("admin1@registrar.edu", "Status Updated", "Updated request R0000007 status from PENDING to IN-PROGRESS", "R0000007", now - datetime.timedelta(days=1)),
-           ("admin2@registrar.edu", "Requirements Verified", "Verified all requirements for request R0000008", "R0000008", now - datetime.timedelta(days=1)),
-           ("admin1@registrar.edu", "Payment Confirmed", "Payment confirmed for request R0000003 - ₱150.00 received", "R0000003", now - datetime.timedelta(days=1)),
-           ("admin2@registrar.edu", "Document Processing", "Started processing Official Transcript for request R0000003", "R0000003", now - datetime.timedelta(hours=12)),
-           ("admin1@registrar.edu", "Status Updated", "Updated request R0000003 status from IN-PROGRESS to DOC-READY", "R0000003", now - datetime.timedelta(hours=6)),
-           ("admin2@registrar.edu", "Document Released", "Released Official Transcript for request R0000003", "R0000003", now - datetime.timedelta(hours=2)),
-           ("admin1@registrar.edu", "Status Updated", "Updated request R0000003 status from DOC-READY to RELEASED", "R0000003", now - datetime.timedelta(hours=1)),
-           
-           # Error handling and maintenance activities
-           ("admin1@registrar.edu", "System Maintenance", "Performed routine database maintenance and optimization", None, now - datetime.timedelta(days=3)),
-           ("admin2@registrar.edu", "Backup Completed", "Daily database backup completed successfully", None, now - datetime.timedelta(days=3)),
-           ("admin1@registrar.edu", "User Support", "Assisted student with document request troubleshooting", "R0000005", now - datetime.timedelta(days=2)),
-           
-           # Authentication and security activities
-           ("admin1@registrar.edu", "Password Reset", "Performed password reset for admin2@registrar.edu", None, now - datetime.timedelta(days=5)),
-           ("admin2@registrar.edu", "Security Check", "Reviewed system access logs and user permissions", None, now - datetime.timedelta(days=4)),
-           
-           # Current day activities for demo purposes
-           ("admin1@registrar.edu", "Request Created", "New request created by student Michael Brown for multiple documents", "R0000008", now - datetime.timedelta(hours=4)),
-           ("admin2@registrar.edu", "Request Assigned", "Assigned request R0000008 to admin2@registrar.edu", "R0000008", now - datetime.timedelta(hours=3)),
-           ("admin1@registrar.edu", "Status Updated", "Updated request R0000001 status from PENDING to IN-PROGRESS", "R0000001", now - datetime.timedelta(hours=2)),
-           ("admin2@registrar.edu", "Document Cost Verified", "Verified pricing for multiple documents (₱300.00)", None, now - datetime.timedelta(hours=1)),
-           ("admin1@registrar.edu", "Payment Confirmed", "Payment confirmed for request R0000007 - ₱125.00 received", "R0000007", now - datetime.timedelta(minutes=30))
        ]
        
        # Insert logs data with proper timestamp formatting
