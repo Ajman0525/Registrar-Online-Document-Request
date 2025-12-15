@@ -99,6 +99,11 @@ const ScrollButton = ({ direction, onClick, isVisible }) => {
 
 
 function Dashboard() {
+  const getStoredState = (key, defaultValue) => {
+    const stored = sessionStorage.getItem(key);
+    return stored ? JSON.parse(stored) : defaultValue;
+  }
+
   const scrollContainerReference = useRef(null);
   const notificationReference = useRef(null);
   const profileReference = useRef(null);
@@ -110,42 +115,6 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
-
-
-
-
-  const toggleProfile = () => {
-    setIsProfileOpen(prev => !prev);
-  };
-
-
-  const handleLogout = async () => {
-    try {
-      const csrfToken = getCSRFToken();
-      const response = await fetch('/api/admin/logout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': csrfToken,
-        },
-        credentials: 'include',
-      });
-      if (response.ok) {
-        navigate('/admin/login');
-      } else {
-        console.error('Logout failed');
-      }
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
-    setIsProfileOpen(false);
-  };
-
-
-  const toggleNotifications = () => {
-    setIsNotificationsOpen(prev => !prev);
-  };
-
 
   const scrollCards = (direction) => {
     if (scrollContainerReference.current) {
