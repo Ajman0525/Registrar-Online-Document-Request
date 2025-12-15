@@ -308,11 +308,11 @@ export default function AssignRequests() {
 
 
   return (
-    <div className="p-8 bg-gray-100 min-h-screen">
-      <h1 className="text-3xl font-bold mb-6 text-gray-900">Assign Requests</h1>
+    <div className="assign-requests-page">
+      <h1 className="title">Assign Requests</h1>
 
       {/* Global Progress Summary */}
-      <div className="mb-8 bg-white p-6 rounded-xl shadow-sm">
+      <div className="admin-accounts-section">
         <h2 className="text-xl font-semibold mb-4">Global Progress Summary</h2>
         <div className="text-lg mb-2">
           {globalProgress.completed} out of {globalProgress.total} completed
@@ -326,7 +326,7 @@ export default function AssignRequests() {
       </div>
 
       {/* Tab Navigation */}
-      <div className="mb-8 bg-white rounded-xl shadow-sm">
+      <div className="admin-accounts-section">
         <div className="border-b border-gray-200">
           <nav className="-mb-px flex space-x-8 px-6">
             <button
@@ -354,13 +354,13 @@ export default function AssignRequests() {
 
 
         {/* Tab Content */}
-        <div className="p-6">
+        <div>
           {activeTab === "admins" && (
-            <div>
-              <h2 className="text-xl font-semibold mb-4">Admin Accounts Management</h2>
-              <p className="text-sm text-gray-600 mb-4">
-                Configure individual admin request limits. Auto assign will distribute requests evenly across available admins.
-              </p>
+            <div className="admin-section-main">
+                <h2 className="text-xl font-semibold mb-4">Admin Accounts Management</h2>
+                <p className="subtext">
+                  Configure individual admin request limits. Auto assign will distribute requests evenly across available admins.
+                </p>
 
               {/* Accounts Table (Admins) */}
               <div className="bg-white border rounded-lg">
