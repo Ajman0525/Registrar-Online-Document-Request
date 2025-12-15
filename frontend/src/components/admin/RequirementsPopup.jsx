@@ -9,9 +9,6 @@ import EditReqPopup from "./EditReqPopup";
 import CantEditPopup from "./CantEditPopup";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 
-
-
-
 function RequirementsPopup({ onClose, selected = [], setSelected, onAddRequirement, selectionMode = true}) {
  const [requirements, setRequirements] = useState([]);
  const [searchTerm, setSearchTerm] = useState("");
@@ -29,9 +26,6 @@ function RequirementsPopup({ onClose, selected = [], setSelected, onAddRequireme
  useEffect(() => {
    setInitialSelected([...selected]);
  }, []);
-
-
-
 
  useEffect(() => {
    const fetchRequirements = async () => {

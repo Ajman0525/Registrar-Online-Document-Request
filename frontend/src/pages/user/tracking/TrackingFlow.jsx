@@ -29,7 +29,7 @@ function TrackFlow() {
 		console.log("Tracking data received:", data.trackData);
 		setTrackData(data.trackData);
         setMaskedPhone(data.maskedPhone);
-        setStudentId(data.studentId);
+        setStudentId(data.studentId || data.student_id);
 		setCurrentView("otp");
         setLoading(false);
     };
@@ -100,7 +100,7 @@ function TrackFlow() {
     };
 
     const handleRefreshStatus = async () => {
-        if (!trackData?.trackingNumber || !studentId) {
+        if (!trackData?.trackingNumber) {
             setCurrentView('status');
             return;
         }
@@ -115,7 +115,6 @@ function TrackFlow() {
                 credentials: 'include',
                 body: JSON.stringify({ 
                     tracking_number: trackData.trackingNumber, 
-                    student_id: studentId 
                 }),
             });
 
@@ -249,7 +248,7 @@ function TrackFlow() {
                                     body: JSON.stringify({
                                         trackingNumber: payment.trackingNumber,
                                         amount: payment.amountDue,
-                                        studentId: payment.studentId || payment.trackData?.studentId
+                                        studentId: payment.studentId
                                     })
                                 });
                                 const body = await resp.json().catch(() => ({}));
@@ -380,7 +379,10 @@ function TrackFlow() {
                         />
                     )}
                     {currentView === "pickup-instructions" && (
-                        <PickupInstructions onBack={handleBack} />
+                        <PickupInstructions 
+                        onBack={handleBack} 
+                        onViewDetails={handleViewDetails}
+                        />
                     )}
                 </ContentBox>
             )}

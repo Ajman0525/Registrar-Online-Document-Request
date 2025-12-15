@@ -1,5 +1,6 @@
 from . import manage_request_bp
-from flask import jsonify, request, g
+from ...whatsapp.controller import send_whatsapp_message
+from flask import jsonify, request, g, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.utils.decorator import jwt_required_with_role
 from .models import ManageRequestModel
@@ -8,6 +9,36 @@ from .models import ManageRequestModel
 # Admin role
 role = "admin"
 
+def send_whatsapp_status_update(phone, full_name, request_id, status_update):
+    status_template_map = {
+        "PENDING": "odr_request_submitted_v2", 
+        "IN-PROGRESS": "odr_processing_request_v2", 
+        "DOC-READY": "odr_document_processed_v3", 
+        "RELEASED": "odr_document_released_v2", 
+        "REJECTED" : "odr_request_submitted_v2" # The Whatsapp template for REJECTED status is still pending for approval, using the submitted template as a placeholder
+    }
+
+    template_name = status_template_map.get(status_update)
+
+    components = [
+        {
+            "type": "body",
+            "parameters": [
+                {"type": "text", "text": str(full_name)},
+                {"type": "text", "text": str(request_id)}
+            ]
+        }
+    ]
+
+    print(f"[Status Update] Attempting to send WhatsApp Status Update to {phone}")
+
+    result = send_whatsapp_message(phone, template_name, components)
+
+    if "error" in result:
+        current_app.logger.error(f"WhatsApp send failed for Status Update to {phone}: {result['error']}")
+        return {"status": "failed", "message": "Failed to send Status Update via WhatsApp"}
+
+    return {"status": "success"}
 
 
 @manage_request_bp.route("/api/admin/requests", methods=["GET"])
@@ -56,18 +87,33 @@ def update_request_status(request_id):
             return jsonify({"error": "Status is required"}), 400
 
         # Validate status
-        valid_statuses = ["UNCONFIRMED", "SUBMITTED", "PENDING", "IN-PROGRESS", "DOC-READY", "RELEASED", "REJECTED"]
+        valid_statuses = ["PENDING", "IN-PROGRESS", "DOC-READY", "RELEASED", "REJECTED"]
         if new_status not in valid_statuses:
             return jsonify({"error": "Invalid status"}), 400
 
         # Get admin ID from JWT token
         admin_id = get_jwt_identity()
+        request_data = ManageRequestModel.get_request_by_id(request_id)
+        if not request_data:
+            return jsonify({"error": "Request not found"}), 404
+        
+        phone = request_data.get("contact_number")
+        full_name = request_data.get("full_name")
 
         success = ManageRequestModel.update_request_status(request_id, new_status, admin_id, payment_status)
+        
         if success:
+            if phone:
+                send_whatsapp_status_update(phone, full_name, request_id, new_status)
+            
+            else:
+                print(f"[Status Update] No phone number available to send WhatsApp status update for request {request_id}")
+
             return jsonify({"message": "Status updated successfully"}), 200
+        
         else:
             return jsonify({"error": "Request not found"}), 404
+            
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

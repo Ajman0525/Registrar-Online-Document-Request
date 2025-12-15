@@ -24,8 +24,8 @@ class Payment:
             cur.execute("""
                 SELECT total_cost, payment_status, student_id
                 FROM requests
-                WHERE request_id = %s AND student_id = %s
-            """, (tracking_number, student_id))
+                WHERE request_id = %s
+            """, (tracking_number,))
             
             order = cur.fetchone()
             
@@ -40,11 +40,16 @@ class Payment:
             if not order:
                 return {
                     'success': False,
-                    'message': f'Order not found for tracking number: {tracking_number} with student_id: {student_id}',
+                    'message': f'Order not found for tracking number: {tracking_number}',
                     'was_already_paid': previous_payment_status 
                 }
             
-            expected_amount = float(order[0]) if order[0] else 0.0
+            # Fetch admin fee from DB
+            cur.execute("SELECT value FROM fee WHERE key = 'admin_fee'")
+            fee_res = cur.fetchone()
+            admin_fee = float(fee_res[0]) if fee_res else 0.0
+            
+            expected_amount = (float(order[0]) if order[0] else 0.0) + admin_fee
             received_amount = float(amount) if amount else 0.0
             db_student_id = order[2]
             
@@ -66,9 +71,9 @@ class Payment:
             # Update payment status
             cur.execute("""
                 UPDATE requests
-                SET payment_status = TRUE
-                WHERE request_id = %s AND student_id = %s
-            """, (tracking_number, student_id))
+                SET payment_status = TRUE, payment_date = (NOW() AT TIME ZONE 'UTC' + INTERVAL '8 HOURS')
+                WHERE request_id = %s
+            """, (tracking_number,))
             rows_updated = cur.rowcount
             conn.commit()
 
