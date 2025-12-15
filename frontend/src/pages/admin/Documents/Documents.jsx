@@ -10,10 +10,24 @@ import RequirementsPopup from "../../../components/admin/RequirementsPopup";
 import HidePopup from "../../../components/admin/HideDocPopup";
 import CantDeleteDocPopup from "../../../components/admin/CantDeleteDocPopup";
 
+const CACHE_KEY = "documents_data_cache";
+
+const getStoredState = (key, defaultValue) => {
+  try {
+    const stored = sessionStorage.getItem(key);
+    return stored ? JSON.parse(stored) : defaultValue;
+    } catch (error) {
+      console.warn("Failed to parse session storage", error)
+      return defaultValue;
+    }
+}
+
 function Documents() {
-  const [documents, setDocuments] = useState([]);
-  const [requirements, setRequirements] = useState([]);
-  const [documentsWithRequirements, setDocumentsWithRequirements] = useState([]);
+
+  const cachedData = getStoredState(CACHE_KEY, null);
+  const [documents, setDocuments] = useState(cachedData?.documents || []);
+  const [requirements, setRequirements] = useState(cachedData?.requirements || []);
+  const [documentsWithRequirements, setDocumentsWithRequirements] = useState(cachedData?.documentsWithRequirements || []);
   const [selectedDoc, setSelectedDoc] = useState(null);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
@@ -28,9 +42,9 @@ function Documents() {
     const exists = await checkDocumentExists(doc.doc_id);
 
     if (exists) {
-      setShowCantDeletePopup(true); // cannot delete
+      setShowCantDeletePopup(true); 
     } else {
-      setShowDeletePopup(true); // safe to delete
+      setShowDeletePopup(true); 
     }
   };
 
@@ -105,7 +119,7 @@ function Documents() {
 
   const fetchDocuments = async () => {
   try {
-    setLoading(true);
+    if (!cachedData) setLoading(true);
 
     const [docsRes, reqRes, joinRes] = await Promise.all([
       fetch("/admin/get-documents"),
@@ -120,6 +134,13 @@ function Documents() {
     setDocuments(docsData);
     setRequirements(reqData);
     setDocumentsWithRequirements(joinData);
+
+    const documentDataToCache = {
+      documents: docsData,
+      requirements: reqData,
+      documentsWithRequirements : joinData
+    }
+    sessionStorage.setItem(CACHE_KEY, JSON.stringify(documentDataToCache))
 
   } catch (err) {
     console.error("Error fetching:", err);
