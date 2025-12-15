@@ -256,7 +256,7 @@ class Payment:
             placeholders = ','.join(['%s'] * len(doc_ids))
             query = f"""
                 UPDATE request_documents
-                SET payment_status = TRUE
+                SET payment_status = TRUE, payment_date = (NOW() AT TIME ZONE 'UTC' + INTERVAL '8 HOURS')
                 WHERE request_id = %s AND doc_id IN ({placeholders})
             """
             
