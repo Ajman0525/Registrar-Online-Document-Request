@@ -109,36 +109,6 @@ class Tracking:
             db_pool.putconn(conn)
 
     @staticmethod
-    def update_payment_status(tracking_number, student_id):
-        """
-        Updates the payment_status of a request to TRUE.
-
-        Args:
-            tracking_number (str): The request_id of the record.
-            student_id (str): The student_id to validate ownership.
-
-        Returns:
-            bool: True if the update was successful, False otherwise.
-        """
-        conn = db_pool.getconn()
-        cur = conn.cursor()
-        try:
-            cur.execute("""
-                UPDATE requests
-                SET payment_status = TRUE
-                WHERE request_id = %s AND student_id = %s
-            """, (tracking_number, student_id))
-            conn.commit()
-            return cur.rowcount > 0  # Returns True if a row was updated
-        except Exception as e:
-            print(f"Error updating payment status: {e}")
-            conn.rollback()
-            return False
-        finally:
-            cur.close()
-            db_pool.putconn(conn)
-
-    @staticmethod
     def set_order_type(request_id, order_type):
         """
         Sets the order_type for a request.
