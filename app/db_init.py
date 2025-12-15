@@ -230,6 +230,15 @@ def ready_request_assignments_table():
    """
    execute_query(query)
 
+def ready_fee_table():
+   query = """
+   CREATE TABLE IF NOT EXISTS fee (
+       key VARCHAR(50) PRIMARY KEY,
+       value NUMERIC NOT NULL
+   )
+   """
+   execute_query(query)
+
 
 def ready_admins_table():
    query = """
