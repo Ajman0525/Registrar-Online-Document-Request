@@ -198,14 +198,18 @@ function Documents() {
           onDelete={handleDelete}
         />
       )}
-
       {showDocRequirementsPopup && (
-          <RequirementsPopup
-            onClose={() => setShowDocRequirementsPopup(false)}
-            selectionMode={false}
-          />
-        )}
-
+        <RequirementsPopup
+          onClose={() => {
+            setShowDocRequirementsPopup(false);
+            fetchDocuments(); // <-- refresh documents after done
+          }}
+          selectionMode={false}
+          onAddRequirement={(newReq) => {
+            fetchDocuments();
+          }}
+        />
+      )}
       {showHidePopup && (
         <HidePopup
           document={selectedDoc}
