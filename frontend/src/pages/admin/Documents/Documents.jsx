@@ -93,12 +93,10 @@ function Documents() {
   await fetchDocuments();
 };
 
-
   const handleOpen = () => {
   setSelectedDoc(null);   // <-- fix
   setShowPopup(true);
 };
-
 
   const handleOpenHide = (doc) => {
     setSelectedDoc(doc);
