@@ -248,7 +248,7 @@ function TrackFlow() {
                                     body: JSON.stringify({
                                         trackingNumber: payment.trackingNumber,
                                         amount: payment.amountDue,
-                                        studentId: payment.studentId || payment.trackData?.studentId
+                                        studentId: payment.studentId
                                     })
                                 });
                                 const body = await resp.json().catch(() => ({}));
