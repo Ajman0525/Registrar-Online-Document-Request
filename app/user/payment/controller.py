@@ -7,6 +7,7 @@ from app.user.authentication.models import AuthenticationUser
 from .models import Payment
 import hmac
 import hashlib
+from flask_jwt_extended import jwt_required
 
 # Store Maya sandbox IPs to make sure webhooks only come from these addresses
 MAYA_SANDBOX_IPS = ['13.229.160.234', '3.1.199.75']
@@ -37,6 +38,7 @@ def send_whatsapp_payment_confirmation(phone, full_name, request_id):
     return {"status": "success"}
 
 @payment_bp.before_request
+@jwt_required()
 def verify_maya_ip():
     """Verify request comes from Maya servers"""
     if MAYA_DISABLE_SECURITY:
@@ -61,6 +63,7 @@ def verify_maya_ip():
 
 
 @payment_bp.route('/maya/webhook', methods=['POST'])
+@jwt_required()
 def maya_webhook():
     """Handle Maya payment webhook"""
     try:
@@ -128,6 +131,7 @@ def verify_signature(payload_bytes, signature):
 
 
 @payment_bp.route('/mark-paid', methods=['POST'])
+@jwt_required()
 def mark_paid_manual():
     try:
         data = request.get_json() or {}
@@ -181,6 +185,7 @@ def mark_paid_manual():
 
 
 @payment_bp.route('/mark-document-paid', methods=['POST'])
+@jwt_required()
 def mark_document_paid():
     try:
         data = request.get_json() or {}

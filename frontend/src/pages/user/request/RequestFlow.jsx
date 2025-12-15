@@ -110,6 +110,7 @@ function RequestFlow() {
     window.history.replaceState({}, "", "/user/request");
   }, [isPaymentReturn, searchParams]);
 
+
   // Centralized state for all request data
   const [requestData, setRequestData] = useState({
     documents: [], // {doc_id, doc_name, cost, quantity}
@@ -122,6 +123,7 @@ function RequestFlow() {
     },
     preferredContact: "",
     totalPrice: 0,
+    adminFee: 0,
     paymentStatus: false,
     remarks: "Request submitted successfully"
   });
@@ -203,6 +205,7 @@ function RequestFlow() {
         const data = await response.json();
 
 
+
         if (data.status === "success" && data.student_data) {
           setRequestData(prev => ({
             ...prev,
@@ -212,7 +215,8 @@ function RequestFlow() {
               contact_number: data.student_data.student_contact || "",
               email: data.student_data.email || "",
               college_code: data.student_data.college_code || ""
-            }
+            },
+            adminFee: data.admin_fee || 0
           }));
         }
         
@@ -564,6 +568,7 @@ function RequestFlow() {
 
       const requirementsData = await Promise.all(requirements);
 
+
       const submissionData = {
         student_info: requestData.studentInfo,
         documents: requestData.documents.map(doc => ({
@@ -576,6 +581,7 @@ function RequestFlow() {
         })),
         requirements: requirementsData,
         total_price: requestData.totalPrice,
+        admin_fee: requestData.adminFee,
         preferred_contact: requestData.preferredContact || "SMS",
         payment_status: requestData.paymentStatus,
         remarks: requestData.remarks
@@ -759,6 +765,7 @@ function RequestFlow() {
         />
       )}
 
+
       {step === "summary" && (
         <Summary
           selectedDocs={requestData.documents}
@@ -766,6 +773,7 @@ function RequestFlow() {
           preferredContactInfo={{ method: requestData.preferredContact }}
           contactInfo={requestData.studentInfo}
           paymentCompleted={paymentCompleted}
+          adminFee={requestData.adminFee}
           onNext={(navigationType) => {
             handleFinalSubmission();
           }}

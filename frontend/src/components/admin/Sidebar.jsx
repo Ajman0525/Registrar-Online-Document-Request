@@ -1,3 +1,4 @@
+
 import "./Sidebar.css";
 import { NavLink } from "react-router-dom";
 import DashboardIcon from '../icons/DashboardIcon';
@@ -6,18 +7,42 @@ import LogsIcon from '../icons/LogsIcon';
 import PaidIcon from '../icons/PaidIcon';
 import RequestsIcon from '../icons/RequestsIcon';
 import SettingsIcon from '../icons/SettingsIcon';
+import { useAuth } from '../../contexts/AuthContext';
+import { getFilteredNavigationItems } from '../../utils/roleUtils';
 
-const navItems = [
-    { name: 'Dashboard', path: '/admin/dashboard', icon: DashboardIcon },
-    { name: 'Requests', path: '/admin/requests', icon: RequestsIcon },
-    { name: 'Transactions', path: '/admin/transactions', icon: PaidIcon },
-    { name: 'Documents', path: '/admin/document', icon: DocumentsIcon },
-    { name: 'Logs', path: '/admin/logs', icon: LogsIcon },
-    { name: 'Settings', path: '/admin/settings', icon: SettingsIcon }
-
-];
 
 const Sidebar = () => {
+    const { role, getFilteredNavigationItems } = useAuth();
+    const filteredNavItems = getFilteredNavigationItems();
+
+    // Define icon mapping for navigation items
+    const getIconComponent = (iconName) => {
+        const iconMap = {
+            'DashboardIcon': DashboardIcon,
+            'RequestsIcon': RequestsIcon,
+            'PaidIcon': PaidIcon,
+            'DocumentsIcon': DocumentsIcon,
+            'LogsIcon': LogsIcon,
+            'SettingsIcon': SettingsIcon,
+        };
+        return iconMap[iconName] || DashboardIcon;
+    };
+
+    // Get all available navigation items with their icons
+    const allNavItems = [
+        { name: 'Dashboard', path: '/admin/dashboard', icon: 'DashboardIcon' },
+        { name: 'Requests', path: '/admin/requests', icon: 'RequestsIcon' },
+        { name: 'Transactions', path: '/admin/transactions', icon: 'PaidIcon' },
+        { name: 'Documents', path: '/admin/document', icon: 'DocumentsIcon' },
+        { name: 'Logs', path: '/admin/logs', icon: 'LogsIcon' },
+        { name: 'Settings', path: '/admin/settings', icon: 'SettingsIcon' }
+    ];
+
+    // Filter navigation items based on user role
+    const navItems = allNavItems.filter(item => 
+        filteredNavItems.some(filtered => filtered.path === item.path)
+    );
+
     return (
         <aside className="admin-sidebar">
             <div className="sidebar-header">
@@ -31,7 +56,7 @@ const Sidebar = () => {
 
             <nav>
                 {navItems.map((item) => {
-                    const Icon = item.icon; // store icon component in variable
+                    const Icon = getIconComponent(item.icon);
 
                     return (
                         <NavLink

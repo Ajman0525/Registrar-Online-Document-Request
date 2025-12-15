@@ -2,11 +2,12 @@ from . import settings_bp
 from flask import jsonify, request, current_app
 from app.utils.decorator import jwt_required_with_role
 from .models import Admin, OpenRequestRestriction, Fee
+from flask_jwt_extended import jwt_required
 
 role = "admin"
 
 @settings_bp.route("/api/admin/admins", methods=["GET"])
-@jwt_required_with_role(role)
+@jwt_required()
 def get_admins():
     """Get all admins."""
     try:
@@ -18,7 +19,7 @@ def get_admins():
 
 
 @settings_bp.route("/api/admin/admins", methods=["POST"])
-@jwt_required_with_role(role)
+@jwt_required()
 def add_admin():
     """Add a new admin."""
     data = request.get_json(silent=True) or {}
@@ -36,7 +37,7 @@ def add_admin():
 
 
 @settings_bp.route("/api/admin/admins/<email>", methods=["PUT"])
-@jwt_required_with_role(role)
+@jwt_required()
 def update_admin(email):
     """Update an admin's role."""
     data = request.get_json(silent=True) or {}
@@ -53,7 +54,7 @@ def update_admin(email):
 
 
 @settings_bp.route("/api/admin/admins/<email>", methods=["DELETE"])
-@jwt_required_with_role(role)
+@jwt_required()
 def delete_admin(email):
     """Delete an admin."""
     if Admin.delete(email):
@@ -70,31 +71,32 @@ def get_settings():
         if settings:
             return jsonify(settings), 200
         else:
-            return jsonify({"start_time": "09:00", "end_time": "17:00", "available_days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]}), 200
+            return jsonify({"start_time": "09:00", "end_time": "17:00", "available_days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], "announcement": ""}), 200
     except Exception as e:
         current_app.logger.error(f"Error fetching settings: {e}")
         return jsonify({"error": "Failed to fetch settings"}), 500
 
 @settings_bp.route("/api/admin/settings", methods=["PUT"])
-@jwt_required_with_role(role)
+@jwt_required()
 def update_settings():
     """Update settings."""
     data = request.get_json(silent=True) or {}
     start_time = data.get("start_time")
     end_time = data.get("end_time")
     available_days = data.get("available_days")
+    announcement = data.get("announcement", "")
 
     if not start_time or not end_time or not available_days:
         return jsonify({"error": "start_time, end_time, and available_days are required"}), 400
 
-    if OpenRequestRestriction.update_settings(start_time, end_time, available_days):
+    if OpenRequestRestriction.update_settings(start_time, end_time, available_days, announcement):
         current_app.logger.info("Settings updated")
         return jsonify({"message": "Settings updated successfully"}), 200
     else:
         return jsonify({"error": "Failed to update settings"}), 500
 
 @settings_bp.route("/api/admin/settings/fee", methods=["GET"])
-@jwt_required_with_role(role)
+@jwt_required()
 def get_admin_fee():
     """Get current admin fee."""
     try:
@@ -105,7 +107,7 @@ def get_admin_fee():
         return jsonify({"error": "Failed to fetch admin fee"}), 500
 
 @settings_bp.route("/api/admin/settings/fee", methods=["PUT"])
-@jwt_required_with_role(role)
+@jwt_required()
 def update_admin_fee():
     """Update admin fee."""
     data = request.get_json(silent=True) or {}

@@ -217,8 +217,10 @@ class Request:
             db_pool.putconn(conn)
         
 
+
+
     @staticmethod
-    def submit_request(request_id, student_id, full_name, contact_number, email, preferred_contact, payment_status, total_cost, college_code, remarks=None, order_type=None):
+    def submit_request(request_id, student_id, full_name, contact_number, email, preferred_contact, payment_status, total_cost, admin_fee, college_code, remarks=None, order_type=None):
         """
         Submit a complete request with all student information and details.
         This method consolidates multiple database operations into one transaction.
@@ -226,13 +228,18 @@ class Request:
         conn = db_pool.getconn()
         cur = conn.cursor()
 
+
         try:
+            # Use the admin_fee passed from frontend
+            admin_fee_amount = float(admin_fee) if admin_fee else 0.0
+            print(f"Using admin fee from frontend: {admin_fee_amount}")
+
             # Use INSERT ... ON CONFLICT DO UPDATE for upsert behavior
             cur.execute("""
                 INSERT INTO requests (
                     request_id, student_id, full_name, contact_number, email,
-                    preferred_contact, payment_status, total_cost, remarks, order_type, status, college_code
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'PENDING', %s)
+                    preferred_contact, payment_status, total_cost, remarks, order_type, status, college_code, admin_fee_amount
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'PENDING', %s, %s)
                 ON CONFLICT (request_id) DO UPDATE SET
                     student_id = EXCLUDED.student_id,
                     full_name = EXCLUDED.full_name,
@@ -244,13 +251,14 @@ class Request:
                     remarks = EXCLUDED.remarks,
                     order_type = EXCLUDED.order_type,
                     college_code = EXCLUDED.college_code,
+                    admin_fee_amount = EXCLUDED.admin_fee_amount,
                     status = 'PENDING'
             """, (request_id, student_id, full_name, contact_number, email, 
-                  preferred_contact, payment_status, total_cost, remarks, order_type, college_code))
+                  preferred_contact, payment_status, total_cost, remarks, order_type, college_code, admin_fee_amount))
             
             conn.commit()
 
-            print(f"Request {request_id} submitted successfully")
+            print(f"Request {request_id} submitted successfully with admin fee: {admin_fee_amount}")
             return True
 
         except Exception as e:

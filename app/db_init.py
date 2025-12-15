@@ -260,16 +260,24 @@ def ready_max_request_settings_table():
     """
    execute_query(query)
 
+
 def ready_open_request_restriction_table():
    query = """
    CREATE TABLE IF NOT EXISTS open_request_restriction (
        id SERIAL PRIMARY KEY,
        start_time TIME NOT NULL,
        end_time TIME NOT NULL,
-       available_days JSONB NOT NULL
+       available_days JSONB NOT NULL,
+       announcement TEXT DEFAULT ''
    )
    """
    execute_query(query)
+   
+   # Add announcement column if it doesn't exist
+   alter_query = """
+   ALTER TABLE open_request_restriction ADD COLUMN IF NOT EXISTS announcement TEXT DEFAULT ''
+   """
+   execute_query(alter_query)
 
 
 def ready_admin_settings_table():

@@ -665,6 +665,14 @@ label{
   font-size: 10px;
 }
 
+
+.price-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
 .price-item {
   display: flex;
   flex-direction: row;
@@ -672,17 +680,39 @@ label{
   width: 100%;
 }
 
-.total-text, .price-amount{
+.price-text {
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  color: var(--color-text-subtext);
+}
+
+.price-divider {
+  border: none;
+  border-top: 2px solid #e2e8f0;
+  margin: 8px 0;
+  width: 100%;
+}
+
+.total-price-item {
+  margin-top: 8px;
+}
+
+.total-text, .price-amount, .total-amount {
   font-family: var(--font-family-base);
   font-size: 18px;
 }
 
-.total-text{
+.total-text {
   color: var(--color-text-subtext);
 }
 
-.price-amount{
+.price-amount, .total-amount {
   font-weight: bold;
+}
+
+.total-amount {
+  font-size: 20px;
+  color: #059669;
 }
 
 

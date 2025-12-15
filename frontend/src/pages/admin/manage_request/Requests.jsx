@@ -1,8 +1,10 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { getCSRFToken } from "../../../utils/csrf";
+import { useAuth } from "../../../contexts/AuthContext";
 
 import StatusChangeConfirmModal from "../../../components/admin/StatusChangeConfirmModal";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
@@ -96,11 +98,13 @@ const StatusColumn = ({ title, requests, onDropRequest, uiLabel, onCardClick, on
   );
 };
 
+
 // =======================================
 // MAIN COMPONENT
 // =======================================
 export default function AdminRequestsDashboard() {
   const navigate = useNavigate();
+  const { role } = useAuth();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -111,6 +115,7 @@ export default function AdminRequestsDashboard() {
   const [totalRequests, setTotalRequests] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
 
+
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState('all'); // 'all' or 'my'
   const [collegeCodeFilter, setCollegeCodeFilter] = useState('');
@@ -119,11 +124,13 @@ export default function AdminRequestsDashboard() {
   const [availableCollegeCodes, setAvailableCollegeCodes] = useState([]);
   const limit = 20;
 
-
   useEffect(() => {
-    fetchRequests(1, '', 'all');
+    // Set initial view mode and fetch data based on role
+    const initialMode = role === 'staff' ? 'my' : 'all';
+    setViewMode(initialMode);
+    fetchRequests(1, '', initialMode);
     fetchAvailableFilters();
-  }, []);
+  }, [role]);
 
   const fetchAvailableFilters = async () => {
     try {

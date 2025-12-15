@@ -638,6 +638,7 @@ const RequestViewPage_InProgress = ({ request, onRefresh }) => {
 
       </div>
 
+
       {/* Doc Ready Confirmation Modal */}
       {showDocReadyModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -646,6 +647,18 @@ const RequestViewPage_InProgress = ({ request, onRefresh }) => {
             <p className="mb-4 text-gray-600">
               Are you sure you want to mark this request as DOC-READY? This will change the request status from IN-PROGRESS to DOC-READY.
             </p>
+            
+            {/* Admin Fee Information */}
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
+              <h3 className="font-semibold text-blue-800 mb-2">Admin Fee Information</h3>
+              <p className="text-sm text-blue-700">
+                <strong>Admin Fee Amount:</strong> ₱{request.admin_fee_amount || '0.00'}
+              </p>
+              <p className="text-xs text-blue-600 mt-1">
+                The admin fee has been included in the total cost for this request.
+              </p>
+            </div>
+            
             <div className="mt-6 flex justify-end space-x-2">
               <button
                 onClick={() => setShowDocReadyModal(false)}
