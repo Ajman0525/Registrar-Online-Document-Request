@@ -115,7 +115,7 @@
   accent-color: #28a745;
 }
 
-.document-name {
+.request-view-wrapper .document-name {
   font-weight: 500;
   color: #333;
   transition: all 0.2s ease;
