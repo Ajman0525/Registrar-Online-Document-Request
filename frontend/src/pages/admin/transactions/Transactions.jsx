@@ -260,6 +260,16 @@ function Transactions() {
   /* Downloads the current transactions list as a pdf file */
   function downloadPDF() {
     const element = document.querySelector('.transactions-page');
+    const clone = element.cloneNode(true);
+    clone.classList.add('print-mode');
+
+    const container = document.createElement('div');
+    container.style.position = 'absolute';
+    container.style.left = '-9999px';
+    container.style.top = '0';
+    container.style.width = '100%';
+    container.appendChild(clone);
+    document.body.appendChild(container);
     
     let filename = 'Transactions.pdf';
     const timeframe = getTimeframeString();
@@ -271,12 +281,17 @@ function Transactions() {
       margin: 0.5,
       filename: filename,
       image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2 },
+      html2canvas: { scale: 2, scrollY: 0 },
       jsPDF: { unit: 'cm', format: 'a4', orientation: 'portrait' }
     };
 
     // Generate PDF
-    html2pdf().set(opt).from(element).save();
+    html2pdf().set(opt).from(clone).save().then(() => {
+      document.body.removeChild(container);
+    }).catch((err) => {
+      console.error(err);
+      document.body.removeChild(container);
+    });
   }
 
   return (
@@ -513,7 +528,7 @@ function Transactions() {
               {transactions.map((tx) => (
                 <tr key={tx.request_id}>
                   <td className="td-request-id">
-                    <Link to={`/admin/requests?request_id=${tx.request_id}`}>{tx.request_id}</Link>
+                    <Link to={`/admin/requests/${tx.request_id}`}>{tx.request_id}</Link>
                   </td>
                   <td className="td-user-name">
                     {tx.full_name}

@@ -9,7 +9,7 @@ class TransactionsModel:
     cur = conn.cursor()
     try:
       base_query = """
-        SELECT request_id, student_id, full_name, total_cost, payment_status, payment_date
+        SELECT request_id, student_id, full_name, total_cost, payment_status, payment_date, admin_fee_amount
         FROM requests
         WHERE TRUE
       """
@@ -41,13 +41,6 @@ class TransactionsModel:
       cur.execute(paginated_query, tuple(params))
       rows = cur.fetchall()
 
-      # Fetch current admin fee from settings
-      cur.execute("SELECT value FROM fee WHERE key = 'admin_fee'")
-      fee_row = cur.fetchone()
-      current_admin_fee = float(fee_row[0]) if fee_row else 0.0
-
-      print(f"Admin Fee fetched: {current_admin_fee}")
-
       results = []
       for row in rows:
         results.append({
@@ -55,10 +48,10 @@ class TransactionsModel:
           'request_id': row[0],
           'student_id': row[1],
           'full_name': row[2],
-          'amount': float(row[3]) if row[3] else 0.0,
+          'amount': (float(row[3]) if row[3] else 0.0) + (float(row[6]) if row[6] else 0.0),
           'paid': bool(row[4]),
           'payment_date': row[5].isoformat() if row[5] else None,
-          'admin_fee': current_admin_fee
+          'admin_fee': float(row[6]) if row[6] else 0.0
         })
 
       return {
@@ -100,7 +93,7 @@ class TransactionsModel:
         params.extend([search_term, search_term, search_term])
 
       # Total Amount (Paid only)
-      query_paid = f"SELECT COALESCE(SUM(total_cost), 0) {base_query} AND payment_status = TRUE"
+      query_paid = f"SELECT COALESCE(SUM(total_cost + COALESCE(admin_fee_amount, 0)), 0) {base_query} AND payment_status = TRUE"
       cur.execute(query_paid, tuple(params))
       total_amount = cur.fetchone()[0]
 

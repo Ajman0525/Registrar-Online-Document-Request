@@ -48,6 +48,7 @@ function Details({ trackData, onTrackAnoter, onBack }) {
                     <div className="document-item document-header">
                         <h4 className="document-name">Name</h4>
                         <span className="quantity-number">Quantity</span>
+                        <span className="payment-status" style={{ minWidth: "80px", textAlign: "center" }}>Status</span>
                     </div>
                     {loading ? (
                         <div className="document-item">
@@ -61,7 +62,16 @@ function Details({ trackData, onTrackAnoter, onBack }) {
                         documents.map((doc, index) => (
                             <div key={index} className="document-item">
                                 <span className="document-name" style={{ fontWeight: "normal" }}>{doc.name}</span>
-                                <span className="quantity-number" style={{ fontWeight: "normal" }}>&nbsp;{doc.quantity}</span>
+                                <span className="quantity-number" style={{ fontWeight: "normal", textAlign: "center"}}>&nbsp;{doc.quantity}</span>
+                                <span style={{ 
+                                    minWidth: "80px", 
+                                    textAlign: "center", 
+                                    color: doc.payment_status ? "green" : "#9ca3af", 
+                                    fontSize: "12px", 
+                                    fontWeight: "bold" 
+                                }}>
+                                    {doc.payment_status ? "PAID" : "UNPAID"}
+                                </span>
                             </div>
                         ))
                     )}

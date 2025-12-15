@@ -15,7 +15,7 @@ def send_whatsapp_status_update(phone, full_name, request_id, status_update):
         "IN-PROGRESS": "odr_processing_request_v2", 
         "DOC-READY": "odr_document_processed_v3", 
         "RELEASED": "odr_document_released_v2", 
-        "REJECTED" : "odr_request_submitted_v2" # The Whatsapp template for REJECTED status is still pending for approval, using the submitted template as a placeholder
+        "REJECTED" : "odr_request_declined" 
     }
 
     template_name = status_template_map.get(status_update)
