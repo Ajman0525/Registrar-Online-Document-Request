@@ -74,8 +74,14 @@ function EnterId({ onNext, onBack, maskedPhone, setMaskedPhone, goBackToOptions}
         //       return;
         //   }
 
+
             setMaskedPhone(data.masked_phone);
             setError("");
+            
+            // Set user type for regular students
+            sessionStorage.setItem("user_type", "student");
+            localStorage.setItem("user_type", "student");
+            
             onNext();
         } catch (error) {
             triggerError("An error occurred. Please try again.");

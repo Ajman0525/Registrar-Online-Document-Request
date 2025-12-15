@@ -59,12 +59,15 @@ def get_request_page_data():
         #Fetch student info
         student_data = Request.get_student_data(student_id)
 
+
         student_name = student_data.get("full_name")
         student_contact = student_data.get("contact_number")
         student_email = student_data.get("email")
+        student_college_code = student_data.get("college_code")
         
         # Step 2: Fetch documents available for request
         documents = DocumentList.get_all_documents()
+
 
 
         # Step 3: send the needed data to React
@@ -74,7 +77,8 @@ def get_request_page_data():
                 "student_id": student_id,
                 "student_name": student_name,
                 "student_contact": student_contact,
-                "email": student_email
+                "email": student_email,
+                "college_code": student_college_code
             },
             "documents": documents
         })
@@ -156,20 +160,31 @@ def complete_request():
         request_id = Request.generate_unique_request_id()
         session["request_id"] = request_id
     
+
     student_id = session.get("student_id")
     student_name = student_info.get("full_name")
     student_contact = student_info.get("contact_number")
     student_email = student_info.get("email")
+    student_college_code = student_info.get("college_code")
     
     try:
+
         # Step 2: Store student info in the database
-        Request.submit_request(request_id, student_id, student_name, student_contact, student_email, preferred_contact, payment_status, total_price, remarks)
+        Request.submit_request(request_id, student_id, student_name, student_contact, student_email, preferred_contact, payment_status, total_price, student_college_code, remarks)
         
+
         # Step 3: Save documents if provided
         if documents_data:
             documents_saved = save_documents_to_db(request_id, documents_data)
             if not documents_saved:
                 raise Exception("Failed to save documents to database")
+        
+        # Step 3.1: Save custom documents if provided
+        custom_documents = [doc for doc in documents_data if doc.get("isCustom", False)]
+        if custom_documents:
+            custom_docs_saved = save_custom_documents_to_db(request_id, student_id, custom_documents)
+            if not custom_docs_saved:
+                raise Exception("Failed to save custom documents to database")
         
         # Step 4: Handle requirement files upload to Supabase
         if requirements_data:
@@ -197,6 +212,42 @@ def complete_request():
         }), 500
 
 
+
+
+@request_bp.route("/api/check-active-requests", methods=["GET"])
+@jwt_required_with_role(role)
+def check_active_requests():
+    """
+    Check for active requests for the logged-in student.
+    Returns all requests where status != 'RELEASED'.
+    """
+    try:
+        # Get student ID from session
+        student_id = session.get("student_id")
+        
+        if not student_id:
+
+            return jsonify({
+                "status": "error",
+                "message": "Student ID not found in session"
+            }), 400
+
+        # Fetch active requests for the student
+        active_requests = Request.get_active_requests_by_student(student_id)
+
+        return jsonify({
+            "status": "success",
+            "active_requests": active_requests,
+            "count": len(active_requests)
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": "An unexpected error occurred while fetching active requests."
+        }), 500
+
+
 @request_bp.route("/api/clear-session", methods=["POST"])
 @jwt_required_with_role(role)
 def logout_user():
@@ -215,6 +266,8 @@ def logout_user():
     response.delete_cookie('session')
     
     return response
+
+
 
 
 def save_documents_to_db(request_id, documents_data):
@@ -285,6 +338,31 @@ def upload_requirement_files_to_supabase(request_id, requirements_data):
         
         return True, "No files to upload", []
         
+
     except Exception as e:
         print(f"Error uploading requirement files: {e}")
         return False, f"Error uploading files: {str(e)}", []
+
+def save_custom_documents_to_db(request_id, student_id, custom_documents):
+    """
+    Helper function to save custom documents to database.
+    Args:
+        request_id (str): The request ID
+        student_id (str): The student ID
+        custom_documents (list): List of custom document objects
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    try:
+        # Extract custom document data
+        custom_docs_data = []
+        for doc in custom_documents:
+            custom_docs_data.append({
+                "doc_name": doc.get("doc_name", ""),
+                "description": doc.get("description", "")
+            })
+        
+        return Request.store_custom_documents(request_id, student_id, custom_docs_data)
+    except Exception as e:
+        print(f"Error saving custom documents: {e}")
+        return False

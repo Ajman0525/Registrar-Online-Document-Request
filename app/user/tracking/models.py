@@ -30,10 +30,15 @@ class Tracking:
             if not record:
                 return None
 
+            # Fetch admin fee from DB
+            cur.execute("SELECT value FROM fee WHERE key = 'admin_fee'")
+            fee_res = cur.fetchone()
+            admin_fee = float(fee_res[0]) if fee_res else 0.0
+
             # Map database columns to frontend keys
             tracking_data = {
                 "status": record[0],
-                "amountDue": float(record[1]) if record[1] is not None else 0.0,
+                "amountDue": (float(record[1]) if record[1] is not None else 0.0) + admin_fee,
                 "contact_number": record[2],
                 "paymentStatus": record[3],
                 "orderType": record[4],

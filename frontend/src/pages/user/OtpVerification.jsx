@@ -43,10 +43,15 @@ function OtpVerification({ onNext, onBack, studentId, maskedPhone, setMaskedPhon
         return;              // stop further execution
       }
 
+
       // If OTP is valid and no liability
       if (isTracking) {
         onNext();
       } else {
+        // Store user type for RequestFlow to access
+        const userType = sessionStorage.getItem("user_type") || "student";
+        localStorage.setItem("user_type", userType);
+        
         navigate("/user/request");
       }
 

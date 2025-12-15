@@ -11,10 +11,13 @@ import RegistrarMasterLayout from "./pages/layouts/RegistrarMasterLayout";
 import Dashboard from "./pages/admin/Dashboard";
 import Documents from "./pages/admin/Documents/Documents";
 import Requests from "./pages/admin/manage_request/Requests";
+import AssignRequests from "./pages/admin/manage_request/AssignRequests";
 import Logs from "./pages/admin/Logs";
 import Transactions from "./pages/admin/transactions/Transactions";
 import Settings from "./pages/admin/Settings";
 import RequestFlow from "./pages/user/request/RequestFlow";
+
+import RequestViewPage_Flow from "./pages/admin/manage_request/RequestViewPage_Flow"
 
 function App() {
   return (
@@ -35,10 +38,13 @@ function App() {
         <Route path="/admin" element={<RegistrarMasterLayout />}>
           <Route path="Dashboard" element={<Dashboard />} />
           <Route path="Requests" element={<Requests />} />
+
+          <Route path="Requests/:requestId" element={<RequestViewPage_Flow />} />
           <Route path="Transactions" element={<Transactions />} />
           <Route path ="Document" element = {<Documents />} />
           <Route path ="Logs" element = {<Logs />} />
           <Route path="settings" element={<Settings />} />
+          <Route path="AssignRequests" element={<AssignRequests />} />
         </Route>
         
       </Routes>
