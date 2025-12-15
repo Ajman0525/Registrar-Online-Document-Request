@@ -281,9 +281,6 @@ export default function AdminRequestsDashboard() {
   return (
     <DndProvider backend={HTML5Backend}>
       <div className="p-8 bg-gray-100 min-h-screen">
-        {/* Top title + search */}
-        <h1 className="text-3xl font-bold mb-6 text-gray-900">Manage Request</h1>
-
         {/* Filter buttons */}
         <div className="mb-4 flex gap-2">
           <button
@@ -314,17 +311,13 @@ export default function AdminRequestsDashboard() {
           >
             Assign Requests
           </button>
-        </div>
 
-
-        <div className="mb-8">
           <ReqSearchbar onSearch={(value) => {
             setSearchQuery(value);
             setCurrentPage(1);
             fetchRequests(1, value, viewMode);
           }} />
         </div>
-
         {/* Filter Controls */}
         <div className="mb-6 p-4 bg-white rounded-lg shadow-sm border border-gray-200">
           <h3 className="text-lg font-semibold mb-4 text-gray-800">Filters</h3>

@@ -341,7 +341,6 @@
 }
 
 .status-in_progress,
-.status-processing,
 .status-assigned {
   background: #d4edda;
   color: #155724;
