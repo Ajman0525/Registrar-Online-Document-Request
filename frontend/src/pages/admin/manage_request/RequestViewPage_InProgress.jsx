@@ -473,7 +473,6 @@ const RequestViewPage_InProgress = ({ request, onRefresh }) => {
           ) : changes.length > 0 ? (
             <div className="changes-table">
               <div className="changes-header">
-                <div className="change-admin">Admin</div>
                 <div className="change-requirement">Requirement</div>
                 <div className="change-status">Status</div>
                 <div className="change-date">Date</div>
@@ -482,7 +481,6 @@ const RequestViewPage_InProgress = ({ request, onRefresh }) => {
 
               {changes.map((change, index) => (
                 <div key={index} className="changes-row">
-                  <div className="change-admin">{change.admin_id}</div>
                   <div className="change-requirement">{change.requirement_name}</div>
                   <div className="change-status">
                     <span className={`status-badge ${change.status}`}>{change.status}</span>

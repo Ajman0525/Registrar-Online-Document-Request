@@ -325,7 +325,6 @@ export default function AdminRequestsDashboard() {
               fetchRequests(1, value, viewMode);
             }} />
         </div>
-
         {/* Filter Controls */}
         <div className="p-4 bg-white rounded-lg shadow-sm border border-gray-200">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
