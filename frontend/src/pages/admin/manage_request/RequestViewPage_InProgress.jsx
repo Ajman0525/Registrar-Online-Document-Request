@@ -596,8 +596,8 @@ const RequestViewPage_InProgress = ({ request, onRefresh }) => {
           </div>
 
           <div className="details-item">
-            <span>Date Requested</span>
-            <span>{request.requested_at}</span>
+            <span>Payment Date</span>
+            <span>{request.payment_date || "Unconfirmed"}</span>
           </div>
 
           {/* <div className="details-item">

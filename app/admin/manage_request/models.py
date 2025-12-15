@@ -642,7 +642,7 @@ class ManageRequestModel:
         cur = conn.cursor()
         try:
             cur.execute("""
-                SELECT request_id, student_id, full_name, contact_number, email, preferred_contact, status, requested_at, remarks, total_cost, payment_status, college_code, order_type
+                SELECT request_id, student_id, full_name, contact_number, email, preferred_contact, status, requested_at, remarks, total_cost, payment_status, college_code, order_type, payment_date
                 FROM requests
                 WHERE request_id = %s
             """, (request_id,))
@@ -664,7 +664,8 @@ class ManageRequestModel:
                 "total_cost": req[9],
                 "payment_status": req[10],
                 "college_code": req[11],
-                "pickup_option": req[12]
+                "pickup_option": req[12],
+                "payment_date":req[13]
             }
 
             # Check if request exists in auth_letters table to determine requester type
