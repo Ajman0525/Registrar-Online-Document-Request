@@ -217,6 +217,7 @@ class Request:
             db_pool.putconn(conn)
         
 
+
     @staticmethod
     def submit_request(request_id, student_id, full_name, contact_number, email, preferred_contact, payment_status, total_cost, college_code, remarks=None, order_type=None):
         """
@@ -227,12 +228,23 @@ class Request:
         cur = conn.cursor()
 
         try:
+            # Fetch admin fee from fee table
+            admin_fee = 0.0
+            try:
+                cur.execute("SELECT value FROM fee WHERE key = 'admin_fee'")
+                fee_res = cur.fetchone()
+                admin_fee = float(fee_res[0]) if fee_res else 0.0
+                print(f"Admin fee fetched: {admin_fee}")
+            except Exception as e:
+                print(f"Error fetching admin fee: {e}")
+                admin_fee = 0.0
+
             # Use INSERT ... ON CONFLICT DO UPDATE for upsert behavior
             cur.execute("""
                 INSERT INTO requests (
                     request_id, student_id, full_name, contact_number, email,
-                    preferred_contact, payment_status, total_cost, remarks, order_type, status, college_code
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'PENDING', %s)
+                    preferred_contact, payment_status, total_cost, remarks, order_type, status, college_code, admin_fee_amount
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'PENDING', %s, %s)
                 ON CONFLICT (request_id) DO UPDATE SET
                     student_id = EXCLUDED.student_id,
                     full_name = EXCLUDED.full_name,
@@ -244,13 +256,14 @@ class Request:
                     remarks = EXCLUDED.remarks,
                     order_type = EXCLUDED.order_type,
                     college_code = EXCLUDED.college_code,
+                    admin_fee_amount = EXCLUDED.admin_fee_amount,
                     status = 'PENDING'
             """, (request_id, student_id, full_name, contact_number, email, 
-                  preferred_contact, payment_status, total_cost, remarks, order_type, college_code))
+                  preferred_contact, payment_status, total_cost, remarks, order_type, college_code, admin_fee))
             
             conn.commit()
 
-            print(f"Request {request_id} submitted successfully")
+            print(f"Request {request_id} submitted successfully with admin fee: {admin_fee}")
             return True
 
         except Exception as e:
