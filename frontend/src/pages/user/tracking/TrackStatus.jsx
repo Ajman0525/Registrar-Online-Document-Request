@@ -86,7 +86,7 @@ function TrackStatus({ trackData, onBack, onViewDetails, onViewDeliveryInstructi
         },
         "REJECTED": {
             className: "status-rejected",
-            title: "Request Rejected",
+            title: <span style={{ color: "#dc2626" }}>Missing or Incorrect Information</span>,
             description: (
                 <div className="status-body">
                     <p className="subtext">
@@ -139,7 +139,7 @@ function TrackStatus({ trackData, onBack, onViewDetails, onViewDeliveryInstructi
             <div className={`text-section ${config.className}`}>
                 <h3 className="status-title">{config.title}</h3>
                 {config.description}
-                <div className="tracking-number-section">
+                <div className="tracking-number-section" style={{ marginTop: '1rem' }}>
                     <p>Tracking Number:</p>
                     <div className="number">
                         <p><strong>{trackData.trackingNumber}</strong></p>
@@ -148,8 +148,8 @@ function TrackStatus({ trackData, onBack, onViewDetails, onViewDeliveryInstructi
                 {/* Display rejection remarks if the status is REJECTED */}
                 {statusKey === 'REJECTED' && trackData.remarks && (
                     <div className="rejection-remarks-section">
-                        <p className="remarks-title">Reason for Rejection:</p>
-                        <p className="remarks-text">{trackData.remarks}</p>
+                        <p className="remarks-title">Remarks:</p>
+                        <strong className="remarks-text">{trackData.remarks}</strong>
                     </div>
                 )}
             </div>
