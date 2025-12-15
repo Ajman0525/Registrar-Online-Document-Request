@@ -682,197 +682,161 @@
   display: none;
 }
 
-/* Print Styles */
-@media print {
-  @page {
-    margin: 0.5cm; /* Add some margin to the page */
-    size: auto;
-  }
+/* Print/PDF Styles using .print-mode class */
+.transactions-page.print-mode {
+  background-color: white !important;
+  font-family: Arial, sans-serif;
+  padding: 0.5cm !important;
+  margin: 0 !important;
+  width: 100%;
+  min-height: 100vh;
+}
 
-  ::-webkit-scrollbar {
-    display: none;
-  }
+.transactions-page.print-mode ::-webkit-scrollbar {
+  display: none;
+}
 
-  * {
-    box-sizing: border-box;
-  }
+/* Hide elements during printing/PDF generation */
+.transactions-page.print-mode .dashboard-header-wrapper,
+.transactions-page.print-mode .summary-cards-content,
+.transactions-page.print-mode .transactions-pagination,
+.transactions-page.print-mode .search-input-wrapper,
+.transactions-page.print-mode button,
+.transactions-page.print-mode select,
+.transactions-page.print-mode .admin-sidebar,
+.transactions-page.print-mode .transactions-list-header,
+.transactions-page.print-mode .app-title,
+.transactions-page.print-mode .timestamp,
+.transactions-page.print-mode .transactions-controls {
+  display: none !important;
+}
 
-  html,
-  body,
-  #root,
-  .app,
-  .admin-main-content,
-  .main-content {
-    background-color: white !important;
-    background: white !important;
-  }
+/* Remove box shadow and padding for the table wrapper */
+.transactions-page.print-mode .transaction-table-wrapper {
+  box-shadow: none;
+  margin: 0;
+  padding: 0;
+}
 
-  /* Specify font */
-  body, .transactions-page {
-    font-family: Arial, sans-serif;
-  } 
+/* Show and style the print header */
+.transactions-page.print-mode .print-report-header {
+  display: block;
+  margin-bottom: 15px;
+  border-bottom: 3px solid #a41c2c;
+  padding-bottom: 10px;
+}
 
+.transactions-page.print-mode .print-header-top {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 10px;
+}
 
-  /* Hide elements during printing */
-  .dashboard-header-wrapper, .summary-cards-content, .transactions-pagination, 
-  .search-input-wrapper, button, select, .admin-sidebar, .transactions-list-header,
-  .app-title, .timestamp, .transactions-controls { 
-    display: none !important; 
-  }
+.transactions-page.print-mode .print-logo {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+}
 
-  /* Remove box shadow and padding for the table wrapper */
-  .transaction-table-wrapper { 
-    box-shadow: none; 
-    margin: 0; 
-  }
+.transactions-page.print-mode .print-header-details h1 {
+  font-size: 18px;
+  font-weight: bold;
+  margin: 0;
+  color: #333;
+  text-transform: uppercase;
+}
 
-  /* Remove page padding for printing */
-  .transactions-page {
-    margin: 0 !important;
-    padding: 0.5cm !important;
-    background-color: white !important;
-    min-height: 100vh;
-    width: 100%;
-  }
+.transactions-page.print-mode .print-header-details p {
+  font-size: 14px;
+  margin: 0px;
+  color: #666;
+}
 
-  /* Show and style the print header */
-  .print-report-header {
-    display: block;
-    margin-bottom: 15px;
-    border-bottom: 3px solid #a41c2c; /* Red border */
-    padding-bottom: 10px;
-  }
+.transactions-page.print-mode .print-title {
+  display: block;
+  font-size: 20px;
+  font-weight: bold;
+  text-align: center;
+  margin: 0px;
+  padding-top: 10px;
+}
 
-  .print-header-top {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    margin-bottom: 10px;
-  }
+.transactions-page.print-mode .print-title h2 {
+  margin: 0;
+  padding: 0;
+}
 
-  .print-logo {
-    width: 80px;
-    height: 80px;
-    object-fit: contain;
-  }
+.transactions-page.print-mode .print-title p {
+  font-size: 14px;
+  font-weight: normal;
+  margin: 0px;
+  margin-bottom: 20px;
+  padding: 0px;
+  color: #666;
+}
 
-  .print-header-details h1 {
-    font-size: 18px;
-    font-weight: bold;
-    margin: 0;
-    color: #333;
-    text-transform: uppercase;
-  }
+.transactions-page.print-mode .transactions-table-container {
+  overflow: visible !important;
+  width: 100%;
+}
 
-  .print-header-details p {
-    font-size: 14px;
-    margin: 0px;
-    color: #666;
-  }
+.transactions-page.print-mode .transactions-table {
+  width: 95% !important;
+  border-collapse: collapse;
+  table-layout: auto;
+}
 
-  .print-header-title-row h2 {
-    font-size: 16px;
-    font-weight: 600;
-    margin: 0;
-    color: #333;
-  }
+.transactions-page.print-mode .transactions-table thead {
+  background-color: #f9fafb;
+  display: table-header-group;
+}
 
-  .print-timeframe {
-    font-weight: normal;
-    font-size: 14px;
-    margin-left: 8px;
-    color: #555;
-  }
+.transactions-page.print-mode .transactions-table tbody {
+  display: table-row-group;
+}
 
-  .print-title {
-    display: block;
-    font-size: 20px;
-    font-weight: bold;
-    text-align: center;
-    margin: 0px;
-    padding-top: 10px;
-  }
+.transactions-page.print-mode .transactions-table th,
+.transactions-page.print-mode .transactions-table td {
+  padding: 10px 6px;
+  text-align: left;
+  font-size: 12px;
+  color: #333;
+  border: 1px solid #ddd;
+  white-space: normal !important;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: none;
+}
 
-  .print-title h2 {
-    margin: 0;
-    padding: 0;
-  }
+/* Adjust specific column widths */
+.transactions-page.print-mode .td-request-id,
+.transactions-page.print-mode .transactions-table th:nth-child(1) {
+  width: 15%;
+}
 
-  .print-title p {
-    font-size: 14px;
-    font-weight: normal;
-    margin: 0px;
-    padding: 0px;
-    color: #666;
-  }
+.transactions-page.print-mode .td-user-name,
+.transactions-page.print-mode .transactions-table th:nth-child(2) {
+  width: 30%;
+}
 
-  .transactions-table-container {
-    overflow: visible !important;
-    width: 100%;
-  }
+.transactions-page.print-mode .td-student-id,
+.transactions-page.print-mode .transactions-table th:nth-child(3) {
+  width: 15%;
+}
 
-  .transactions-table {
-    width: 100% !important;
-    border-collapse: collapse;
-    table-layout: auto;
-    page-break-inside: auto;
-  }
+.transactions-page.print-mode .td-amount,
+.transactions-page.print-mode .transactions-table th:nth-child(4) {
+  width: 10%;
+}
 
-  .transactions-table thead {
-    background-color: #f9fafb;
-    display: table-header-group;
-  }
+.transactions-page.print-mode .td-date,
+.transactions-page.print-mode .transactions-table th:nth-child(5) {
+  width: 30%;
+}
 
-  .transactions-table tbody {
-    display: table-row-group;
-  }
-
-  .transactions-table tr {
-    page-break-inside: avoid;
-    page-break-after: auto;
-  }
-
-  .transactions-table th, .transactions-table td {
-    padding: 10px 6px;
-    text-align: left;
-    font-size: 12px;
-    color: #333;
-    border: 1px solid #ddd;
-    white-space: normal !important;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    max-width: none;
-  }
-
-  /* Adjust specific column widths to fit on page */
-  .td-request-id, 
-  .transactions-table th:nth-child(1) {
-    width: 15%; /* Request ID */
-  }
-
-  .td-user-name,
-  .transactions-table th:nth-child(2) {
-    width: 30%; /* User Name */
-  }
-
-  .td-amount,
-  .transactions-table th:nth-child(3) {
-    width: 15%; /* Student ID */
-  }
-
-  .td-amount,
-  .transactions-table th:nth-child(4) {
-    width: 10%; /* Amount */
-  }
-
-  .td-date,
-  .transactions-table th:nth-child(5) {
-    width: 30%; /* Date */
-  }
-
-  .td-request-id,
-  .td-request-id a {
-    color: black !important;
-    text-decoration: none !important;
-  }
+.transactions-page.print-mode .td-request-id,
+.transactions-page.print-mode .td-request-id a {
+  color: black !important;
+  text-decoration: none !important;
 }
