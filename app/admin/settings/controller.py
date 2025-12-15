@@ -6,7 +6,7 @@ from .models import Admin, OpenRequestRestriction, Fee
 role = "admin"
 
 @settings_bp.route("/api/admin/admins", methods=["GET"])
-@jwt_required_with_role(role)
+@jwt_required()
 def get_admins():
     """Get all admins."""
     try:
@@ -18,7 +18,7 @@ def get_admins():
 
 
 @settings_bp.route("/api/admin/admins", methods=["POST"])
-@jwt_required_with_role(role)
+@jwt_required()
 def add_admin():
     """Add a new admin."""
     data = request.get_json(silent=True) or {}
@@ -36,7 +36,7 @@ def add_admin():
 
 
 @settings_bp.route("/api/admin/admins/<email>", methods=["PUT"])
-@jwt_required_with_role(role)
+@jwt_required()
 def update_admin(email):
     """Update an admin's role."""
     data = request.get_json(silent=True) or {}
@@ -53,7 +53,7 @@ def update_admin(email):
 
 
 @settings_bp.route("/api/admin/admins/<email>", methods=["DELETE"])
-@jwt_required_with_role(role)
+@jwt_required()
 def delete_admin(email):
     """Delete an admin."""
     if Admin.delete(email):
@@ -76,7 +76,7 @@ def get_settings():
         return jsonify({"error": "Failed to fetch settings"}), 500
 
 @settings_bp.route("/api/admin/settings", methods=["PUT"])
-@jwt_required_with_role(role)
+@jwt_required()
 def update_settings():
     """Update settings."""
     data = request.get_json(silent=True) or {}
@@ -94,7 +94,7 @@ def update_settings():
         return jsonify({"error": "Failed to update settings"}), 500
 
 @settings_bp.route("/api/admin/settings/fee", methods=["GET"])
-@jwt_required_with_role(role)
+@jwt_required()
 def get_admin_fee():
     """Get current admin fee."""
     try:
@@ -105,7 +105,7 @@ def get_admin_fee():
         return jsonify({"error": "Failed to fetch admin fee"}), 500
 
 @settings_bp.route("/api/admin/settings/fee", methods=["PUT"])
-@jwt_required_with_role(role)
+@jwt_required()
 def update_admin_fee():
     """Update admin fee."""
     data = request.get_json(silent=True) or {}

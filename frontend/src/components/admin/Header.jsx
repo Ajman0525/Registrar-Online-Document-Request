@@ -36,8 +36,9 @@ const NotificationPanel = ({ notifications }) => (
     </div>
 );
 
+
 // --- User Profile Panel ---
-const UserProfilePanel = ({ onLogout }) => (
+const UserProfilePanel = ({ onLogout, userRole }) => (
     <div className="user-profile-panel">
         <div className="profile-panel-header">
             <div className="profile-avatar-large">
@@ -45,7 +46,7 @@ const UserProfilePanel = ({ onLogout }) => (
             </div>
             <div className="profile-info">
                 <h4>Administrator</h4>
-                <p>admin@example.com</p>
+                <p>Role: {userRole ? userRole.charAt(0).toUpperCase() + userRole.slice(1) : 'Unknown'}</p>
             </div>
         </div>
         <div className="profile-panel-content">
@@ -66,8 +67,9 @@ const UserProfilePanel = ({ onLogout }) => (
     </div>
 );
 
+
 // --- Main Header Component ---
-const Header = ({ title = "Welcome, Administrator.", notifications = [], onLogout }) => {
+const Header = ({ title = "Welcome, Administrator.", notifications = [], onLogout, userRole }) => {
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
 
@@ -157,9 +159,11 @@ const Header = ({ title = "Welcome, Administrator.", notifications = [], onLogou
                                 </svg>
                             </span>
                         </div>
+
                         {isProfileOpen && (
                             <UserProfilePanel
                                 onLogout={onLogout}
+                                userRole={userRole}
                             />
                         )}
                     </div>

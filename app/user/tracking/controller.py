@@ -32,6 +32,7 @@ def send_whatsapp_otp(phone, otp_code, full_name):
     return {"status": "success"}
 
 @tracking_bp.route('/api/track', methods=['POST'])
+@jwt_required()
 def get_tracking_data():
     """
     API endpoint to fetch tracking information based on tracking number and student ID.
@@ -118,7 +119,7 @@ def get_tracking_data():
         }), 500
     
 @tracking_bp.route("/api/set-order-type", methods=["POST"], strict_slashes=False)
-@jwt_required_with_role(role)
+@jwt_required()
 def set_order_type():
     """
     Sets the order_type for the current request.
@@ -155,7 +156,7 @@ def set_order_type():
         }), 500
 
 @tracking_bp.route('/api/track/status/<tracking_number>', methods=['GET'])
-@jwt_required_with_role(role)
+@jwt_required()
 def get_tracking_status(tracking_number):
     """
     API endpoint to get current tracking status without OTP verification.
@@ -183,7 +184,7 @@ def get_tracking_status(tracking_number):
 
 
 @tracking_bp.route('/api/track/document/<tracking_number>', methods=['GET'])
-@jwt_required_with_role(role)
+@jwt_required()
 def get_requested_documents(tracking_number):
     """
     API endpoint to fetch requested documents for a given tracking number and student ID.
@@ -211,7 +212,7 @@ def get_requested_documents(tracking_number):
 
 
 @tracking_bp.route('/api/track/changes/<tracking_number>', methods=['GET'])
-@jwt_required_with_role(role)
+@jwt_required()
 def get_request_changes(tracking_number):
     """
     API endpoint to fetch requested changes for a given tracking number and student ID.
@@ -247,7 +248,7 @@ def get_request_changes(tracking_number):
 
 
 @tracking_bp.route('/api/track/changes/<tracking_number>/upload', methods=['POST'])
-@jwt_required_with_role(role)
+@jwt_required()
 def upload_change_files(tracking_number):
     """
     API endpoint to upload files for requested changes.

@@ -10,7 +10,6 @@ from werkzeug.utils import secure_filename
 from supabase import create_client, Client
 from config import SUPABASE_URL, SUPABASE_ANON_KEY
 
-role = 'user'
 
 def send_whatsapp_tracking(phone, full_name, request_id):
     template_name = "odr_request_submitted"
@@ -44,7 +43,7 @@ def check_request_allowed():
     return jsonify({"allowed": True}), 200
 
 @request_bp.route("/api/request", methods=["GET"])
-@jwt_required_with_role(role)
+@jwt_required()
 @request_allowed_required()
 def get_request_page_data():
     """
@@ -92,7 +91,7 @@ def get_request_page_data():
 
 
 @request_bp.route("/api/list-requirements", methods=["POST"])
-@jwt_required_with_role(role)  
+@jwt_required()  
 def get_requirements():
     """
     Returns all unique requirements for selected documents.
@@ -135,7 +134,7 @@ def get_requirements():
 
 #complete button in summary page
 @request_bp.route("/api/complete-request", methods=["POST"])
-@jwt_required_with_role(role)
+@jwt_required()
 def complete_request():
     """
     Complete the request submission process.
@@ -215,7 +214,7 @@ def complete_request():
 
 
 @request_bp.route("/api/check-active-requests", methods=["GET"])
-@jwt_required_with_role(role)
+@jwt_required()
 def check_active_requests():
     """
     Check for active requests for the logged-in student.
@@ -249,7 +248,7 @@ def check_active_requests():
 
 
 @request_bp.route("/api/clear-session", methods=["POST"])
-@jwt_required_with_role(role)
+@jwt_required()
 def logout_user():
     """
     Clears user session and JWT cookies.

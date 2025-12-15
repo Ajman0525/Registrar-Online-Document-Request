@@ -231,6 +231,7 @@ def verify_otp():
 
 
 @authentication_user_bp.route("/upload-authletter", methods=["POST"])
+@jwt_required()
 def upload_auth_letter():
     """
     Uploads an authorization letter for a student.

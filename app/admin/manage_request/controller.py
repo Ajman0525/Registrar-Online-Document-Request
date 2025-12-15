@@ -6,9 +6,6 @@ from app.utils.decorator import jwt_required_with_role
 from .models import ManageRequestModel
 
 
-# Admin role
-role = "admin"
-
 def send_whatsapp_status_update(phone, full_name, request_id, status_update):
     status_template_map = {
         "PENDING": "odr_request_submitted_v2", 
@@ -42,7 +39,7 @@ def send_whatsapp_status_update(phone, full_name, request_id, status_update):
 
 
 @manage_request_bp.route("/api/admin/requests", methods=["GET"])
-@jwt_required_with_role(role)
+@jwt_required()
 def get_requests():
     """
     Get paginated requests for admin management with filtering options.
@@ -74,7 +71,7 @@ def get_requests():
 
 
 @manage_request_bp.route("/api/admin/requests/<request_id>/status", methods=["PUT"])
-@jwt_required_with_role(role)
+@jwt_required()
 def update_request_status(request_id):
     """
     Update the status of a specific request.
@@ -119,7 +116,7 @@ def update_request_status(request_id):
 
 
 @manage_request_bp.route("/api/admin/requests/<request_id>", methods=["DELETE"])
-@jwt_required_with_role(role)
+@jwt_required()
 def delete_request(request_id):
     """
     Delete a specific request and all associated data.
@@ -139,7 +136,7 @@ def delete_request(request_id):
 
 
 @manage_request_bp.route("/api/admin/my-requests", methods=["GET"])
-@jwt_required_with_role(role)
+@jwt_required()
 def get_my_requests():
     """
     Get paginated requests assigned to the logged-in admin with filtering options.
@@ -175,7 +172,7 @@ def get_my_requests():
 
 
 @manage_request_bp.route("/api/admin/requests/<request_id>/changes", methods=["POST"])
-@jwt_required_with_role(role)
+@jwt_required()
 def request_changes(request_id):
     """
     Submit a change request and reject the current request.
@@ -199,7 +196,7 @@ def request_changes(request_id):
 
 
 @manage_request_bp.route("/api/admin/auto-assign", methods=["POST"])
-@jwt_required_with_role(role)
+@jwt_required()
 def auto_assign_requests():
     """
     Auto-assign a number of requests using load balancing across all admins.
@@ -220,7 +217,7 @@ def auto_assign_requests():
 
 
 @manage_request_bp.route("/api/admin/manual-assign", methods=["POST"])
-@jwt_required_with_role(role)
+@jwt_required()
 def manual_assign_requests():
     """
     Manually assign specific requests to the logged-in admin or a specified admin.
@@ -243,7 +240,7 @@ def manual_assign_requests():
 
 
 @manage_request_bp.route("/api/admin/unassigned-requests", methods=["GET"])
-@jwt_required_with_role(role)
+@jwt_required()
 def get_unassigned_requests():
     """
     Get unassigned requests for manual assignment with filtering and search.
@@ -310,7 +307,7 @@ def get_unassigned_requests():
 
 
 @manage_request_bp.route("/api/admin/unassigned-requests/filters", methods=["GET"])
-@jwt_required_with_role(role)
+@jwt_required()
 def get_unassigned_requests_filters():
     """
     Get available filter options for unassigned requests.
@@ -341,7 +338,7 @@ def get_unassigned_requests_filters():
 
 
 @manage_request_bp.route("/api/admin/assignment-progress", methods=["GET"])
-@jwt_required_with_role(role)
+@jwt_required()
 def get_assignment_progress():
     """
     Get assignment progress for the logged-in admin.
@@ -355,7 +352,7 @@ def get_assignment_progress():
 
 
 @manage_request_bp.route("/api/admin/admins-progress", methods=["GET"])
-@jwt_required_with_role(role)
+@jwt_required()
 def get_admins_progress():
     """
     Get assignment progress for all admins using optimized single query.
@@ -397,7 +394,7 @@ def get_admins_progress():
 
 
 @manage_request_bp.route("/api/admin/admin-requests/<admin_id>", methods=["GET"])
-@jwt_required_with_role(role)
+@jwt_required()
 def get_admin_requests(admin_id):
     """
     Get all requests assigned to a specific admin.
@@ -414,7 +411,7 @@ def get_admin_requests(admin_id):
 
 
 @manage_request_bp.route("/api/admin/admin-max-requests/<admin_id>", methods=["GET"])
-@jwt_required_with_role(role)
+@jwt_required()
 def get_admin_max_requests(admin_id):
     """
     Get the max requests for a specific admin.
@@ -427,7 +424,7 @@ def get_admin_max_requests(admin_id):
 
 
 @manage_request_bp.route("/api/admin/admin-max-requests/<admin_id>", methods=["PUT"])
-@jwt_required_with_role(role)
+@jwt_required()
 def set_admin_max_requests(admin_id):
     """
     Set the max requests for a specific admin.
@@ -442,7 +439,7 @@ def set_admin_max_requests(admin_id):
 
 
 @manage_request_bp.route("/api/admin/unassign", methods=["POST"])
-@jwt_required_with_role(role)
+@jwt_required()
 def unassign_request():
     """
     Unassign a request from an admin.
@@ -466,7 +463,7 @@ def unassign_request():
 
 
 @manage_request_bp.route("/api/admin/requests/<request_id>", methods=["GET"])
-@jwt_required_with_role(role)
+@jwt_required()
 def get_single_request(request_id):
     """
     Get a single request by ID with all details.
@@ -482,7 +479,7 @@ def get_single_request(request_id):
 
 
 @manage_request_bp.route("/api/admin/requests/<request_id>/changes", methods=["GET"])
-@jwt_required_with_role(role)
+@jwt_required()
 def get_request_changes(request_id):
     """
     Get all changes for a specific request.
@@ -497,7 +494,7 @@ def get_request_changes(request_id):
 
 
 @manage_request_bp.route("/api/admin/requests/<request_id>/documents/<doc_id>/status", methods=["PUT"])
-@jwt_required_with_role(role)
+@jwt_required()
 def toggle_document_status(request_id, doc_id):
     """
     Toggle the completion status of a document in a request.
@@ -519,7 +516,7 @@ def toggle_document_status(request_id, doc_id):
 
 
 @manage_request_bp.route("/api/admin/requests/<request_id>/others_documents/<doc_id>/status", methods=["PUT"])
-@jwt_required_with_role(role)
+@jwt_required()
 def toggle_others_document_status(request_id, doc_id):
     """
     Toggle the completion status of an others document in a request.
@@ -541,7 +538,7 @@ def toggle_others_document_status(request_id, doc_id):
 
 
 @manage_request_bp.route("/api/admin/requests/filters", methods=["GET"])
-@jwt_required_with_role(role)
+@jwt_required()
 def get_requests_filters():
     """
     Get available filter options for requests.
