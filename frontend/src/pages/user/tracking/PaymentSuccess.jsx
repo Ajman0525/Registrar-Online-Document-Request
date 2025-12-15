@@ -17,7 +17,7 @@ function PaymentSuccess({ onViewStatus, trackingNumber }) {
   return (
     <div className="text-section">
       <h3 className="status-title">Payment Successful!</h3>
-      <p className="subtext">Your payment has been confirmed. The webhook will process your payment in the background. Redirecting to status...</p>
+      <p className="subtext">Your payment has been confirmed. Click "View Status" to see how to receive your documents.</p>
       <div style={{ marginTop: '20px' }}>
         <ButtonLink onClick={onViewStatus} placeholder="View Status Now" variant="primary" />
       </div>
