@@ -9,6 +9,17 @@ import ProcessedIcon from "../../components/icons/ProcessedIcon";
 import ScrollLeft from "../../components/icons/ScrollLeft";
 import ScrollRight from "../../components/icons/ScrollRight";
 
+const CACHE_KEY = 'dashboard_data_cache';
+
+const getStoredState = (key, defaultValue) => {
+  try{
+    const stored = sessionStorage.getItem(key);
+    return stored ? JSON.parse(stored) : defaultValue;
+  } catch (error) {
+    console.warn("Failed to parse session storage", error)
+    return defaultValue;
+  }
+}
 
 const ActivityItem = ({ activity }) => (
   <div className="activity-item">
@@ -99,6 +110,7 @@ const ScrollButton = ({ direction, onClick, isVisible }) => {
 
 
 function Dashboard() {
+
   const scrollContainerReference = useRef(null);
   const notificationReference = useRef(null);
   const profileReference = useRef(null);
@@ -106,46 +118,11 @@ function Dashboard() {
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-  const [dashboardData, setDashboardData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const navigate = useNavigate();
-
-
-
-
-  const toggleProfile = () => {
-    setIsProfileOpen(prev => !prev);
-  };
-
-
-  const handleLogout = async () => {
-    try {
-      const csrfToken = getCSRFToken();
-      const response = await fetch('/api/admin/logout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': csrfToken,
-        },
-        credentials: 'include',
-      });
-      if (response.ok) {
-        navigate('/admin/login');
-      } else {
-        console.error('Logout failed');
-      }
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
-    setIsProfileOpen(false);
-  };
-
-
-  const toggleNotifications = () => {
-    setIsNotificationsOpen(prev => !prev);
-  };
-
+  const cachedData = getStoredState(CACHE_KEY, null);
+  const [dashboardData, setDashboardData] = useState(cachedData);
+  const [loading, setLoading] = useState (cachedData == null);
+  const [error, setError] = useState(null);
 
   const scrollCards = (direction) => {
     if (scrollContainerReference.current) {
@@ -193,6 +170,9 @@ function Dashboard() {
         if (response.ok) {
           const data = await response.json();
           setDashboardData(data);
+
+          sessionStorage.setItem(CACHE_KEY, JSON.stringify(data))
+          
         } else if (response.status === 401) {
           navigate('/admin/login');
         } else {
