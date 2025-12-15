@@ -56,16 +56,24 @@ function TrackFlow() {
 	};
     const handleViewDeliveryInstructions = () => setCurrentView("delivery-instructions");
 
-    const pollForPaymentStatus = (trackingNumber) => {
+    const pollForPaymentStatus = (trackingNumber, currentStudentId) => {
         const maxAttempts = 10;
         let attempts = 0;
 
         const poll = setInterval(async () => {
             try {
                 console.log(`[MAYA][POLL] Attempt ${attempts + 1}/${maxAttempts} for tracking ${trackingNumber}`);
-                const response = await fetch(`/api/track/status/${trackingNumber}`, {
+                const response = await fetch('/api/track', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': getCSRFToken() 
+                    },
                     credentials: 'include',
-                    headers: { 'X-CSRF-TOKEN': getCSRFToken() }
+                    body: JSON.stringify({ 
+                        tracking_number: trackingNumber,
+                        student_id: currentStudentId
+                    })
                 });
 
                 if (response.ok) {
@@ -74,11 +82,11 @@ function TrackFlow() {
                         const data = await response.json();
                         console.log("[MAYA][POLL] Response data:", data);
                         
-                        // If payment status updated, refresh and go to status
-                        if (data.trackData && data.trackData.paymentStatus === true) {
+                        // If payment status updated or minimum amount paid (partial success), refresh and go to status
+                        if (data.track_data && (data.track_data.paymentStatus === true || data.track_data.minimumAmountDue === 0)) {
                             clearInterval(poll);
                             localStorage.removeItem('pendingPayment');
-                            setTrackData(data.trackData);
+                            setTrackData(data.track_data);
                             setCurrentView('status');
                             return;
                         }
@@ -137,7 +145,7 @@ function TrackFlow() {
 
     const handleSelectPaymentMethod = async (method) => {
         // Check which payment method was selected
-        if (method === "online") {
+        if (method.startsWith("online")) {
             setLoading(true);
             try {
                 // Get studentId from trackData if available, otherwise use state
@@ -147,9 +155,14 @@ function TrackFlow() {
                     throw new Error('Student ID is required for payment');
                 }
 
+                // Determine amount based on method selection
+                const amountToPay = method === "online_minimum" 
+                    ? trackData.minimumAmountDue 
+                    : trackData.amountDue;
+
                 // Call Maya Checkout API to create a new checkout session
                 console.log("[MAYA][CHECKOUT] Creating checkout with", {
-                    amount: trackData.amountDue,
+                    amount: amountToPay,
                     trackingNumber: trackData.trackingNumber,
                     studentId: currentStudentId
                 });
@@ -162,7 +175,7 @@ function TrackFlow() {
                     body: JSON.stringify({
                         // Total cost
                         totalAmount: {
-                            value: trackData.amountDue,
+                            value: amountToPay,
                             currency: "PHP"
                         },
                         // Use tracking number as unique reference for identifying the transaction
@@ -193,7 +206,7 @@ function TrackFlow() {
                 localStorage.setItem('pendingPayment', JSON.stringify({
                     checkoutId: checkout.id,
                     trackingNumber: trackData.trackingNumber,
-                    amountDue: trackData.amountDue,
+                    amountDue: amountToPay,
                     studentId: studentId,
                     trackData: trackData,
                     timestamp: Date.now()
@@ -218,6 +231,7 @@ function TrackFlow() {
     useEffect(() => {
         const paymentStatus = searchParams.get("payment");
         const trackingNumber = searchParams.get("tracking");
+        const urlStudentId = searchParams.get("student_id");
 
         if (paymentStatus && trackingNumber) {
             const pendingPayment = localStorage.getItem("pendingPayment");
@@ -259,7 +273,7 @@ function TrackFlow() {
                         };
                         markPaid().finally(() => {
                             // Start polling for payment status update
-                            pollForPaymentStatus(trackingNumber);
+                            pollForPaymentStatus(trackingNumber, studentId);
                             setCurrentView('payment-success');
                         });
 
@@ -277,6 +291,38 @@ function TrackFlow() {
                     window.history.replaceState({}, '', '/user/track');
                 }
             }
+        } else if (trackingNumber && urlStudentId && !trackData) {
+            // Track logic for redirection from RequestFlow
+            const autoTrack = async () => {
+                setLoading(true);
+                try {
+                    const response = await fetch('/api/track', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ tracking_number: trackingNumber, student_id: urlStudentId }),
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.track_data) {
+                            handleTrackIdSubmit({
+                                trackData: data.track_data,
+                                maskedPhone: data.masked_phone,
+                                studentId: urlStudentId
+                            });
+                            // Clean URL to remove sensitive student_id
+                            window.history.replaceState({}, '', '/user/track');
+                        }
+                    }
+                } catch (error) {
+                    console.error("Track failed:", error);
+                } finally {
+                    setLoading(false);
+                }
+            };
+            autoTrack();
         }
     }, [searchParams]);
 

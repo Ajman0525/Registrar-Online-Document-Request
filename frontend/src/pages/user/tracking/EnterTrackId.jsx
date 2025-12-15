@@ -69,7 +69,7 @@ function EnterTrackId({ onNext }) {
                 trackData: data.track_data,
                 maskedPhone: data.masked_phone,
                 studentId: studentId
-            }); // pass the data from the backend to the next step
+            }, data.require_otp === false); // pass the data from the backend to the next step
         } catch (err) {
             console.error("Full error object:", err);
             console.error("Error message:", err.message);
