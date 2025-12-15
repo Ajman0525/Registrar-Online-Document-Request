@@ -44,13 +44,22 @@ class Payment:
                     'was_already_paid': previous_payment_status 
                 }
             
-            expected_amount = float(order[0]) if order[0] else 0.0
+            # Fetch admin fee from DB
+            cur.execute("SELECT value FROM fee WHERE key = 'admin_fee'")
+            fee_res = cur.fetchone()
+            admin_fee = float(fee_res[0]) if fee_res else 0.0
             
-            if amount is None:
-                received_amount = expected_amount
-            else:
-                received_amount = float(amount)
+            expected_amount = (float(order[0]) if order[0] else 0.0) + admin_fee
+            received_amount = float(amount) if amount else 0.0
+            db_student_id = order[2]
             
+            # Validate student_id matches
+            if db_student_id != student_id:
+                return {
+                    'success': False,
+                    'message': f'Student ID mismatch for tracking number: {tracking_number}',
+                    'was_already_paid': previous_payment_status
+                }
             
             if received_amount != expected_amount:
                 return {
@@ -87,6 +96,149 @@ class Payment:
                 'success': False,
                 'message': error_msg,
                 'was_already_paid': previous_payment_status
+            }
+
+        finally:
+            cur.close()
+            db_pool.putconn(conn)
+
+    @staticmethod
+    def get_document_payment_status(tracking_number, student_id, doc_id):
+        """
+        Gets the payment status of a specific document in request_documents.
+        
+        Args:
+            tracking_number (str): The request_id of the record.
+            student_id (str): The student_id to validate ownership.
+            doc_id (str): The document ID to check payment status for.
+            
+        Returns:
+            dict: A dictionary with 'success' (bool), 'payment_status' (bool), and 'message' (str) keys.
+        """
+        conn = db_pool.getconn()
+        cur = conn.cursor()
+        try:
+            # First verify the request belongs to the student
+            cur.execute("""
+                SELECT r.request_id, r.student_id
+                FROM requests r
+                WHERE r.request_id = %s AND r.student_id = %s
+            """, (tracking_number, student_id))
+            
+            request_record = cur.fetchone()
+            if not request_record:
+                return {
+                    'success': False,
+                    'payment_status': False,
+                    'message': f'Request not found for tracking number: {tracking_number} with student_id: {student_id}'
+                }
+            
+            # Get the specific document payment status
+            cur.execute("""
+                SELECT payment_status
+                FROM request_documents
+                WHERE request_id = %s AND doc_id = %s
+            """, (tracking_number, doc_id))
+            
+            doc_record = cur.fetchone()
+            if not doc_record:
+                return {
+                    'success': False,
+                    'payment_status': False,
+                    'message': f'Document {doc_id} not found in request {tracking_number}'
+                }
+            
+            payment_status = bool(doc_record[0])
+            return {
+                'success': True,
+                'payment_status': payment_status,
+                'message': f'Document {doc_id} payment status: {payment_status}'
+            }
+                
+        except Exception as e:
+            error_msg = f"Database error getting document payment status: {e}"
+            if has_app_context():
+                current_app.logger.error(f"[MAYA] {error_msg}")
+            else:
+                print(f"[MAYA] {error_msg}")
+            return {
+                'success': False,
+                'payment_status': False,
+                'message': error_msg
+            }
+        finally:
+            cur.close()
+            db_pool.putconn(conn)
+
+    @staticmethod
+    def update_multiple_documents_payment_status(tracking_number, student_id, doc_ids):
+        """
+        Updates the payment_status of multiple documents in request_documents to TRUE.
+        
+        Args:
+            tracking_number (str): The request_id of the record.
+            student_id (str): The student_id to validate ownership.
+            doc_ids (list): List of document IDs to update payment status for.
+            
+        Returns:
+            dict: A dictionary with 'success' (bool), 'updated_count' (int), and 'message' (str) keys.
+        """
+        if not doc_ids:
+            return {
+                'success': False,
+                'updated_count': 0,
+                'message': 'No document IDs provided'
+            }
+            
+        conn = db_pool.getconn()
+        cur = conn.cursor()
+        try:
+            # First verify the request belongs to the student
+            cur.execute("""
+                SELECT r.request_id, r.student_id
+                FROM requests r
+                WHERE r.request_id = %s AND r.student_id = %s
+            """, (tracking_number, student_id))
+            
+            request_record = cur.fetchone()
+            if not request_record:
+                return {
+                    'success': False,
+                    'updated_count': 0,
+                    'message': f'Request not found for tracking number: {tracking_number} with student_id: {student_id}'
+                }
+            
+            # Create placeholders for the IN clause
+            placeholders = ','.join(['%s'] * len(doc_ids))
+            query = f"""
+                UPDATE request_documents
+                SET payment_status = TRUE
+                WHERE request_id = %s AND doc_id IN ({placeholders})
+            """
+            
+            cur.execute(query, [tracking_number] + doc_ids)
+            
+            rows_updated = cur.rowcount
+            conn.commit()
+            
+            message = f'{rows_updated} document(s) payment confirmed for tracking number: {tracking_number}'
+            return {
+                'success': True,
+                'updated_count': rows_updated,
+                'message': message
+            }
+                
+        except Exception as e:
+            conn.rollback()
+            error_msg = f"Database error updating multiple documents payment status: {e}"
+            if has_app_context():
+                current_app.logger.error(f"[MAYA] {error_msg}")
+            else:
+                print(f"[MAYA] {error_msg}")
+            return {
+                'success': False,
+                'updated_count': 0,
+                'message': error_msg
             }
         finally:
             cur.close()

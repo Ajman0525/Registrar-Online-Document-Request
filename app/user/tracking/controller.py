@@ -39,12 +39,15 @@ def get_tracking_data():
     """
     data = request.get_json(silent=True) or {}
     tracking_number = data.get('tracking_number')
-    student_id = data.get('student_id')
 
     current_app.logger.info(f"Tracking request received: {data}")
 
-    if not tracking_number or not student_id:
-        return jsonify({"message": "Please provide both Tracking Number and Student ID."}), 400
+    if not tracking_number:
+        return jsonify({"message": "Please provide Tracking Number."}), 400
+    
+    student_id = Tracking.get_student_id_by_tracking_number(tracking_number)
+    if not student_id:
+        return jsonify({"message": "Invalid Tracking Number."}), 404
     
     is_already_authenticated = False
     try:
@@ -59,7 +62,7 @@ def get_tracking_data():
 
     try:
         # Fetch tracking record
-        record = Tracking.get_record_by_ids(tracking_number, student_id)
+        record = Tracking.get_record_by_tracking_number(tracking_number)
         if not record:
             return jsonify({"message": "Invalid Tracking Number or Student ID."}), 404
 
@@ -96,7 +99,8 @@ def get_tracking_data():
             "message": "Tracking data retrieved successfully",
             "role": role,
             "track_data": record,
-            "masked_phone": masked_phone
+            "masked_phone": masked_phone,
+            "student_id": student_id
         }
         response = jsonify(response_data)
 
@@ -162,8 +166,8 @@ def get_tracking_status(tracking_number):
         return jsonify({"message": "User session not found or invalid."}), 401
 
     try:
-        record = Tracking.get_record_by_ids(tracking_number, student_id)
-        if not record:
+        record = Tracking.get_record_by_tracking_number(tracking_number)
+        if not record or record['studentId'] != student_id:
             return jsonify({"message": "Tracking record not found."}), 404
 
         return jsonify({

@@ -10,7 +10,7 @@ const StatusChangeConfirmModal = ({ request, newStatus, onConfirm, onCancel, isL
       <div className="status-change-modal-popup">
         <h3 className="status-change-modal-title">Confirm Status Change</h3>
         <p className="status-change-modal-message">
-          Are you sure you want to change the status of <strong>{request.request_id}</strong> ({request.full_name}) from <strong>{request.status}</strong> to <strong>{newStatus}</strong>?
+          Are you sure you want to change the status of <strong>{request.request_id}</strong> ({request.full_name}) from <strong>{request.status}</strong> to <strong>{newStatus.status}</strong>?
         </p>
         {isLoading && <LoadingSpinner message="Updating status..." />}
         <div className="status-change-modal-action-section">

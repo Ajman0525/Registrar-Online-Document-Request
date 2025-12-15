@@ -9,7 +9,7 @@ class LoggingModel:
         cur = conn.cursor()
         try:
             cur.execute("""
-                SELECT log_id, admin_id, action, details, timestamp
+                SELECT log_id, admin_id, action, details, timestamp, request_id
                 FROM logs
                 ORDER BY timestamp DESC
             """)
@@ -20,7 +20,8 @@ class LoggingModel:
                     "admin_id": log[1],
                     "action": log[2],
                     "details": log[3],
-                    "timestamp": log[4].strftime("%Y-%m-%d %H:%M:%S") if log[4] else None
+                    "timestamp": log[4].strftime("%Y-%m-%d %H:%M:%S") if log[4] else None,
+                    "request_id": log[5]
                 }
                 for log in logs
             ]

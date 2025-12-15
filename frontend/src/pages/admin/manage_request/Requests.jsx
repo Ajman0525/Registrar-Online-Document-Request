@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { getCSRFToken } from "../../../utils/csrf";
-import RequestModal from "../../../components/admin/RequestModal";
+
 import StatusChangeConfirmModal from "../../../components/admin/StatusChangeConfirmModal";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
+import ReqSearchbar from "../../../components/admin/ReqSearchbar";
+import AssignDropdown from "../../../components/admin/AssignDropdown";
 
 // =======================================
 // STATUS MAPPING 
@@ -21,9 +24,10 @@ const STATUS_MAP = {
 const UI_STATUSES = Object.keys(STATUS_MAP);
 
 // =======================================
-// Card Component 
+// Card Component
 // =======================================
-const RequestCard = ({ request, onClick }) => {
+const RequestCard = ({ request, onClick, onAssign }) => {
+  const [isAssigning, setIsAssigning] = useState(false);
   const [{ isDragging }, drag] = useDrag(() => ({
     type: "REQUEST",
     item: { id: request.request_id },
@@ -37,8 +41,8 @@ const RequestCard = ({ request, onClick }) => {
   return (
     <div
       ref={drag}
-      onClick={() => onClick(request)}
-      className={`bg-white rounded-xl p-4 mb-4 shadow-sm border border-gray-200 cursor-pointer transition 
+      onClick={() => !isAssigning && onClick(request)}
+      className={`bg-white rounded-xl p-4 mb-4 shadow-sm border border-gray-200 ${isAssigning ? 'cursor-not-allowed' : 'cursor-pointer'} transition
       ${isDragging ? "opacity-50" : "opacity-100"}`}
     >
       <div className="text-gray-900 font-medium">
@@ -48,16 +52,16 @@ const RequestCard = ({ request, onClick }) => {
       <div className="text-gray-400 text-sm">{date}</div>
 
       <div className="flex justify-end mt-2">
-        <div className="w-6 h-6 bg-gray-300 rounded-full"></div>
+        <AssignDropdown requestId={request.request_id} onAssign={onAssign} onToggleOpen={setIsAssigning} />
       </div>
     </div>
   );
 };
 
 // =======================================
-// Column Component 
+// Column Component
 // =======================================
-const StatusColumn = ({ title, requests, onDropRequest, uiLabel, onCardClick }) => {
+const StatusColumn = ({ title, requests, onDropRequest, uiLabel, onCardClick, onAssign }) => {
   const [, drop] = useDrop({
     accept: "REQUEST",
     drop: (item) => onDropRequest(item.id, uiLabel),
@@ -79,7 +83,7 @@ const StatusColumn = ({ title, requests, onDropRequest, uiLabel, onCardClick }) 
 
       <div className="flex flex-col">
         {requests.map((r) => (
-          <RequestCard key={r.request_id} request={r} onClick={onCardClick} />
+          <RequestCard key={r.request_id} request={r} onClick={onCardClick} onAssign={onAssign} />
         ))}
 
         {requests.length === 0 && (
@@ -94,25 +98,30 @@ const StatusColumn = ({ title, requests, onDropRequest, uiLabel, onCardClick }) 
 // MAIN COMPONENT
 // =======================================
 export default function AdminRequestsDashboard() {
+  const navigate = useNavigate();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedRequest, setSelectedRequest] = useState(null);
+
   const [statusChangeRequest, setStatusChangeRequest] = useState(null);
   const [newStatus, setNewStatus] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRequests, setTotalRequests] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState('all'); // 'all' or 'my'
   const limit = 20;
 
   useEffect(() => {
-    fetchRequests(currentPage);
-  }, [currentPage]);
+    fetchRequests(1, '', 'all');
+  }, []);
 
-  const fetchRequests = async (page = 1) => {
+  const fetchRequests = async (page, search, mode) => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/requests?page=${page}&limit=${limit}`, {
+      const searchParam = search ? `&search=${encodeURIComponent(search)}` : '';
+      const endpoint = mode === 'my' ? '/api/admin/my-requests' : '/api/admin/requests';
+      const res = await fetch(`${endpoint}?page=${page}&limit=${limit}${searchParam}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -121,6 +130,10 @@ export default function AdminRequestsDashboard() {
         credentials: "include",
       });
 
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
       const data = await res.json();
       console.log('Fetched data:', data);
       setRequests(data.requests.map(req => ({ ...req, paymentStatus: req.payment_status })));
@@ -128,6 +141,7 @@ export default function AdminRequestsDashboard() {
       setTotalPages(Math.ceil(data.total / limit));
       console.log('Total pages:', Math.ceil(data.total / limit));
     } catch (err) {
+      console.error('Error fetching requests:', err);
       setError("Failed to load requests");
     } finally {
       setLoading(false);
@@ -161,9 +175,37 @@ export default function AdminRequestsDashboard() {
       body: JSON.stringify(newStatus),
     });
 
-    fetchRequests(currentPage);
+    fetchRequests(currentPage, searchQuery, viewMode);
     setStatusChangeRequest(null);
     setNewStatus(null);
+  };
+
+  const handleCardClick = (request) => {
+    navigate(`/admin/Requests/${request.request_id}`);
+  };
+
+  const handleAssignRequest = async (requestId, adminId) => {
+    try {
+      const res = await fetch("/api/admin/manual-assign", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-TOKEN": getCSRFToken(),
+        },
+        credentials: "include",
+        body: JSON.stringify({ request_ids: [requestId], admin_id: adminId }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(data.message);
+        fetchRequests(currentPage, searchQuery, viewMode);
+      } else {
+        alert(data.error);
+      }
+    } catch (err) {
+      console.error("Error assigning request:", err);
+      alert("Error assigning request");
+    }
   };
 
   if (loading) return <LoadingSpinner message="Loading requests..." />;
@@ -194,12 +236,44 @@ export default function AdminRequestsDashboard() {
         {/* Top title + search */}
         <h1 className="text-3xl font-bold mb-6 text-gray-900">Manage Request</h1>
 
+        {/* Filter buttons */}
+        <div className="mb-4 flex gap-2">
+          <button
+            onClick={() => {
+              setViewMode('all');
+              setSearchQuery('');
+              setCurrentPage(1);
+              fetchRequests(1, '', 'all');
+            }}
+            className={`px-4 py-2 rounded ${viewMode === 'all' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+          >
+            All View
+          </button>
+          <button
+            onClick={() => {
+              setViewMode('my');
+              setSearchQuery('');
+              setCurrentPage(1);
+              fetchRequests(1, '', 'my');
+            }}
+            className={`px-4 py-2 rounded ${viewMode === 'my' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+          >
+            My Task
+          </button>
+          <button
+            onClick={() => navigate('/admin/AssignRequests')}
+            className="px-4 py-2 rounded bg-green-500 text-white hover:bg-green-600"
+          >
+            Assign Requests
+          </button>
+        </div>
+
         <div className="mb-8">
-          <input
-            type="text"
-            placeholder="Search Request"
-            className="w-full p-4 rounded-full shadow-sm border border-gray-200 bg-white text-gray-700"
-          />
+          <ReqSearchbar onSearch={(value) => {
+            setSearchQuery(value);
+            setCurrentPage(1);
+            fetchRequests(1, value, viewMode);
+          }} />
         </div>
 
         {/* Columns */}
@@ -211,7 +285,8 @@ export default function AdminRequestsDashboard() {
               requests={grouped[label]}
               uiLabel={label}
               onDropRequest={handleDropRequest}
-              onCardClick={setSelectedRequest}
+              onCardClick={handleCardClick}
+              onAssign={handleAssignRequest}
             />
           ))}
         </div>
@@ -220,7 +295,11 @@ export default function AdminRequestsDashboard() {
         {totalPages > 1 && (
           <div className="flex justify-center items-center mt-8 gap-4">
             <button
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              onClick={() => {
+                const newPage = Math.max(currentPage - 1, 1);
+                setCurrentPage(newPage);
+                fetchRequests(newPage, searchQuery, viewMode);
+              }}
               disabled={currentPage === 1}
               className="px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300 disabled:cursor-not-allowed"
             >
@@ -230,7 +309,11 @@ export default function AdminRequestsDashboard() {
               Page {currentPage} of {totalPages} ({totalRequests} total requests)
             </span>
             <button
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              onClick={() => {
+                const newPage = Math.min(currentPage + 1, totalPages);
+                setCurrentPage(newPage);
+                fetchRequests(newPage, searchQuery, viewMode);
+              }}
               disabled={currentPage === totalPages}
               className="px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300 disabled:cursor-not-allowed"
             >
@@ -240,13 +323,7 @@ export default function AdminRequestsDashboard() {
         )}
       </div>
 
-      {selectedRequest && (
-        <RequestModal
-          request={selectedRequest}
-          onClose={() => setSelectedRequest(null)}
-          onStatusChange={handleDropRequest}
-        />
-      )}
+
 
       {statusChangeRequest && (
         <StatusChangeConfirmModal
