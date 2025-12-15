@@ -523,76 +523,7 @@ function RequestFlow() {
 
   // Handle final submission
   const handleFinalSubmission = async () => {
-    try {
-      // Check if payment was required (meaning request was already created)
-      const hasImmediatePayment = requestData.documents.some(doc => doc.requires_payment_first);
-      
-      if (hasImmediatePayment) {
-        // Payment was required, request should already be created
-        // Just get the tracking ID from sessionStorage and proceed
-        const requestId = sessionStorage.getItem('current_request_id');
-
-        if (requestId) {
-          setTrackingId(requestId);
-          
-          // Clear saved state since request is completed
-          sessionStorage.removeItem('current_request_step');
-          sessionStorage.removeItem('current_request_id');
-          console.log("[MAYA][BROWSER] Cleared saved state after request completion");
-          
-          // Upload auth letter if it exists (for outsider users)
-          const authLetterData = sessionStorage.getItem("authLetterData");
-          if (authLetterData) {
-            try {
-              const parsedAuthData = JSON.parse(authLetterData);
-              
-              // Convert base64 to blob for upload
-              const byteCharacters = atob(parsedAuthData.fileData);
-              const byteNumbers = new Array(byteCharacters.length);
-              for (let i = 0; i < byteCharacters.length; i++) {
-                byteNumbers[i] = byteCharacters.charCodeAt(i);
-              }
-              const byteArray = new Uint8Array(byteNumbers);
-              const blob = new Blob([byteArray], { type: parsedAuthData.fileType });
-
-              const formData = new FormData();
-              formData.append("file", blob, parsedAuthData.fileName);
-              formData.append("firstname", parsedAuthData.firstname);
-              formData.append("lastname", parsedAuthData.lastname);
-              formData.append("number", parsedAuthData.number);
-              formData.append("requester_name", parsedAuthData.requesterName);
-              formData.append("request_id", requestId);
-
-              const authUploadResponse = await fetch("/user/upload-authletter", {
-                method: "POST",
-                body: formData
-              });
-
-              const authUploadData = await authUploadResponse.json();
-              
-              if (authUploadResponse.ok && authUploadData.success) {
-                console.log("Auth letter uploaded successfully with request ID:", requestId);
-                // Clear stored auth letter data after successful upload
-                sessionStorage.removeItem("authLetterData");
-              } else {
-                console.warn("Auth letter upload failed:", authUploadData.notification);
-              }
-            } catch (authError) {
-              console.error("Error uploading auth letter:", authError);
-            }
-          }
-          
-          goNextStep();
-        } else {
-          alert("Error: Request ID not found. Please try again.");
-        }
-      } else {
-        // No payment required, create request now
-        await createRequestAndFinalize();
-      }
-    } catch (error) {
-      alert("An error occurred while completing the request.");
-    }
+    await createRequestAndFinalize();
   };
 
   // Helper function to create request and finalize (for non-payment cases)
@@ -719,7 +650,13 @@ function RequestFlow() {
           }
         }
 
-        goNextStep();
+        const hasImmediatePayment = requestData.documents.some(doc => doc.requires_payment_first);
+        if (hasImmediatePayment) {
+          const studentId = requestData.studentInfo.student_id;
+          window.location.href = `/user/track?tracking=${requestId}&student_id=${studentId}`;
+        } else {
+          goNextStep();
+        }
       } else {
         alert(`Error: ${data.notification}`);
       }
@@ -838,11 +775,7 @@ function RequestFlow() {
           paymentCompleted={paymentCompleted}
           adminFee={requestData.adminFee}
           onNext={(navigationType) => {
-            if (navigationType === 'payNow') {
-              goNextStep('payNow');
-            } else {
-              handleFinalSubmission();
-            }
+            handleFinalSubmission();
           }}
           onBack={goBackStep}
         />

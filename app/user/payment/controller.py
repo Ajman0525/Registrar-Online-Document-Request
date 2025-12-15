@@ -171,6 +171,8 @@ def mark_paid_manual():
                     current_app.logger.warning(
                         f"[MAYA] Phone number missing for student {student_id}."
                     )
+        else:
+            current_app.logger.warning(f"[MAYA][BROWSER] mark-paid failed for {tracking_number}: {result.get('message')}")
         
         status_code = 200 if result.get('success') else 400
         return jsonify(result), status_code
