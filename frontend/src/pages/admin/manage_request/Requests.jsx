@@ -8,6 +8,8 @@ import StatusChangeConfirmModal from "../../../components/admin/StatusChangeConf
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
 import ReqSearchbar from "../../../components/admin/ReqSearchbar";
 import AssignDropdown from "../../../components/admin/AssignDropdown";
+import ButtonLink from "../../../components/common/ButtonLink";
+import "./Requests.css";
 
 // =======================================
 // STATUS MAPPING 
@@ -280,54 +282,52 @@ export default function AdminRequestsDashboard() {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="p-8 bg-gray-100 min-h-screen">
+      <div className="manage-requests-page">
         {/* Top title + search */}
-        <h1 className="text-3xl font-bold mb-6 text-gray-900">Manage Request</h1>
+        <h1 className="title">Manage Request</h1>
 
         {/* Filter buttons */}
-        <div className="mb-4 flex gap-2">
-          <button
-            onClick={() => {
-              setViewMode('all');
-              setSearchQuery('');
-              setCurrentPage(1);
-              fetchRequests(1, '', 'all');
-            }}
-            className={`px-4 py-2 rounded ${viewMode === 'all' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
-          >
-            All View
-          </button>
-          <button
-            onClick={() => {
-              setViewMode('my');
-              setSearchQuery('');
-              setCurrentPage(1);
-              fetchRequests(1, '', 'my');
-            }}
-            className={`px-4 py-2 rounded ${viewMode === 'my' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
-          >
-            My Task
-          </button>
-          <button
-            onClick={() => navigate('/admin/AssignRequests')}
-            className="px-4 py-2 rounded bg-green-500 text-white hover:bg-green-600"
-          >
-            Assign Requests
-          </button>
-        </div>
-
-
-        <div className="mb-8">
+        <div className="toolbar">
+          <div className="filter-buttons-continer">
+            <ButtonLink
+              onClick={() => {
+                setViewMode('all');
+                setSearchQuery('');
+                setCurrentPage(1);
+                fetchRequests(1, '', 'all');
+              }}
+              placeholder="All View"
+              variant="secondary"
+              className="filter-button"
+            >
+            </ButtonLink>
+            <ButtonLink
+              onClick={() => {
+                setViewMode('my');
+                setSearchQuery('');
+                setCurrentPage(1);
+                fetchRequests(1, '', 'my');
+              }}
+              placeholder="My Task"
+              variant="secondary"
+            >
+            </ButtonLink>
+            <ButtonLink
+              onClick={() => navigate('/admin/AssignRequests')}
+              placeholder={"Auto Assign"}
+              variant="secondary"
+            >
+            </ButtonLink>
+          </div>
           <ReqSearchbar onSearch={(value) => {
-            setSearchQuery(value);
-            setCurrentPage(1);
-            fetchRequests(1, value, viewMode);
-          }} />
+              setSearchQuery(value);
+              setCurrentPage(1);
+              fetchRequests(1, value, viewMode);
+            }} />
         </div>
 
         {/* Filter Controls */}
-        <div className="mb-6 p-4 bg-white rounded-lg shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold mb-4 text-gray-800">Filters</h3>
+        <div className="p-4 bg-white rounded-lg shadow-sm border border-gray-200">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* College Code Filter */}
             <div>
@@ -360,15 +360,15 @@ export default function AdminRequestsDashboard() {
 
             {/* Others Documents Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Others Documents</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Request Type</label>
               <select
                 value={hasOthersDocsFilter}
                 onChange={(e) => setHasOthersDocsFilter(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">All Requests</option>
-                <option value="true">Has Others Documents</option>
-                <option value="false">No Others Documents</option>
+                <option value="true">With Others Documents</option>
+                <option value="false">Without Others Documents</option>
               </select>
             </div>
 

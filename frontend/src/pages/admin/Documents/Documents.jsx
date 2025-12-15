@@ -149,7 +149,7 @@ function Documents() {
   );
 
   return (
-    <div>
+    <div className="manage-documents-page">
       {loading && <LoadingSpinner message="Loading documents..." />}
       <div className="toolbar">
         <h1 className="title">Manage Documents</h1>
