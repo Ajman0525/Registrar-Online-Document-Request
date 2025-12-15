@@ -513,7 +513,7 @@ function Transactions() {
               {transactions.map((tx) => (
                 <tr key={tx.request_id}>
                   <td className="td-request-id">
-                    <Link to={`/admin/requests?request_id=${tx.request_id}`}>{tx.request_id}</Link>
+                    <Link to={`/admin/requests/${tx.request_id}`}>{tx.request_id}</Link>
                   </td>
                   <td className="td-user-name">
                     {tx.full_name}
