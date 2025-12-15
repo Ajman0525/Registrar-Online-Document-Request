@@ -127,18 +127,18 @@ function Documents() {
       fetch("/admin/get-documents-with-requirements")
     ]);
 
-    const docsData = await docsRes.json();
-    const reqData = await reqRes.json();
-    const joinData = await joinRes.json();
+    const documentsData = await docsRes.json();
+    const requestsData = await reqRes.json();
+    const documentsWithRequirements = await joinRes.json();
 
-    setDocuments(docsData);
-    setRequirements(reqData);
-    setDocumentsWithRequirements(joinData);
+    setDocuments(documentsData);
+    setRequirements(requestsData);
+    setDocumentsWithRequirements(documentsWithRequirements);
 
     const documentDataToCache = {
-      documents: docsData,
-      requirements: reqData,
-      documentsWithRequirements : joinData
+      documents: documentsData,
+      requirements: requestsData,
+      documentsWithRequirements: documentsWithRequirements
     }
     sessionStorage.setItem(CACHE_KEY, JSON.stringify(documentDataToCache))
 
