@@ -1,7 +1,7 @@
 from . import tracking_bp
 from ...whatsapp.controller import send_whatsapp_message 
 from flask import jsonify, request, current_app, session
-from flask_jwt_extended import create_access_token, set_access_cookies, get_jwt_identity, verify_jwt_in_request
+from flask_jwt_extended import create_access_token, set_access_cookies, get_jwt_identity, verify_jwt_in_request, jwt_required
 from .models import Tracking
 from app.utils.decorator import jwt_required_with_role
 from app.user.authentication.models import AuthenticationUser

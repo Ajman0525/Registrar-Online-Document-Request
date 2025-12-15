@@ -1,10 +1,12 @@
+
 from . import request_bp
 from ...whatsapp.controller import send_whatsapp_message 
 from flask import jsonify, request, session, current_app
 from app.utils.decorator import jwt_required_with_role, request_allowed_required
-from flask_jwt_extended import get_jwt_identity, unset_jwt_cookies
+from flask_jwt_extended import get_jwt_identity, unset_jwt_cookies, jwt_required
 from .models import Request
 from app.user.document_list.models import DocumentList
+from app.admin.settings.models import Fee
 import os
 from werkzeug.utils import secure_filename
 from supabase import create_client, Client
@@ -60,14 +62,16 @@ def get_request_page_data():
 
 
         student_name = student_data.get("full_name")
+
         student_contact = student_data.get("contact_number")
         student_email = student_data.get("email")
         student_college_code = student_data.get("college_code")
-        
+
         # Step 2: Fetch documents available for request
         documents = DocumentList.get_all_documents()
 
-
+        # Step 3: Get admin fee
+        admin_fee = Fee.get_value('admin_fee')
 
         # Step 3: send the needed data to React
         return jsonify({
@@ -79,7 +83,8 @@ def get_request_page_data():
                 "email": student_email,
                 "college_code": student_college_code
             },
-            "documents": documents
+            "documents": documents,
+            "admin_fee": admin_fee
         })
 
     except Exception as e:
@@ -143,11 +148,13 @@ def complete_request():
     data = request.get_json()
     
 
+
     # Extract data from frontend
     student_info = data.get("student_info", {})
     documents_data = data.get("documents", [])
     requirements_data = data.get("requirements", [])
     total_price = data.get("total_price", 0.0)
+    admin_fee = data.get("admin_fee", 0.0)
     preferred_contact = data.get("preferred_contact", "SMS")
     payment_status = data.get("payment_status", False)
     remarks = data.get("remarks", "Request submitted successfully")
@@ -168,8 +175,9 @@ def complete_request():
     
     try:
 
+
         # Step 2: Store student info in the database
-        Request.submit_request(request_id, student_id, student_name, student_contact, student_email, preferred_contact, payment_status, total_price, student_college_code, remarks)
+        Request.submit_request(request_id, student_id, student_name, student_contact, student_email, preferred_contact, payment_status, total_price, admin_fee, student_college_code, remarks)
         
 
         # Step 3: Save documents if provided

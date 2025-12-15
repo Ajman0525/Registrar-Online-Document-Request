@@ -2,7 +2,7 @@ from . import authentication_user_bp
 from ...whatsapp.controller import send_whatsapp_message 
 from flask import jsonify, request, session, current_app
 from .models import AuthenticationUser
-from flask_jwt_extended import create_access_token, set_access_cookies
+from flask_jwt_extended import create_access_token, set_access_cookies, jwt_required
 from flask import jsonify, request, session
 from app.utils.decorator import jwt_required_with_role
 from werkzeug.utils import secure_filename
@@ -10,6 +10,7 @@ from supabase import create_client, Client
 from config import SUPABASE_URL, SUPABASE_ANON_KEY 
 import random
 import hashlib
+
 
 def send_whatsapp_otp(phone, full_name, otp_code):
     template_name = "odr_reference_number"

@@ -3,6 +3,7 @@ from flask import jsonify, request
 from app.utils.decorator import jwt_required_with_role
 from flask_jwt_extended import get_jwt_identity
 from .models import TransactionsModel
+from flask_jwt_extended import jwt_required
 
 @transactions_bp.route("/api/admin/transactions", methods=["GET"])
 @jwt_required()

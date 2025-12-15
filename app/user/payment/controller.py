@@ -7,6 +7,7 @@ from app.user.authentication.models import AuthenticationUser
 from .models import Payment
 import hmac
 import hashlib
+from flask_jwt_extended import jwt_required
 
 # Store Maya sandbox IPs to make sure webhooks only come from these addresses
 MAYA_SANDBOX_IPS = ['13.229.160.234', '3.1.199.75']

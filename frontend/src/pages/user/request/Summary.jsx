@@ -9,14 +9,16 @@ import { getCSRFToken } from "../../../utils/csrf";
 
 
 
+
 function Summary({
   selectedDocs = [],
   uploadedFiles = {},
   preferredContactInfo = {},
   contactInfo = {},
   paymentCompleted = false,
+  adminFee = 0,
   onNext = () => {},
-  onBack = () => {},
+  onBack = () => {},q
 }) {
   const [completing, setCompleting] = useState(false);
 
@@ -67,12 +69,16 @@ function Summary({
   };
 
 
+
   // Calculate total price - ensure doc.cost is used correctly
   const totalPrice = selectedDocs.reduce((sum, doc) => {
     const cost = doc.cost || 0;
     const quantity = doc.quantity || 1;
     return sum + (cost * quantity);
   }, 0);
+
+  // Ensure adminFee is a number
+  const numericAdminFee = Number(adminFee) || 0;
 
   // Calculate price for documents requiring immediate payment
   const immediatePaymentDocs = selectedDocs.filter(doc => doc.requires_payment_first);
@@ -364,12 +370,25 @@ function Summary({
           </div>
         </div>
 
+
+
         <div className="summary-row">
           <label className="summary-label">Price</label>
           <hr />
-          <div className="price-item">
-            <p className="total-text">Total Php:</p>
-            <div className="price-amount">{totalPrice.toFixed(2)}</div>
+          <div className="price-breakdown">
+            <div className="price-item">
+              <p className="price-text">Document Costs:</p>
+              <div className="price-amount">Php {totalPrice.toFixed(2)}</div>
+            </div>
+            <div className="price-item">
+              <p className="price-text">Admin Fee:</p>
+              <div className="price-amount">Php {numericAdminFee.toFixed(2)}</div>
+            </div>
+            <hr className="price-divider" />
+            <div className="price-item total-price-item">
+              <p className="total-text">Total Php:</p>
+              <div className="price-amount total-amount">{(totalPrice + numericAdminFee).toFixed(2)}</div>
+            </div>
           </div>
         </div>
 

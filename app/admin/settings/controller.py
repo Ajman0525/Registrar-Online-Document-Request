@@ -2,6 +2,7 @@ from . import settings_bp
 from flask import jsonify, request, current_app
 from app.utils.decorator import jwt_required_with_role
 from .models import Admin, OpenRequestRestriction, Fee
+from flask_jwt_extended import jwt_required
 
 role = "admin"
 
