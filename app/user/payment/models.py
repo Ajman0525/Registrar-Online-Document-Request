@@ -49,8 +49,38 @@ class Payment:
             fee_res = cur.fetchone()
             admin_fee = float(fee_res[0]) if fee_res else 0.0
             
-            expected_amount = (float(order[0]) if order[0] else 0.0) + admin_fee
-            received_amount = float(amount) if amount else 0.0
+            # Check if any docs are already paid to decide on admin fee inclusion
+            cur.execute("SELECT COUNT(*) FROM request_documents WHERE request_id = %s AND payment_status = TRUE", (tracking_number,))
+            paid_docs_count = cur.fetchone()[0]
+            include_admin_fee = (paid_docs_count == 0)
+
+            # Fetch docs to calculate expected amounts
+            cur.execute("""
+                SELECT d.doc_id, d.cost, rd.quantity, d.requires_payment_first, rd.payment_status
+                FROM request_documents rd
+                JOIN documents d ON rd.doc_id = d.doc_id
+                WHERE rd.request_id = %s
+            """, (tracking_number,))
+            docs = cur.fetchall()
+
+            total_unpaid = 0.0
+            required_unpaid = 0.0
+            unpaid_doc_ids = []
+            required_unpaid_doc_ids = []
+
+            for doc_id, cost, qty, req_first, paid in docs:
+                if not paid:
+                    val = float(cost) * qty
+                    total_unpaid += val
+                    unpaid_doc_ids.append(doc_id)
+                    if req_first:
+                        required_unpaid += val
+                        required_unpaid_doc_ids.append(doc_id)
+
+            expected_full = float(total_unpaid + (admin_fee if include_admin_fee else 0.0))
+            expected_required = float(required_unpaid + (admin_fee if include_admin_fee else 0.0))
+
+            received_amount = float(amount) if amount is not None else expected_full
             db_student_id = order[2]
             
             # Validate student_id matches
@@ -61,20 +91,34 @@ class Payment:
                     'was_already_paid': previous_payment_status
                 }
             
-            if received_amount != expected_amount:
+            docs_to_update = []
+            if abs(received_amount - expected_full) < 0.01:
+                docs_to_update = unpaid_doc_ids
+            elif abs(received_amount - expected_required) < 0.01:
+                docs_to_update = required_unpaid_doc_ids
+            else:
                 return {
                     'success': False,
-                    'message': f'Payment amount mismatch: expected {expected_amount}, received {received_amount}',
+                    'message': f'Payment amount mismatch: expected {expected_full} (Full) or {expected_required} (Required), received {received_amount}',
                     'was_already_paid': previous_payment_status
                 }
             
             # Update payment status
-            cur.execute("""
-                UPDATE requests
-                SET payment_status = TRUE, payment_date = (NOW() AT TIME ZONE 'UTC' + INTERVAL '8 HOURS')
-                WHERE request_id = %s
-            """, (tracking_number,))
-            rows_updated = cur.rowcount
+            if docs_to_update:
+                placeholders = ','.join(['%s'] * len(docs_to_update))
+                query = f"UPDATE request_documents SET payment_status = TRUE WHERE request_id = %s AND doc_id IN ({placeholders})"
+                cur.execute(query, [tracking_number] + docs_to_update)
+            
+            # 2. Check if all documents are paid before updating main request
+            cur.execute("SELECT COUNT(*) FROM request_documents WHERE request_id = %s AND payment_status = FALSE", (tracking_number,))
+            if cur.fetchone()[0] == 0:
+                cur.execute("""
+                    UPDATE requests
+                    SET payment_status = TRUE, payment_date = (NOW() AT TIME ZONE 'UTC' + INTERVAL '8 HOURS')
+                    WHERE request_id = %s
+                """, (tracking_number,))
+            
+            rows_updated = len(docs_to_update)
             conn.commit()
 
             message = f'Payment confirmed for tracking number: {tracking_number}, rows updated: {rows_updated}'
@@ -219,6 +263,16 @@ class Payment:
             cur.execute(query, [tracking_number] + doc_ids)
             
             rows_updated = cur.rowcount
+            
+            # Check if all documents are paid before updating main request
+            cur.execute("SELECT COUNT(*) FROM request_documents WHERE request_id = %s AND payment_status = FALSE", (tracking_number,))
+            if cur.fetchone()[0] == 0:
+                cur.execute("""
+                    UPDATE requests
+                    SET payment_status = TRUE, payment_date = (NOW() AT TIME ZONE 'UTC' + INTERVAL '8 HOURS')
+                    WHERE request_id = %s
+                """, (tracking_number,))
+                
             conn.commit()
             
             message = f'{rows_updated} document(s) payment confirmed for tracking number: {tracking_number}'

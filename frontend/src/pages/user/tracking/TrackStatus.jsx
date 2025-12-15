@@ -75,6 +75,23 @@ function TrackStatus({ trackData, onBack, onViewDetails, onViewDeliveryInstructi
                 </div>
             ),
         },
+        "PAYMENT-REQUIRED": {
+            className: "status-payment",
+            title: "Payment Required",
+            description: (  
+                <div className="status-body">
+                    <p className="subtext">Payment is required before we can process your request. Please complete your payment before we process your documents.</p>
+                </div>
+            ),
+            actionSection: (
+                <div className="action-section">
+                    <div className="button-section">
+                        <ButtonLink onClick={onBack} placeholder="Track Another" variant="secondary" />
+                        <ButtonLink onClick={onViewPaymentOptions} placeholder="Pay Now" variant="primary" />
+                    </div>
+                </div>
+            ),
+        },
         "RELEASED": {
             className: "status-released",
             title: "Document Released",
@@ -112,7 +129,10 @@ function TrackStatus({ trackData, onBack, onViewDetails, onViewDeliveryInstructi
     // get the specific configuration for the current status
     // convert status to uppercase for case-insensitive matching
     let statusKey = trackData.status ? trackData.status.toUpperCase() : '';
-    if (statusKey === 'DOC-READY' && trackData.paymentStatus === false) {
+    
+    if (statusKey !== 'REJECTED' && trackData.minimumAmountDue > 0) {
+        statusKey = 'PAYMENT-REQUIRED';
+    } else if (statusKey === 'DOC-READY' && trackData.paymentStatus === false) {
         statusKey = 'PAYMENT-PENDING';
     } else if (statusKey === 'DOC-READY' && trackData.orderType === 'LBC') {
         // [TEMP] show 'Out for Delivery' if order type is LBC and document is ready

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import "./Tracking.css";
 import ButtonLink from "../../../components/common/ButtonLink";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
+import { getCSRFToken } from "../../../utils/csrf";
 
 function EnterTrackId({ onNext }) {
     const [trackingNumber, setTrackingNumber] = useState("");
@@ -41,7 +42,9 @@ function EnterTrackId({ onNext }) {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': getCSRFToken(),
                 },
+                credentials: 'include',
                 body: JSON.stringify({ tracking_number: trackingNumber, student_id: studentId }),
             });
 
@@ -69,7 +72,7 @@ function EnterTrackId({ onNext }) {
                 trackData: data.track_data,
                 maskedPhone: data.masked_phone,
                 studentId: studentId
-            }); // pass the data from the backend to the next step
+            }, data.require_otp === false); // pass the data from the backend to the next step
         } catch (err) {
             console.error("Full error object:", err);
             console.error("Error message:", err.message);

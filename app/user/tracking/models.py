@@ -19,7 +19,7 @@ class Tracking:
         try:
             # Query to get the main request details
             cur.execute("""
-                SELECT status, total_cost, contact_number, payment_status, order_type, remarks
+                SELECT status, total_cost, contact_number, payment_status, order_type, remarks, student_id
                 FROM requests
                 WHERE request_id = %s
             """, (tracking_number,))
@@ -34,16 +34,37 @@ class Tracking:
             fee_res = cur.fetchone()
             admin_fee = float(fee_res[0]) if fee_res else 0.0
 
+            # Check if any docs are already paid to decide on admin fee inclusion
+            cur.execute("SELECT COUNT(*) FROM request_documents WHERE request_id = %s AND payment_status = TRUE", (tracking_number,))
+            paid_docs_count = cur.fetchone()[0]
+            include_admin_fee = (paid_docs_count == 0)
+
+            # Calculate amounts based on unpaid documents
+            cur.execute("""
+                SELECT d.cost, rd.quantity, d.requires_payment_first, rd.payment_status
+                FROM request_documents rd
+                JOIN documents d ON rd.doc_id = d.doc_id
+                WHERE rd.request_id = %s
+            """, (tracking_number,))
+            
+            docs = cur.fetchall()
+            total_unpaid = sum(float(d[0]) * d[1] for d in docs if not d[3])
+            required_unpaid = sum(float(d[0]) * d[1] for d in docs if not d[3] and d[2])
+
+            amount_due = total_unpaid + (admin_fee if include_admin_fee else 0.0)
+            min_amount_due = required_unpaid + (admin_fee if include_admin_fee else 0.0)
+
             # Map database columns to frontend keys
             tracking_data = {
                 "status": record[0],
-                "amountDue": (float(record[1]) if record[1] is not None else 0.0) + admin_fee,
+                "amountDue": amount_due,
+                "minimumAmountDue": min_amount_due,
                 "contact_number": record[2],
                 "paymentStatus": record[3],
                 "orderType": record[4],
                 "remarks": record[5],
                 "trackingNumber": tracking_number,
-                "studentId": record[5],
+                "studentId": record[6],
             }
             
             return tracking_data
@@ -75,7 +96,7 @@ class Tracking:
             print(f"Fetching documents for tracking number: {tracking_number}")
 
             cur.execute("""
-                SELECT d.doc_name, rd.quantity
+                SELECT d.doc_name, rd.quantity, d.cost, d.requires_payment_first, rd.payment_status
                 FROM request_documents rd
                 JOIN documents d ON rd.doc_id = d.doc_id
                 WHERE rd.request_id = %s
@@ -94,7 +115,10 @@ class Tracking:
             documents = [
                 {
                     "name": record[0],
-                    "quantity": record[1]
+                    "quantity": record[1],
+                    "cost": float(record[2]),
+                    "requires_payment_first": record[3],
+                    "payment_status": record[4]
                 }
                 for record in records
             ]
