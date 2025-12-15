@@ -71,7 +71,7 @@ def get_settings():
         if settings:
             return jsonify(settings), 200
         else:
-            return jsonify({"start_time": "09:00", "end_time": "17:00", "available_days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]}), 200
+            return jsonify({"start_time": "09:00", "end_time": "17:00", "available_days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], "announcement": ""}), 200
     except Exception as e:
         current_app.logger.error(f"Error fetching settings: {e}")
         return jsonify({"error": "Failed to fetch settings"}), 500
@@ -84,11 +84,12 @@ def update_settings():
     start_time = data.get("start_time")
     end_time = data.get("end_time")
     available_days = data.get("available_days")
+    announcement = data.get("announcement", "")
 
     if not start_time or not end_time or not available_days:
         return jsonify({"error": "start_time, end_time, and available_days are required"}), 400
 
-    if OpenRequestRestriction.update_settings(start_time, end_time, available_days):
+    if OpenRequestRestriction.update_settings(start_time, end_time, available_days, announcement):
         current_app.logger.info("Settings updated")
         return jsonify({"message": "Settings updated successfully"}), 200
     else:

@@ -25,6 +25,8 @@ const Settings = () => {
     const [availableDays, setAvailableDays] = useState(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']);
     const [adminFee, setAdminFee] = useState('');
     const [initialAdminFee, setInitialAdminFee] = useState('');
+    const [announcement, setAnnouncement] = useState('');
+    const [initialAnnouncement, setInitialAnnouncement] = useState('');
     const [initialAvailability, setInitialAvailability] = useState({
         startHour: '9', startMinute: '00', startAmpm: 'AM',
         endHour: '5', endMinute: '00', endAmpm: 'PM',
@@ -165,11 +167,14 @@ const Settings = () => {
                 const eHour = endHour24 === 0 ? '12' : endHour24 > 12 ? (endHour24 - 12).toString() : endHour24.toString();
                 const eAmpm = endHour24 >= 12 ? 'PM' : 'AM';
 
+
                 setEndHour(eHour);
                 setEndMinute(endM);
                 setEndAmpm(eAmpm);
 
                 setAvailableDays(data.available_days);
+                setAnnouncement(data.announcement || '');
+                setInitialAnnouncement(data.announcement || '');
                 setInitialAvailability({
                     startHour: sHour, startMinute: startM, startAmpm: sAmpm,
                     endHour: eHour, endMinute: endM, endAmpm: eAmpm,
@@ -218,8 +223,9 @@ const Settings = () => {
                     "X-CSRF-TOKEN": getCSRFToken(),
                 },
                 credentials: 'include',
-                body: JSON.stringify({ start_time: startTime24, end_time: endTime24, available_days: availableDays }),
+                body: JSON.stringify({ start_time: startTime24, end_time: endTime24, available_days: availableDays, announcement: announcement }),
             });
+
 
             if (response.ok) {
                 // Settings updated successfully
@@ -228,6 +234,7 @@ const Settings = () => {
                     endHour, endMinute, endAmpm,
                     availableDays
                 });
+                setInitialAnnouncement(announcement);
             } else {
                 const errorData = await response.json();
                 setError(errorData.error || 'Failed to update settings');
@@ -417,6 +424,32 @@ const Settings = () => {
                             style={(loading || !isAvailabilityChanged) ? { backgroundColor: '#cccccc', cursor: 'not-allowed' } : {}}
                         >
                             {loading ? 'Updating...' : 'Update Settings'}
+                        </button>
+                    </div>
+                </form>
+
+            </div>
+
+            <div className="availability-settings" style={{ marginTop: '20px' }}>
+                <h2>Announcement Configuration</h2>
+                <p>Set the announcement text to display on the landing page.</p>
+                <form className="availability-form" onSubmit={updateSettings}>
+                    <div className="form-group">
+                        <label>Announcement Text:</label>
+                        <textarea 
+                            value={announcement} 
+                            onChange={(e) => setAnnouncement(e.target.value)} 
+                            placeholder="Enter announcement text that will be displayed on the landing page..."
+                            style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc', width: '100%', height: '100px', resize: 'vertical' }}
+                        />
+                    </div>
+                    <div className="update-button-wrapper">
+                        <button 
+                            type="submit" 
+                            className="update-settings-btn" 
+                            disabled={loading}
+                        >
+                            {loading ? 'Updating...' : 'Update Announcement'}
                         </button>
                     </div>
                 </form>
