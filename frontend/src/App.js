@@ -13,6 +13,7 @@ import Documents from "./pages/admin/Documents/Documents";
 import Requests from "./pages/admin/manage_request/Requests";
 import AssignRequests from "./pages/admin/manage_request/AssignRequests";
 import Logs from "./pages/admin/Logs";
+import Transactions from "./pages/admin/transactions/Transactions";
 import Settings from "./pages/admin/Settings";
 import RequestFlow from "./pages/user/request/RequestFlow";
 
@@ -39,6 +40,7 @@ function App() {
           <Route path="Requests" element={<Requests />} />
 
           <Route path="Requests/:requestId" element={<RequestViewPage_Flow />} />
+          <Route path="Transactions" element={<Transactions />} />
           <Route path ="Document" element = {<Documents />} />
           <Route path ="Logs" element = {<Logs />} />
           <Route path="settings" element={<Settings />} />
