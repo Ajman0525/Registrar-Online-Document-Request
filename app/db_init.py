@@ -112,6 +112,7 @@ def ready_requirements_table():
    """
    execute_query(query)
 
+
 def ready_documents_table():
     query = """
     CREATE TABLE IF NOT EXISTS documents (
@@ -120,7 +121,8 @@ def ready_documents_table():
         description VARCHAR(255),
         logo_link VARCHAR(255),
         cost NUMERIC(10,2) DEFAULT 0.00,
-        hidden BOOLEAN DEFAULT FALSE
+        hidden BOOLEAN DEFAULT FALSE,
+        requires_payment_first BOOLEAN DEFAULT FALSE
     )
     """
     execute_query(query)
@@ -152,6 +154,7 @@ def ready_requests_table():
        payment_status BOOLEAN DEFAULT FALSE,
        total_cost NUMERIC(10,2) DEFAULT 0.00,
        requested_at TIMESTAMP DEFAULT NOW(),
+       payment_date TIMESTAMP,
        remarks VARCHAR(255),
        order_type varchar(20),
        college_code VARCHAR(20) NOT NULL
@@ -161,16 +164,26 @@ def ready_requests_table():
 
 
 #mapping table between requests and requested documents for each request and quantity
+
 def ready_request_documents_table():
    query = """
    CREATE TABLE IF NOT EXISTS request_documents (
        request_id VARCHAR(15) REFERENCES requests(request_id) ON DELETE CASCADE,
        doc_id VARCHAR(200),
        quantity INTEGER DEFAULT 1,
+       payment_status BOOLEAN DEFAULT FALSE,
        PRIMARY KEY (request_id, doc_id)
    )
    """
    execute_query(query)
+
+# Add status column if it doesn't exist
+   alter_query = """
+   ALTER TABLE request_documents ADD COLUMN IF NOT EXISTS status VARCHAR(15) DEFAULT 'IN-PROGRESS' 
+   """
+   execute_query(alter_query)
+
+
 
 
 #mapping table between requests and requirements with uploaded file paths
@@ -198,6 +211,33 @@ def ready_logs_table():
    )
    """
    execute_query(query)
+   # Add request_id column if it doesn't exist
+   alter_query = """
+   ALTER TABLE logs ADD COLUMN IF NOT EXISTS request_id VARCHAR(15) DEFAULT 'none'
+   """
+   execute_query(alter_query)
+
+
+def ready_request_assignments_table():
+   query = """
+   CREATE TABLE IF NOT EXISTS request_assignments (
+       assignment_id SERIAL PRIMARY KEY,
+       request_id VARCHAR(15) REFERENCES requests(request_id) ON DELETE CASCADE,
+       admin_id VARCHAR(100) NOT NULL,
+       assigned_at TIMESTAMP DEFAULT NOW(),
+       UNIQUE (request_id)  -- Ensure a request is assigned to only one admin
+   )
+   """
+   execute_query(query)
+
+def ready_fee_table():
+   query = """
+   CREATE TABLE IF NOT EXISTS fee (
+       key VARCHAR(50) PRIMARY KEY,
+       value NUMERIC NOT NULL
+   )
+   """
+   execute_query(query)
 
 
 def ready_admins_table():
@@ -210,6 +250,14 @@ def ready_admins_table():
    execute_query(query)
 
 
+def ready_max_request_settings_table():
+   query = """
+   CREATE TABLE IF NOT EXISTS max_request_settings (
+       key VARCHAR(100) PRIMARY KEY,
+       value TEXT NOT NULL
+    )
+    """
+   execute_query(query)
 
 def ready_open_request_restriction_table():
    query = """
@@ -220,6 +268,18 @@ def ready_open_request_restriction_table():
        available_days JSONB NOT NULL
    )
    """
+   execute_query(query)
+
+
+def ready_admin_settings_table():
+   query = """
+   CREATE TABLE IF NOT EXISTS admin_settings (
+       admin_id VARCHAR(100) NOT NULL,
+       key VARCHAR(100) NOT NULL,
+       value TEXT NOT NULL,
+       PRIMARY KEY (admin_id, key)
+    )
+    """
    execute_query(query)
 
 def ready_others_docs_table():
@@ -236,13 +296,50 @@ def ready_others_docs_table():
    """
    execute_query(query)
 
-    
- 
+
+# ==========================
+# INDEXES FOR PERFORMANCE
+# ==========================
+
+def create_performance_indexes():
+   """Create indexes on frequently queried columns for better performance."""
+   indexes = [
+       "CREATE INDEX IF NOT EXISTS idx_requests_requested_at ON requests(requested_at DESC)",
+       "CREATE INDEX IF NOT EXISTS idx_requests_status ON requests(status)",
+       "CREATE INDEX IF NOT EXISTS idx_requests_request_id ON requests(request_id)",
+       "CREATE INDEX IF NOT EXISTS idx_request_documents_request_id ON request_documents(request_id)",
+       "CREATE INDEX IF NOT EXISTS idx_request_documents_doc_id ON request_documents(doc_id)",
+       "CREATE INDEX IF NOT EXISTS idx_document_requirements_doc_id ON document_requirements(doc_id)",
+       "CREATE INDEX IF NOT EXISTS idx_document_requirements_req_id ON document_requirements(req_id)",
+       "CREATE INDEX IF NOT EXISTS idx_request_requirements_links_request_id ON request_requirements_links(request_id)",
+       "CREATE INDEX IF NOT EXISTS idx_request_requirements_links_requirement_id ON request_requirements_links(requirement_id)",
+       "CREATE INDEX IF NOT EXISTS idx_logs_details ON logs(details)",
+       "CREATE INDEX IF NOT EXISTS idx_logs_admin_id ON logs(admin_id)",
+       "CREATE INDEX IF NOT EXISTS idx_logs_timestamp ON logs(timestamp DESC)",
+       "CREATE INDEX IF NOT EXISTS idx_request_assignments_request_id ON request_assignments(request_id)",
+       "CREATE INDEX IF NOT EXISTS idx_request_assignments_admin_id ON request_assignments(admin_id)"
+   ]
+
+   for index_query in indexes:
+       execute_query(index_query)
+   print("Performance indexes created successfully.")
+
+def ready_fee_table():
+   query = """
+   CREATE TABLE IF NOT EXISTS fee (
+       key VARCHAR(50) PRIMARY KEY,
+       value NUMERIC NOT NULL
+   )
+   """
+   execute_query(query)
+
+
 
 
 # ==========================
 # SAMPLE DATA FOR INDEPENDENT TABLES
 # ==========================
+
 
 
 def populate_independent_tables():
@@ -252,7 +349,7 @@ def populate_independent_tables():
    try:
        # Students data
        student_values = [
-           ("2025-1011", "John Smith", "09171234567", "john.smith@example.com", False, "John", "Smith", "CCS"),
+           ("2025-1011", "John Smith", "639518876143", "john.smith@example.com", False, "John", "Smith", "CCS"),
            ("2025-1012", "Maria Garcia", "09172345678", "maria.garcia@example.com", True, "Maria", "Garcia", "COE"),
            ("2025-1013", "David Johnson", "09173456789", "david.johnson@example.com", False, "David", "Johnson", "CAS"),
            ("2025-1014", "Emma Wilson", "09174567890", "emma.wilson@example.com", True, "Emma", "Wilson", "CBA"),
@@ -288,21 +385,23 @@ def populate_independent_tables():
        )
 
 
+
        # Documents data
        doc_values = [
-           ("DOC0001", "Official Transcript of Records", "Complete academic record with grades and units earned", "/assets/logos/transcript.png", 100.00, False),
-           ("DOC0002", "Diploma/Certificate of Completion", "Official proof of degree or program completion", "/assets/logos/diploma.png", 150.00, False),
-           ("DOC0003", "Certificate of Enrollment", "Proof of current enrollment status", "/assets/logos/enrollment.png", 50.00, False),
-           ("DOC0004", "Good Moral Certificate", "Character reference for employment or further education", "/assets/logos/moral.png", 75.00, False),
-           ("DOC0005", "Certification of Grades", "Summary of academic performance for specific period", "/assets/logos/grades.png", 60.00, False),
-           ("DOC0006", "Authentication of Documents", "Official verification of document authenticity", "/assets/logos/authentication.png", 80.00, False),
-           ("DOC0007", "Replacement of Lost Diploma", "Duplicate diploma for lost or damaged original", "/assets/logos/replacement.png", 200.00, False),
-           ("DOC0008", "Course Description", "Detailed description of subjects taken", "/assets/logos/course_desc.png", 40.00, False),
-           ("DOC0009", "Ranking Certificate", "Academic ranking among graduating class", "/assets/logos/ranking.png", 65.00, False),
-           ("DOC0010", "Special Order/Citation", "Recognition of academic achievements or awards", "/assets/logos/awards.png", 55.00, False)
+           ("DOC0001", "Official Transcript of Records", "Complete academic record with grades and units earned", "/assets/logos/transcript.png", 100.00, False, True),
+           ("DOC0002", "Diploma/Certificate of Completion", "Official proof of degree or program completion", "/assets/logos/diploma.png", 150.00, False, False),
+           ("DOC0003", "Certificate of Enrollment", "Proof of current enrollment status", "/assets/logos/enrollment.png", 50.00, False, False),
+           ("DOC0004", "Good Moral Certificate", "Character reference for employment or further education", "/assets/logos/moral.png", 75.00, False, True),
+           ("DOC0005", "Certification of Grades", "Summary of academic performance for specific period", "/assets/logos/grades.png", 60.00, False, False),
+           ("DOC0006", "Authentication of Documents", "Official verification of document authenticity", "/assets/logos/authentication.png", 80.00, False, True),
+           ("DOC0007", "Replacement of Lost Diploma", "Duplicate diploma for lost or damaged original", "/assets/logos/replacement.png", 200.00, False, False),
+           ("DOC0008", "Course Description", "Detailed description of subjects taken", "/assets/logos/course_desc.png", 40.00, False, False),
+           ("DOC0009", "Ranking Certificate", "Academic ranking among graduating class", "/assets/logos/ranking.png", 65.00, False, False),
+           ("DOC0010", "Special Order/Citation", "Recognition of academic achievements or awards", "/assets/logos/awards.png", 55.00, False, False)
        ]
+
        cur.executemany(
-           "INSERT INTO documents (doc_id, doc_name, description, logo_link, cost, hidden) VALUES (%s, %s, %s, %s, %s, %s) ON CONFLICT (doc_id) DO NOTHING",
+           "INSERT INTO documents (doc_id, doc_name, description, logo_link, cost, hidden, requires_payment_first) VALUES (%s, %s, %s, %s, %s, %s, %s) ON CONFLICT (doc_id) DO NOTHING",
            doc_values
        )
 
@@ -344,10 +443,174 @@ def populate_independent_tables():
            doc_req_values
        )
 
+
+       # Get current timestamp
+       now = datetime.datetime.now()
+
+       # Requests
+       request_values = [
+           ("R0000001", "2025-1011", "Juan Dela Cruz", "09171234567", "juan@example.com", "Email", "SUBMITTED", True, 125.00, now, now, "Request submitted successfully"),
+           ("R0000002", "2025-1012", "Maria Clara", "09179876543", "maria@example.com", "SMS", "PENDING", False, 75.00, now, None, "Awaiting payment"),
+           ("R0000003", "2025-1013", "Maria Juan", "09179876543", "maria@example.com", "Email", "IN-PROGRESS", True, 150.00, now, now, "Processing documents"),
+           ("R0000004", "2025-1014", "Maria Mendoza", "09179876543", "maria@example.com", "SMS", "DOC-READY", True, 100.00, now, now, "Documents ready for pickup"),
+           ("R0000005", "2025-1015", "Maria Cruz", "09179876543", "maria@example.com", "Email", "RELEASED", True, 50.00, now, now, "Released to student"),
+           ("R0000006", "2025-1017", "Maria Juan", "09179876543", "maria@example.com", "SMS", "REJECTED", False, 0.00, now, None, "Incomplete requirements"),
+           ("R0000007", "2025-1018", "Maria Mendoza", "09179876543", "maria@example.com", "Email", "UNCONFIRMED", False, 0.00, now, None, "Awaiting confirmation"),
+           ("R0000008", "2025-1019", "Maria Cruz", "09179876543", "maria@example.com", "SMS", "SUBMITTED", True, 200.00, now, now, "Request submitted"),
+       ]
+       extras.execute_values(
+           cur,
+           """
+           INSERT INTO requests (request_id, student_id, full_name, contact_number, email, preferred_contact, status, payment_status, total_cost, requested_at, payment_date, remarks)
+           VALUES %s
+           ON CONFLICT (request_id) DO NOTHING
+           """,
+           request_values
+       )
+
+       # Request Documents
+       req_doc_values = [
+           ("R0000001", "DOC0001", 1),
+           ("R0000001", "DOC0002", 2),
+           ("R0000002", "DOC0002", 1),
+           ("R0000003", "DOC0001", 1),
+           ("R0000003", "DOC0003", 1),
+           ("R0000004", "DOC0003", 1),
+           ("R0000005", "DOC0001", 1),
+           ("R0000006", "DOC0002", 1),
+           ("R0000007", "DOC0001", 1),
+           ("R0000008", "DOC0001", 2),
+           ("R0000008", "DOC0002", 1),
+           ("R0000008", "DOC0003", 1),
+       ]
+       cur.executemany(
+           "INSERT INTO request_documents (request_id, doc_id, quantity) VALUES (%s, %s, %s) ON CONFLICT DO NOTHING",
+           req_doc_values
+       )
+
+       # Request Requirements Links (simulate uploaded files)
+       req_req_links_values = [
+           ("R0000001", "REQ0001", "uploads/R0000001_REQ0001_valid_id.pdf"),
+           ("R0000001", "REQ0002", "uploads/R0000001_REQ0002_proof_address.jpg"),
+           ("R0000002", "REQ0001", "uploads/R0000002_REQ0001_valid_id.png"),
+           ("R0000003", "REQ0001", "uploads/R0000003_REQ0001_valid_id.pdf"),
+           ("R0000003", "REQ0002", "uploads/R0000003_REQ0002_proof_address.jpg"),
+           ("R0000003", "REQ0003", "uploads/R0000003_REQ0003_photo.jpg"),
+           ("R0000004", "REQ0001", "uploads/R0000004_REQ0001_valid_id.pdf"),
+           ("R0000004", "REQ0003", "uploads/R0000004_REQ0003_photo.png"),
+           ("R0000005", "REQ0001", "uploads/R0000005_REQ0001_valid_id.pdf"),
+           ("R0000005", "REQ0002", "uploads/R0000005_REQ0002_proof_address.jpg"),
+           ("R0000008", "REQ0001", "uploads/R0000008_REQ0001_valid_id.pdf"),
+           ("R0000008", "REQ0002", "uploads/R0000008_REQ0002_proof_address.jpg"),
+           ("R0000008", "REQ0003", "uploads/R0000008_REQ0003_photo.jpg"),
+       ]
+       cur.executemany(
+           "INSERT INTO request_requirements_links (request_id, requirement_id, file_path) VALUES (%s, %s, %s) ON CONFLICT DO NOTHING",
+           req_req_links_values
+       )
+
+       # Insert default admin_fee if it doesn't exist
+       cur.execute(
+           "INSERT INTO fee (key, value) VALUES (%s, %s) ON CONFLICT (key) DO NOTHING",
+           ('admin_fee', '10.00')
+       )
        conn.commit()
        print("Independent tables populated successfully.")
    except Exception as e:
        print(f"Error populating independent tables: {e}")
+       conn.rollback()
+   finally:
+       cur.close()
+       conn.close()
+
+
+def populate_logs_table():
+   """Populate the logs table with sample data representing typical admin actions."""
+   conn = get_connection()
+   cur = conn.cursor()
+   try:
+       # Sample logs data representing typical registrar system activities
+       log_values = [
+           # System initialization and admin activities
+           ("admin1@registrar.edu", "System Initialization", "Database initialized with sample data including students, documents, and requirements", None, "2024-01-15 08:30:00"),
+           ("admin1@registrar.edu", "Admin Login", "Administrator logged into the system", None, "2024-01-15 08:31:00"),
+           ("admin2@registrar.edu", "Admin Login", "Staff administrator logged into the system", None, "2024-01-15 09:15:00"),
+           
+           # Document management activities
+           ("admin1@registrar.edu", "Document Created", "Created new document: Official Transcript of Records with cost ₱100.00", "DOC0001", "2024-01-15 10:00:00"),
+           ("admin1@registrar.edu", "Document Updated", "Updated document requirements for Diploma/Certificate of Completion", "DOC0002", "2024-01-15 10:15:00"),
+           ("admin2@registrar.edu", "Document Hidden", "Hidden document: Authentication of Documents for maintenance", "DOC0006", "2024-01-15 11:30:00"),
+           ("admin1@registrar.edu", "Document Cost Updated", "Updated cost for Replacement of Lost Diploma to ₱200.00", "DOC0007", "2024-01-15 14:20:00"),
+           
+           # Request management activities
+           ("admin1@registrar.edu", "Request Created", "New request created by student John Smith for Official Transcript of Records", "REQ2024001", "2024-01-16 09:45:00"),
+           ("admin2@registrar.edu", "Request Assigned", "Assigned request REQ2024001 to admin2@registrar.edu", "REQ2024001", "2024-01-16 10:00:00"),
+           ("admin2@registrar.edu", "Status Updated", "Updated request REQ2024001 status from PENDING to IN-PROGRESS", "REQ2024001", "2024-01-16 11:30:00"),
+           ("admin1@registrar.edu", "Request Created", "New request created by student Maria Garcia for Diploma/Certificate", "REQ2024002", "2024-01-16 13:20:00"),
+           ("admin1@registrar.edu", "Payment Confirmed", "Payment confirmed for request REQ2024001 - ₱100.00 received", "REQ2024001", "2024-01-16 15:45:00"),
+           ("admin2@registrar.edu", "Status Updated", "Updated request REQ2024001 status from IN-PROGRESS to DOC-READY", "REQ2024001", "2024-01-17 09:15:00"),
+           ("admin1@registrar.edu", "Document Released", "Released Official Transcript of Records for request REQ2024001", "REQ2024001", "2024-01-17 14:30:00"),
+           ("admin2@registrar.edu", "Status Updated", "Updated request REQ2024001 status from DOC-READY to RELEASED", "REQ2024001", "2024-01-17 14:35:00"),
+           
+           # Student management activities
+           ("admin1@registrar.edu", "Student Added", "Added new student: David Johnson (2025-1013) from CAS", None, "2024-01-18 08:00:00"),
+           ("admin2@registrar.edu", "Student Updated", "Updated contact information for student Emma Wilson", None, "2024-01-18 10:30:00"),
+           ("admin1@registrar.edu", "Liability Status Updated", "Updated liability status for student Michael Brown to cleared", None, "2024-01-18 11:45:00"),
+           
+           # Requirement management activities
+           ("admin1@registrar.edu", "Requirement Created", "Created new requirement: Marriage Certificate (if applicable)", None, "2024-01-19 09:00:00"),
+           ("admin2@registrar.edu", "Requirement Updated", "Updated requirement details for Valid Student ID", None, "2024-01-19 10:15:00"),
+           ("admin1@registrar.edu", "Document-Requirement Mapping", "Mapped Birth Certificate (PSA) requirement to Replacement Diploma", None, "2024-01-19 13:20:00"),
+           
+           # System configuration activities
+           ("admin1@registrar.edu", "Settings Updated", "Updated maximum concurrent requests limit to 50", None, "2024-01-20 08:30:00"),
+           ("admin2@registrar.edu", "Request Window Updated", "Modified request submission window: 8:00 AM - 5:00 PM", None, "2024-01-20 09:45:00"),
+           ("admin1@registrar.edu", "Admin Role Updated", "Changed admin2@registrar.edu role from staff to senior_admin", None, "2024-01-20 11:00:00"),
+           
+           # Recent activities for testing
+           ("admin1@registrar.edu", "Request Created", "New request created by student Emma Wilson for Good Moral Certificate", "REQ2024003", "2024-01-21 10:30:00"),
+           ("admin2@registrar.edu", "Request Assigned", "Assigned request REQ2024003 to admin2@registrar.edu", "REQ2024003", "2024-01-21 10:45:00"),
+           ("admin1@registrar.edu", "Status Updated", "Updated request REQ2024002 status from PENDING to IN-PROGRESS", "REQ2024002", "2024-01-21 14:15:00"),
+           ("admin2@registrar.edu", "Requirements Verified", "Verified all requirements for request REQ2024003", "REQ2024003", "2024-01-22 09:30:00"),
+           ("admin1@registrar.edu", "Payment Confirmed", "Payment confirmed for request REQ2024003 - ₱75.00 received", "REQ2024003", "2024-01-22 11:20:00"),
+           ("admin2@registrar.edu", "Document Processing", "Started processing Good Moral Certificate for request REQ2024003", "REQ2024003", "2024-01-22 13:45:00"),
+           ("admin1@registrar.edu", "Status Updated", "Updated request REQ2024003 status from IN-PROGRESS to DOC-READY", "REQ2024003", "2024-01-23 08:15:00"),
+           ("admin2@registrar.edu", "Document Released", "Released Good Moral Certificate for request REQ2024003", "REQ2024003", "2024-01-23 10:30:00"),
+           ("admin1@registrar.edu", "Status Updated", "Updated request REQ2024003 status from DOC-READY to RELEASED", "REQ2024003", "2024-01-23 10:35:00"),
+           
+           # Error handling and maintenance activities
+           ("admin1@registrar.edu", "System Maintenance", "Performed routine database maintenance and optimization", None, "2024-01-24 06:00:00"),
+           ("admin2@registrar.edu", "Backup Completed", "Daily database backup completed successfully", None, "2024-01-24 06:30:00"),
+           ("admin1@registrar.edu", "User Support", "Assisted student with document request troubleshooting", "REQ2024004", "2024-01-24 15:20:00"),
+           
+           # Authentication and security activities
+           ("admin1@registrar.edu", "Password Reset", "Performed password reset for admin2@registrar.edu", None, "2024-01-25 08:45:00"),
+           ("admin2@registrar.edu", "Security Check", "Reviewed system access logs and user permissions", None, "2024-01-25 14:30:00"),
+           
+           # Current day activities for demo purposes
+           ("admin1@registrar.edu", "Request Created", "New request created by student Michael Brown for Course Description", "REQ2024005", "2024-01-26 09:15:00"),
+           ("admin2@registrar.edu", "Request Assigned", "Assigned request REQ2024005 to admin1@registrar.edu", "REQ2024005", "2024-01-26 09:30:00"),
+           ("admin1@registrar.edu", "Status Updated", "Updated request REQ2024005 status from PENDING to IN-PROGRESS", "REQ2024005", "2024-01-26 11:45:00"),
+           ("admin2@registrar.edu", "Document Cost Verified", "Verified pricing for Course Description (₱40.00)", None, "2024-01-26 13:20:00"),
+           ("admin1@registrar.edu", "Payment Confirmed", "Payment confirmed for request REQ2024005 - ₱40.00 received", "REQ2024005", "2024-01-26 15:50:00")
+       ]
+       
+       # Insert logs data with proper timestamp formatting
+       for log_entry in log_values:
+           admin_id, action, details, request_id, timestamp = log_entry
+           cur.execute(
+               """
+               INSERT INTO logs (admin_id, action, details, request_id, timestamp)
+               VALUES (%s, %s, %s, %s, %s)
+               ON CONFLICT DO NOTHING
+               """,
+               (admin_id, action, details, request_id, timestamp)
+           )
+
+       conn.commit()
+       print("Logs table populated with sample data successfully.")
+   except Exception as e:
+       print(f"Error populating logs table: {e}")
        conn.rollback()
    finally:
        cur.close()
@@ -380,22 +643,41 @@ def initialize_db():
    ready_request_documents_table()
    ready_request_requirements_links_table()
    ready_logs_table()
+   ready_request_assignments_table()
    ready_admins_table()
+   ready_max_request_settings_table()
+   ready_admin_settings_table()
    ready_open_request_restriction_table()
+   ready_fee_table()
+   #insert_sample_data()
    ready_others_docs_table()
    print("Database and tables initialized successfully.")
+
 
 
 def initialize_and_populate():
    """Initialize database, tables, and populate independent tables."""
    initialize_db()
    populate_independent_tables()
+   populate_logs_table()
    print("Database initialized and independent tables populated successfully.")
+
 
 
 def populate_only():
    """Populate only independent tables (assumes tables already exist)."""
    populate_independent_tables()
+
+
+def populate_logs_only():
+   """Populate only logs table (assumes tables already exist)."""
+   populate_logs_table()
+
+
+def populate_logs_and_independent():
+   """Populate both independent tables and logs table (assumes tables already exist)."""
+   populate_independent_tables()
+   populate_logs_table()
 
 
 if __name__ == "__main__":

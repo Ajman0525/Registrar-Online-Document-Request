@@ -1,7 +1,7 @@
 from . import settings_bp
 from flask import jsonify, request, current_app
 from app.utils.decorator import jwt_required_with_role
-from .models import Admin, OpenRequestRestriction
+from .models import Admin, OpenRequestRestriction, Fee
 
 role = "admin"
 
@@ -92,3 +92,30 @@ def update_settings():
         return jsonify({"message": "Settings updated successfully"}), 200
     else:
         return jsonify({"error": "Failed to update settings"}), 500
+
+@settings_bp.route("/api/admin/settings/fee", methods=["GET"])
+@jwt_required_with_role(role)
+def get_admin_fee():
+    """Get current admin fee."""
+    try:
+        value = Fee.get_value('admin_fee')
+        return jsonify({'admin_fee': value}), 200
+    except Exception as e:
+        current_app.logger.error(f"Error fetching admin fee: {e}")
+        return jsonify({"error": "Failed to fetch admin fee"}), 500
+
+@settings_bp.route("/api/admin/settings/fee", methods=["PUT"])
+@jwt_required_with_role(role)
+def update_admin_fee():
+    """Update admin fee."""
+    data = request.get_json(silent=True) or {}
+    admin_fee = data.get('admin_fee')
+
+    if admin_fee is None:
+        return jsonify({"error": "admin_fee is required"}), 400
+
+    if Fee.update_value('admin_fee', admin_fee):
+        current_app.logger.info(f"Admin fee updated to {admin_fee}")
+        return jsonify({"message": "Admin fee updated successfully"}), 200
+    else:
+        return jsonify({"error": "Failed to update admin fee"}), 500

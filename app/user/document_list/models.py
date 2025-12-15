@@ -16,6 +16,7 @@ class DocumentList:
 
         try:
             cur = conn.cursor(cursor_factory=extras.RealDictCursor)
+
             query = """
                         SELECT 
                             d.doc_id,
@@ -23,6 +24,7 @@ class DocumentList:
                             d.description,
                             d.logo_link,
                             d.cost,
+                            d.requires_payment_first,
                             COALESCE(
                                 ARRAY_AGG(r.requirement_name ORDER BY r.requirement_name) 
                                 FILTER (WHERE r.requirement_name IS NOT NULL),
@@ -32,7 +34,7 @@ class DocumentList:
                         LEFT JOIN document_requirements dr ON d.doc_id = dr.doc_id
                         LEFT JOIN requirements r ON dr.req_id = r.req_id
                         WHERE d.hidden = FALSE
-                        GROUP BY d.doc_id, d.doc_name, d.description, d.logo_link, d.cost
+                        GROUP BY d.doc_id, d.doc_name, d.description, d.logo_link, d.cost, d.requires_payment_first
                         ORDER BY d.doc_id;
                     """
             cur.execute(query)

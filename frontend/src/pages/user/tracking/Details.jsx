@@ -54,14 +54,14 @@ function Details({ trackData, onTrackAnoter, onBack }) {
                             <span>Loading documents...</span>
                         </div>
                     ) : error ? (
-                        <div className="document-item">
+                        <div className="c-item">
                             <span>Error: {error}</span>
                         </div>
                     ) : (
                         documents.map((doc, index) => (
                             <div key={index} className="document-item">
-                                <h4 className="document-name">{doc.name}</h4>
-                                <span className="quantity-number">&nbsp;{doc.quantity}</span>
+                                <span className="document-name" style={{ fontWeight: "normal" }}>{doc.name}</span>
+                                <span className="quantity-number" style={{ fontWeight: "normal" }}>&nbsp;{doc.quantity}</span>
                             </div>
                         ))
                     )}
