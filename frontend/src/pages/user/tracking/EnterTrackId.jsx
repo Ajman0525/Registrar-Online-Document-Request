@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import "./Tracking.css";
 import ButtonLink from "../../../components/common/ButtonLink";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
+import { getCSRFToken } from "../../../utils/csrf";
 
 function EnterTrackId({ onNext }) {
     const [trackingNumber, setTrackingNumber] = useState("");
@@ -41,7 +42,9 @@ function EnterTrackId({ onNext }) {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': getCSRFToken(),
                 },
+                credentials: 'include',
                 body: JSON.stringify({ tracking_number: trackingNumber, student_id: studentId }),
             });
 

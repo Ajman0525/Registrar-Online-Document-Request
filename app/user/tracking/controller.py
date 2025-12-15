@@ -57,8 +57,14 @@ def get_tracking_data():
         if current_user == student_id:
             is_already_authenticated = True
             current_app.logger.info(f"User {student_id} is already authenticated. Skipping OTP.")
-    except Exception:
+    except Exception as e:
+        current_app.logger.warning(f"JWT verification failed in /api/track: {e}")
         pass
+
+    if not is_already_authenticated:
+        if session.get("student_id") == student_id:
+            is_already_authenticated = True
+            current_app.logger.info(f"User {student_id} is authenticated via session. Skipping OTP.")
 
     try:
         # Fetch tracking record

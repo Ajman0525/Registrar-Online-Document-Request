@@ -25,12 +25,12 @@ function TrackFlow() {
     const MAYA_PUBLIC_KEY = 'pk-Z0OSzLvIcOI2UIvDhdTGVVfRSSeiGStnceqwUE7n0Ah';
 
     // the 'data' parameter will hold the response from the tracking API
-    const handleTrackIdSubmit = (data) => {
+    const handleTrackIdSubmit = (data, skipOtp = false) => {
 		console.log("Tracking data received:", data.trackData);
 		setTrackData(data.trackData);
         setMaskedPhone(data.maskedPhone);
         setStudentId(data.studentId || data.student_id);
-		setCurrentView("otp");
+		setCurrentView(skipOtp ? "status" : "otp");
         setLoading(false);
     };
 
@@ -119,6 +119,7 @@ function TrackFlow() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': getCSRFToken(),
                 },
                 credentials: 'include',
                 body: JSON.stringify({ 
@@ -207,7 +208,7 @@ function TrackFlow() {
                     checkoutId: checkout.id,
                     trackingNumber: trackData.trackingNumber,
                     amountDue: amountToPay,
-                    studentId: studentId,
+                    studentId: currentStudentId,
                     trackData: trackData,
                     timestamp: Date.now()
                 }));
@@ -267,6 +268,9 @@ function TrackFlow() {
                                 });
                                 const body = await resp.json().catch(() => ({}));
                                 console.log("[MAYA][BROWSER] mark-paid response", resp.status, body);
+                                if (!resp.ok) {
+                                    console.error("[MAYA][BROWSER] mark-paid error message:", body.message);
+                                }
                             } catch (err) {
                                 console.error("[MAYA][BROWSER] mark-paid failed", err);
                             }
@@ -300,7 +304,9 @@ function TrackFlow() {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': getCSRFToken(),
                         },
+                        credentials: 'include',
                         body: JSON.stringify({ tracking_number: trackingNumber, student_id: urlStudentId }),
                     });
 
@@ -311,7 +317,7 @@ function TrackFlow() {
                                 trackData: data.track_data,
                                 maskedPhone: data.masked_phone,
                                 studentId: urlStudentId
-                            });
+                            }, data.require_otp === false);
                             // Clean URL to remove sensitive student_id
                             window.history.replaceState({}, '', '/user/track');
                         }
