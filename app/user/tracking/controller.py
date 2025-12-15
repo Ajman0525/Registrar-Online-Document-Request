@@ -32,7 +32,6 @@ def send_whatsapp_otp(phone, otp_code, full_name):
     return {"status": "success"}
 
 @tracking_bp.route('/api/track', methods=['POST'])
-@jwt_required()
 def get_tracking_data():
     """
     API endpoint to fetch tracking information based on tracking number and student ID.
