@@ -188,7 +188,7 @@ def edit_document(doc_id):
             UPDATE documents
             SET doc_name = %s, description = %s, cost = %s, requires_payment_first = %s
             WHERE doc_id = %s;
-        """, (doc_name, description, cost, doc_id, requires_payment_first))
+        """, (doc_name, description, cost, requires_payment_first, doc_id))
 
         # clear old requirements
         cursor.execute("DELETE FROM document_requirements WHERE doc_id = %s;", (doc_id,))

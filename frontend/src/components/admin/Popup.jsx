@@ -60,6 +60,12 @@ function Popup({ onClose, onSuccess, document }) {
   }, [isEditMode, document, allRequirements]);
 
   useEffect(() => {
+    if (price <= 0 && requiresPaymentFirst) {
+      setRequiresPaymentFirst(false);
+    }
+  }, [price]);
+
+  useEffect(() => {
   fetch("/admin/get-requirements")
     .then((res) => res.json())
     .then((data) => {
@@ -311,16 +317,22 @@ function Popup({ onClose, onSuccess, document }) {
             {errors.price && (
               <p className="error-text">{errors.price}</p>
             )}
-          </div>
+        </div>
           <div className="checkbox-section">
             <label className="checkbox-label">
               <input
                 type="checkbox"
                 checked={requiresPaymentFirst}
+                disabled={price <= 0}   // <-- disable when price is 0
                 onChange={(e) => setRequiresPaymentFirst(e.target.checked)}
               />
               Require payment before processing
             </label>
+            {price <= 0 && (
+              <p className="info-text" style={{ color: "#888", fontSize: "12px" }}>
+                Cannot require payment when price is 0
+              </p>
+            )}
           </div>
         </div>
 
