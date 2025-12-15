@@ -112,6 +112,7 @@ def get_my_requests():
             has_others_docs_filter = has_others_docs.lower() in ('true', '1', 'yes')
         
         admin_id = get_jwt_identity()
+
         result = ManageRequestModel.fetch_requests(
             page=page, 
             limit=limit, 
@@ -122,6 +123,31 @@ def get_my_requests():
             has_others_docs=has_others_docs_filter
         )
         return jsonify({"requests": result["requests"], "total": result["total"]}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+
+@manage_request_bp.route("/api/admin/requests/<request_id>/changes", methods=["POST"])
+@jwt_required_with_role(role)
+def request_changes(request_id):
+    """
+    Submit a change request and reject the current request.
+    """
+    try:
+        data = request.get_json()
+        wrong_requirements = data.get("wrong_requirements", [])
+        remarks = data.get("remarks", "")
+        file_link = data.get("file_link", None)
+        
+        # Get admin ID from JWT token
+        admin_id = get_jwt_identity()
+
+        success = ManageRequestModel.create_change_request(request_id, admin_id, wrong_requirements, remarks, file_link)
+        if success:
+            return jsonify({"message": "Request changes submitted and request rejected successfully"}), 200
+        else:
+            return jsonify({"error": "Failed to submit request changes"}), 500
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -392,6 +418,7 @@ def unassign_request():
 
 
 
+
 @manage_request_bp.route("/api/admin/requests/<request_id>", methods=["GET"])
 @jwt_required_with_role(role)
 def get_single_request(request_id):
@@ -404,6 +431,19 @@ def get_single_request(request_id):
             return jsonify(request_data), 200
         else:
             return jsonify({"error": "Request not found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@manage_request_bp.route("/api/admin/requests/<request_id>/changes", methods=["GET"])
+@jwt_required_with_role(role)
+def get_request_changes(request_id):
+    """
+    Get all changes for a specific request.
+    """
+    try:
+        changes = ManageRequestModel.get_request_changes(request_id)
+        return jsonify({"changes": changes}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

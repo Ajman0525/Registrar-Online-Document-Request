@@ -295,6 +295,25 @@ def ready_others_docs_table():
    execute_query(alter_query)
 
 
+
+
+def ready_changes_table():
+   query = """
+   CREATE TABLE IF NOT EXISTS changes (
+       change_id SERIAL PRIMARY KEY,
+       request_id VARCHAR(15) REFERENCES requests(request_id) ON DELETE CASCADE,
+       admin_id VARCHAR(100) NOT NULL,
+       requirement_id VARCHAR(200) REFERENCES requirements(req_id) ON DELETE CASCADE,  -- Individual requirement ID
+       remarks TEXT,
+       file_link VARCHAR(500),  -- Link to uploaded file for the change request
+       status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
+       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+   )
+   """
+   execute_query(query)
+
+
 # ==========================
 # INDEXES FOR PERFORMANCE
 # ==========================
@@ -567,6 +586,7 @@ def initialize_db():
    ready_admin_settings_table()
    ready_open_request_restriction_table()
    ready_others_docs_table()
+   ready_changes_table()
    print("Database and tables initialized successfully.")
 
 

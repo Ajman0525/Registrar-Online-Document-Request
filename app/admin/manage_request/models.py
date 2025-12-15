@@ -434,6 +434,7 @@ class ManageRequestModel:
         finally:
             cur.close()
 
+
     @staticmethod
     def delete_request(request_id, admin_id):
         """Delete a request and all associated data, and log the deletion."""
@@ -485,6 +486,12 @@ class ManageRequestModel:
                 DELETE FROM request_documents
                 WHERE request_id = %s
             """, (request_id,))
+            
+            # Delete changes
+            cur.execute("""
+                DELETE FROM changes
+                WHERE request_id = %s
+            """, (request_id,))
 
             # Finally, delete the request itself
             cur.execute("""
@@ -497,6 +504,45 @@ class ManageRequestModel:
         except Exception as e:
             conn.rollback()
             print(f"Error deleting request {request_id}: {e}")
+            return False
+        finally:
+            cur.close()
+
+
+
+
+
+    @staticmethod
+    def create_change_request(request_id, admin_id, wrong_requirements, remarks, file_link=None):
+        """Create a change request and set request status to REJECTED."""
+        conn = g.db_conn
+        cur = conn.cursor()
+        try:
+            # Insert into changes table - one row for each requirement ID
+            for requirement_id in wrong_requirements:
+                cur.execute("""
+                    INSERT INTO changes (request_id, admin_id, requirement_id, remarks, file_link, status)
+                    VALUES (%s, %s, %s, %s, %s, 'pending')
+                """, (request_id, admin_id, requirement_id, remarks, file_link))
+            
+            # Update request status to REJECTED
+            cur.execute("""
+                UPDATE requests
+                SET status = 'REJECTED'
+                WHERE request_id = %s
+            """, (request_id,))
+            
+            # Log the action
+            cur.execute("""
+                INSERT INTO logs (admin_id, action, details, request_id)
+                VALUES (%s, 'Request Changes', %s, %s)
+            """, (admin_id, f'Requested changes for {request_id}. Status set to REJECTED.', request_id))
+            
+            conn.commit()
+            return True
+        except Exception as e:
+            conn.rollback()
+            print(f"Error creating change request: {e}")
             return False
         finally:
             cur.close()
@@ -533,6 +579,40 @@ class ManageRequestModel:
 
 
 
+
+
+    @staticmethod
+    def get_request_changes(request_id):
+        """Fetch all changes for a specific request."""
+        conn = g.db_conn
+        cur = conn.cursor()
+        try:
+            cur.execute("""
+                SELECT c.change_id, c.admin_id, c.requirement_id, c.remarks, c.file_link, c.status, c.created_at, c.updated_at,
+                       r.requirement_name
+                FROM changes c
+                LEFT JOIN requirements r ON c.requirement_id = r.req_id
+                WHERE c.request_id = %s
+                ORDER BY c.created_at DESC
+            """, (request_id,))
+            changes = cur.fetchall()
+            
+            return [
+                {
+                    "change_id": change[0],
+                    "admin_id": change[1],
+                    "requirement_id": change[2],
+                    "requirement_name": change[8] or "Unknown Requirement",
+                    "remarks": change[3],
+                    "file_link": change[4],
+                    "status": change[5],
+                    "created_at": change[6].strftime("%Y-%m-%d %H:%M:%S") if change[6] else None,
+                    "updated_at": change[7].strftime("%Y-%m-%d %H:%M:%S") if change[7] else None
+                }
+                for change in changes
+            ]
+        finally:
+            cur.close()
 
     @staticmethod
     def get_request_by_id(request_id):
@@ -596,16 +676,18 @@ class ManageRequestModel:
             docs = cur.fetchall()
             request_data["documents"] = [{"doc_id": doc[0], "name": doc[1], "quantity": doc[2], "cost": doc[3], "requires_payment_first": doc[4], "is_done": doc[5]} for doc in docs]
 
+
             # Fetch requirements
             cur.execute("""
-                SELECT DISTINCT r.requirement_name
+                SELECT DISTINCT r.req_id, r.requirement_name
                 FROM request_documents rd
                 JOIN document_requirements dr ON rd.doc_id = dr.doc_id
                 JOIN requirements r ON dr.req_id = r.req_id
                 WHERE rd.request_id = %s
             """, (request_id,))
             reqs = cur.fetchall()
-            request_data["requirements"] = [req[0] for req in reqs]
+            request_data["requirements"] = [req[1] for req in reqs]
+            request_data["all_requirements"] = [{"req_id": req[0], "name": req[1]} for req in reqs]
 
 
             # Fetch uploaded files
@@ -638,9 +720,13 @@ class ManageRequestModel:
                 for doc in others_docs
             ]
 
+
             # Fetch recent logs
             recent_logs = ManageRequestModel.get_recent_logs_for_request(request_id, limit=1)
             request_data["recent_log"] = recent_logs[0] if recent_logs else None
+
+            # Fetch changes for this request
+            request_data["changes"] = ManageRequestModel.get_request_changes(request_id)
 
             return request_data
         finally:
