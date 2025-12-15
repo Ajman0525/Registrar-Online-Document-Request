@@ -395,20 +395,20 @@ const RequestViewPage_Pending = ({ request, onRefresh }) => {
             <span>{request.requested_at}</span>
           </div>
 
-          <div className="details-item">
+          {/* <div className="details-item">
             <span>Payment Option</span>
             <span>{request.payment_option || "Unconfirmed"}</span>
-          </div>
+          </div> */}
 
           <div className="details-item">
             <span>Pickup Option</span>
             <span>{request.pickup_option || "Unconfirmed"}</span>
           </div>
 
-          <div className="details-item">
+          {/* <div className="details-item">
             <span>Date Released</span>
             <span>{request.date_released || "Unconfirmed"}</span>
-          </div>
+          </div> */}
           
         </div>
 

@@ -41,14 +41,31 @@ const RequestViewPage_InProgress = ({ request, onRefresh }) => {
     // Add null check inside useEffect to prevent errors
     if (!request) return;
 
+
     // Fetch assignee information if needed
     const fetchAssigneeInfo = async () => {
       try {
-        // For now, we'll show a placeholder since we don't have assignee API
-        setAssigneeInfo({ name: "Assigned Admin" });
+        const response = await fetch(`/api/admin/request-admin/${request.request_id}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': getCSRFToken()
+          },
+          credentials: 'include'
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setAssigneeInfo({ 
+            admin_id: data.admin_id,
+          });
+        } else {
+          // Handle case where request is not assigned
+          setAssigneeInfo({ admin_id: "Not Assigned" });
+        }
       } catch (error) {
         console.error("Error fetching assignee info:", error);
-        setAssigneeInfo({ name: "Unknown Admin" });
+        setAssigneeInfo({ admin_id: "Unknown Admin" });
       }
     };
 
@@ -548,7 +565,7 @@ const RequestViewPage_InProgress = ({ request, onRefresh }) => {
           <div className="details-item">
             <span>Assignee</span>
             <span className="assignee-tag">
-              <div className="avatar-icon">👤</div> {assigneeInfo?.name || "Loading..."}
+              <div className="avatar-icon">👤</div> {assigneeInfo?.admin_id.split("@")[0] || "Loading..."}
             </span>
           </div>
 
@@ -583,25 +600,20 @@ const RequestViewPage_InProgress = ({ request, onRefresh }) => {
             <span>{request.requested_at}</span>
           </div>
 
-          <div className="details-item">
+          {/* <div className="details-item">
             <span>Payment Option</span>
             <span>{request.payment_option || "Unconfirmed"}</span>
-          </div>
+          </div> */}
 
           <div className="details-item">
             <span>Pickup Option</span>
             <span>{request.pickup_option || "Unconfirmed"}</span>
           </div>
 
-          <div className="details-item">
+          {/* <div className="details-item">
             <span>Date Released</span>
             <span>{request.date_released || "Unconfirmed"}</span>
-          </div>
-
-          <div className="details-item">
-            <span>Date Completed</span>
-            <span>{request.completed_at || "Unconfirmed"}</span>
-          </div>
+          </div> */}
         </div>
 
 
