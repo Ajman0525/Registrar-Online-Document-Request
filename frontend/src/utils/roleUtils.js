@@ -24,7 +24,7 @@ export const ROLE_PERMISSIONS = {
   staff: {
     dashboard: true,
     requests: true,
-    transactions: true,
+    transactions: false,
     documents: false,
     logs: false,
     settings: false,
@@ -118,7 +118,7 @@ export const getDefaultPathForRole = (role) => {
 export const normalizeRole = (role) => {
   if (!role) return 'none';
   
-  const validRoles = ['admin', 'manager', 'staff', 'none'];
+  const validRoles = ['admin', 'manager', 'auditor', 'staff', 'none'];
   const normalizedRole = role.toLowerCase().trim();
   
   return validRoles.includes(normalizedRole) ? normalizedRole : 'none';

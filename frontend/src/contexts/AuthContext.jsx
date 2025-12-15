@@ -97,8 +97,9 @@ export const AuthProvider = ({ children }) => {
     
     const rolePermissions = {
       admin: ['dashboard', 'requests', 'transactions', 'documents', 'logs', 'settings'],
-      manager: ['dashboard', 'requests', 'documents', 'transactions'],
-      staff: ['dashboard', 'requests', 'transactions'],
+      manager: ['dashboard', 'requests', 'documents', 'logs'],
+      auditor:['dashboard', 'transactions'],
+      staff: ['dashboard', 'requests'],
       none: [],
     };
     
