@@ -218,10 +218,12 @@ class Payment:
             cur.close()
             db_pool.putconn(conn)
 
+
     @staticmethod
     def update_multiple_documents_payment_status(tracking_number, student_id, doc_ids):
         """
         Updates the payment_status of multiple documents in request_documents to TRUE.
+        If all documents in the request have payment_status = TRUE, also updates the request payment_status to TRUE.
         
         Args:
             tracking_number (str): The request_id of the record.
@@ -229,12 +231,13 @@ class Payment:
             doc_ids (list): List of document IDs to update payment status for.
             
         Returns:
-            dict: A dictionary with 'success' (bool), 'updated_count' (int), and 'message' (str) keys.
+            dict: A dictionary with 'success' (bool), 'updated_count' (int), 'request_payment_updated' (bool), and 'message' (str) keys.
         """
         if not doc_ids:
             return {
                 'success': False,
                 'updated_count': 0,
+                'request_payment_updated': False,
                 'message': 'No document IDs provided'
             }
             
@@ -243,7 +246,7 @@ class Payment:
         try:
             # First verify the request belongs to the student
             cur.execute("""
-                SELECT r.request_id, r.student_id
+                SELECT r.request_id, r.student_id, r.payment_status
                 FROM requests r
                 WHERE r.request_id = %s AND r.student_id = %s
             """, (tracking_number, student_id))
@@ -253,8 +256,11 @@ class Payment:
                 return {
                     'success': False,
                     'updated_count': 0,
+                    'request_payment_updated': False,
                     'message': f'Request not found for tracking number: {tracking_number} with student_id: {student_id}'
                 }
+            
+            previous_request_payment_status = bool(request_record[2])
             
             # Create placeholders for the IN clause
             placeholders = ','.join(['%s'] * len(doc_ids))
@@ -268,21 +274,42 @@ class Payment:
             
             rows_updated = cur.rowcount
             
-            # Check if all documents are paid before updating main request
-            cur.execute("SELECT COUNT(*) FROM request_documents WHERE request_id = %s AND payment_status = FALSE", (tracking_number,))
-            if cur.fetchone()[0] == 0:
+            # Check if all documents in the request have payment_status = TRUE
+            cur.execute("""
+                SELECT COUNT(*) as total_docs,
+                       SUM(CASE WHEN payment_status = TRUE THEN 1 ELSE 0 END) as paid_docs
+                FROM request_documents
+                WHERE request_id = %s
+            """, (tracking_number,))
+            
+            doc_counts = cur.fetchone()
+            total_docs = doc_counts[0]
+            paid_docs = doc_counts[1]
+            
+            # If all documents are paid and request payment status was not already TRUE, update it
+            request_payment_updated = False
+            if total_docs > 0 and total_docs == paid_docs and not previous_request_payment_status:
                 cur.execute("""
                     UPDATE requests
-                    SET payment_status = TRUE, payment_date = (NOW() AT TIME ZONE 'UTC' + INTERVAL '8 HOURS')
+                    SET payment_status = TRUE
                     WHERE request_id = %s
                 """, (tracking_number,))
-                
+                request_payment_updated = True
+                message = f'{rows_updated} document(s) payment confirmed for tracking number: {tracking_number}. All documents paid - request payment status updated to TRUE.'
+            else:
+                if total_docs > 0 and total_docs == paid_docs:
+                    message = f'{rows_updated} document(s) payment confirmed for tracking number: {tracking_number}. All documents are now paid.'
+                else:
+                    message = f'{rows_updated} document(s) payment confirmed for tracking number: {tracking_number}. {paid_docs}/{total_docs} documents are now paid.'
+            
             conn.commit()
             
-            message = f'{rows_updated} document(s) payment confirmed for tracking number: {tracking_number}'
             return {
                 'success': True,
                 'updated_count': rows_updated,
+                'request_payment_updated': request_payment_updated,
+                'total_documents': total_docs,
+                'paid_documents': paid_docs,
                 'message': message
             }
                 
@@ -296,6 +323,7 @@ class Payment:
             return {
                 'success': False,
                 'updated_count': 0,
+                'request_payment_updated': False,
                 'message': error_msg
             }
         finally:

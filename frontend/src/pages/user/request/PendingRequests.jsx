@@ -55,7 +55,7 @@ function PendingRequests({ onProceedToNewRequest, onBackToLogin }) {
   const getStatusColor = (status) => {
     switch (status.toLowerCase()) {
       case 'pending':
-        return 'status-pending';
+        return 'pr-status-pending';
       case 'processing':
       case 'in_progress':
         return 'status-processing';

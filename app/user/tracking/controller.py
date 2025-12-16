@@ -1,7 +1,7 @@
 from . import tracking_bp
 from ...whatsapp.controller import send_whatsapp_message 
 from flask import jsonify, request, current_app, session
-from flask_jwt_extended import create_access_token, set_access_cookies, get_jwt_identity, verify_jwt_in_request
+from flask_jwt_extended import create_access_token, set_access_cookies, get_jwt_identity, verify_jwt_in_request, jwt_required
 from .models import Tracking
 from app.utils.decorator import jwt_required_with_role
 from app.user.authentication.models import AuthenticationUser
@@ -125,7 +125,7 @@ def get_tracking_data():
         }), 500
     
 @tracking_bp.route("/api/set-order-type", methods=["POST"], strict_slashes=False)
-@jwt_required_with_role(role)
+@jwt_required()
 def set_order_type():
     """
     Sets the order_type for the current request.
@@ -162,7 +162,7 @@ def set_order_type():
         }), 500
 
 @tracking_bp.route('/api/track/status/<tracking_number>', methods=['GET'])
-@jwt_required_with_role(role)
+@jwt_required()
 def get_tracking_status(tracking_number):
     """
     API endpoint to get current tracking status without OTP verification.
@@ -188,8 +188,9 @@ def get_tracking_status(tracking_number):
             "message": f"An unexpected error occurred: {str(e)}"
         }), 500
 
+
 @tracking_bp.route('/api/track/document/<tracking_number>', methods=['GET'])
-@jwt_required_with_role(role)
+@jwt_required()
 def get_requested_documents(tracking_number):
     """
     API endpoint to fetch requested documents for a given tracking number and student ID.
@@ -214,3 +215,95 @@ def get_requested_documents(tracking_number):
             "status": "error",
             "message": f"An unexpected error occurred: {str(e)}"
         }), 500
+
+
+@tracking_bp.route('/api/track/changes/<tracking_number>', methods=['GET'])
+@jwt_required()
+def get_request_changes(tracking_number):
+    """
+    API endpoint to fetch requested changes for a given tracking number and student ID.
+    """
+    student_id = get_jwt_identity()
+    if not student_id:
+        return jsonify({"message": "User session not found or invalid."}), 401
+
+    try:
+        # Verify that the tracking number belongs to this student
+        actual_student_id = Tracking.get_student_id_by_tracking_number(tracking_number)
+        if not actual_student_id or actual_student_id != student_id:
+            return jsonify({"message": "Tracking record not found or access denied."}), 404
+
+        changes = Tracking.get_request_changes_by_tracking_number(tracking_number)
+        if changes is None:
+            return jsonify({"message": "No changes found for the provided Tracking Number."}), 404
+
+        # Log the retrieved changes as requested
+        current_app.logger.info(f"Retrieved changes for tracking number {tracking_number}: {changes}")
+
+        return jsonify({
+            "message": "Requested changes retrieved successfully",
+            "changes": changes
+        }), 200
+
+    except Exception as e:
+        current_app.logger.error(f"Error in /api/track/changes: {e}")
+        return jsonify({
+            "status": "error",
+            "message": f"An unexpected error occurred: {str(e)}"
+        }), 500
+
+
+@tracking_bp.route('/api/track/changes/<tracking_number>/upload', methods=['POST'])
+@jwt_required()
+def upload_change_files(tracking_number):
+    """
+    API endpoint to upload files for requested changes.
+    Only allows file uploads for REJECTED status requests.
+    """
+    student_id = get_jwt_identity()
+    if not student_id:
+        return jsonify({"message": "User session not found or invalid."}), 401
+
+    try:
+        # Verify that the tracking number belongs to this student
+        actual_student_id = Tracking.get_student_id_by_tracking_number(tracking_number)
+        if not actual_student_id or actual_student_id != student_id:
+            return jsonify({"message": "Tracking record not found or access denied."}), 404
+
+        # Get form data
+        file_data = request.form.get('file_data')
+        file_name = request.form.get('file_name')
+        file_type = request.form.get('file_type')
+        change_id = request.form.get('change_id')
+
+        if not all([file_data, file_name, file_type, change_id]):
+            return jsonify({"message": "Missing required file information."}), 400
+
+        # Save the file (will check if status is REJECTED)
+        success = Tracking.save_change_file(tracking_number, change_id, file_data, file_name, file_type, student_id)
+        
+        if success:
+            return jsonify({
+                "message": "File uploaded successfully",
+                "file_name": file_name,
+                "change_id": change_id,
+                "tracking_number": tracking_number
+            }), 200
+        else:
+            # More specific error message for rejected status validation
+            record = Tracking.get_record_by_tracking_number(tracking_number)
+            if record and record.get('status') != 'REJECTED':
+                return jsonify({
+                    "message": f"File uploads are only allowed for rejected requests. Current status: {record.get('status')}",
+                    "status": record.get('status')
+                }), 403
+            else:
+                return jsonify({"message": "Failed to save file. Please try again."}), 500
+
+    except Exception as e:
+        current_app.logger.error(f"Error in /api/track/changes/upload: {e}")
+        return jsonify({
+            "status": "error",
+            "message": f"An unexpected error occurred: {str(e)}"
+        }), 500
+

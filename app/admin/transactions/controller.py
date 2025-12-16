@@ -3,14 +3,10 @@ from flask import jsonify, request
 from app.utils.decorator import jwt_required_with_role
 from flask_jwt_extended import get_jwt_identity
 from .models import TransactionsModel
-
-
-# Admin role
-role = "admin"
-
+from flask_jwt_extended import jwt_required
 
 @transactions_bp.route("/api/admin/transactions", methods=["GET"])
-@jwt_required_with_role(role)
+@jwt_required()
 def get_transactions():
 	try:
 		page = int(request.args.get('page', 1))
@@ -33,7 +29,7 @@ def get_transactions():
 
 
 @transactions_bp.route('/api/admin/transactions/summary', methods=['GET'])
-@jwt_required_with_role(role)
+@jwt_required()
 def get_summary():
 	try:
 		# returns total amount of paid transactions, total number, unpaid transactions

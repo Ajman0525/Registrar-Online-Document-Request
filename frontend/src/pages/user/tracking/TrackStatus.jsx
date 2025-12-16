@@ -1,9 +1,196 @@
+import { useState, useEffect, useRef } from "react";
 import "./Tracking.css";
 import ButtonLink from "../../../components/common/ButtonLink";
 import ContentBox from "../../../components/user/ContentBox";
+import LoadingSpinner from "../../../components/common/LoadingSpinner";
+import { getCSRFToken } from "../../../utils/csrf";
 
 /* track status component */
-function TrackStatus({ trackData, onBack, onViewDetails, onViewDeliveryInstructions, onViewPaymentOptions, onViewPickupInstructions }) {
+
+
+function TrackStatus({ trackData, onBack, onViewDetails, onViewDeliveryInstructions, onViewPaymentOptions, onViewPickupInstructions, onRefreshTrackData }) {
+    const [changes, setChanges] = useState([]);
+    const [loadingChanges, setLoadingChanges] = useState(false);
+    const [consolidatedRemarks, setConsolidatedRemarks] = useState('');
+    const [uploadedFiles, setUploadedFiles] = useState({});
+    const [uploadingFiles, setUploadingFiles] = useState(false);
+    const [changeFiles, setChangeFiles] = useState({});
+    const fileInputRefs = useRef({});
+
+    // Fetch changes when status is REJECTED
+    useEffect(() => {
+        if (trackData?.status === 'REJECTED' && trackData?.trackingNumber) {
+            fetchChanges();
+        }
+    }, [trackData?.status, trackData?.trackingNumber]);
+
+    const fetchChanges = async () => {
+        setLoadingChanges(true);
+        try {
+            const response = await fetch(`/api/track/changes/${trackData.trackingNumber}`, {
+                method: 'GET',
+                credentials: 'include',
+                headers: { 'X-CSRF-TOKEN': getCSRFToken() }
+            });
+
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.changes) {
+                    // The backend returns the structure directly
+                    setChanges(data.changes.changes || data.changes || []);
+                    setConsolidatedRemarks(data.changes.remarks || '');
+                } else {
+                    setChanges([]);
+                    setConsolidatedRemarks('');
+                }
+            } else {
+                console.error('Failed to fetch changes');
+                setChanges([]);
+                setConsolidatedRemarks('');
+            }
+        } catch (error) {
+            console.error('Error fetching changes:', error);
+            setChanges([]);
+            setConsolidatedRemarks('');
+        } finally {
+            setLoadingChanges(false);
+        }
+    };
+
+    // Handle file change for changes
+    const handleFileChange = (changeId, e) => {
+        const file = e.target.files?.[0] || null;
+        const key = String(changeId);
+
+        if (file) {
+            const maxSize = 10 * 1024 * 1024; // 10MB
+            const allowedTypes = ["application/pdf", "image/jpeg", "image/png", "image/jpg"];
+
+            if (file.size > maxSize) {
+                alert("File must be less than 10MB.");
+                if (fileInputRefs.current[key]) fileInputRefs.current[key].value = "";
+                return;
+            }
+            if (!allowedTypes.includes(file.type)) {
+                alert("Only PDF, JPG, JPEG, PNG allowed.");
+                if (fileInputRefs.current[key]) fileInputRefs.current[key].value = "";
+                return;
+            }
+        }
+
+        setChangeFiles(prev => ({
+            ...prev,
+            [key]: file
+        }));
+    };
+
+    // Convert file to base64
+    const fileToBase64 = (file) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result.split(',')[1]);
+            reader.onerror = error => reject(error);
+        });
+    };
+
+
+    // Upload files for changes
+    const handleUploadFiles = async () => {
+        try {
+            setUploadingFiles(true);
+
+            const filesToUpload = Object.entries(changeFiles).filter(([key, file]) => file instanceof File);
+            
+            if (filesToUpload.length === 0) {
+                alert("Please select files to upload.");
+                return;
+            }
+
+            const uploadPromises = filesToUpload.map(async ([changeId, file]) => {
+                const base64 = await fileToBase64(file);
+                
+                const formData = new FormData();
+                formData.append('file_data', base64);
+                formData.append('file_name', file.name);
+                formData.append('file_type', file.type);
+                formData.append('change_id', changeId);
+
+                const response = await fetch(`/api/track/changes/${trackData.trackingNumber}/upload`, {
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': getCSRFToken() },
+                    credentials: 'include',
+                    body: formData
+                });
+
+                const responseData = await response.json();
+
+                if (!response.ok) {
+                    // Provide specific error messages based on response
+                    if (response.status === 403) {
+                        throw new Error(`File uploads are only allowed for rejected requests. Current status: ${responseData.status || 'Unknown'}`);
+                    } else if (response.status === 400) {
+                        throw new Error(`Invalid file: ${responseData.message || 'Please check your file format and size'}`);
+                    } else {
+                        throw new Error(responseData.message || `Upload failed for change ${changeId}`);
+                    }
+                }
+
+                return responseData;
+            });
+
+            const results = await Promise.allSettled(uploadPromises);
+            
+            // Check for any failed uploads
+            const failedUploads = results.filter(result => result.status === 'rejected');
+            const successfulUploads = results.filter(result => result.status === 'fulfilled');
+
+            if (failedUploads.length > 0) {
+                const errorMessages = failedUploads.map(result => result.reason.message).join('\n');
+                alert(`Some files failed to upload:\n${errorMessages}`);
+            }
+
+            if (successfulUploads.length > 0) {
+                alert(`${successfulUploads.length} file(s) uploaded successfully!`);
+            }
+            
+            // Only clear uploaded files that were successful
+            const successfulChangeIds = successfulUploads.map(result => {
+                const fulfilled = result.value;
+                return fulfilled.change_id || result.value.change_id;
+            }).filter(Boolean);
+
+            setChangeFiles(prev => {
+                const updated = { ...prev };
+                successfulChangeIds.forEach(changeId => {
+                    delete updated[changeId];
+                });
+                return updated;
+            });
+            
+            // Clear file inputs for successful uploads
+            Object.keys(fileInputRefs.current).forEach(key => {
+                if (successfulChangeIds.includes(key) && fileInputRefs.current[key]) {
+                    fileInputRefs.current[key].value = "";
+                }
+            });
+
+            // Refresh changes to show uploaded files
+            fetchChanges();
+
+            // Refresh track data to get updated status (REJECTED -> PENDING)
+            if (onRefreshTrackData) {
+                onRefreshTrackData();
+            }
+
+        } catch (error) {
+            console.error('Error uploading files:', error);
+            alert(`Error uploading files: ${error.message || 'Please try again.'}`);
+        } finally {
+            setUploadingFiles(false);
+        }
+    };
 
     // config for each status
     const statusConfig = {
@@ -165,11 +352,120 @@ function TrackStatus({ trackData, onBack, onViewDetails, onViewDeliveryInstructi
                         <p><strong>{trackData.trackingNumber}</strong></p>
                     </div>
                 </div>
-                {/* Display rejection remarks if the status is REJECTED */}
-                {statusKey === 'REJECTED' && trackData.remarks && (
-                    <div className="rejection-remarks-section">
-                        <p className="remarks-title">Remarks:</p>
-                        <strong className="remarks-text">{trackData.remarks}</strong>
+
+                {/* Display changes requirements if the status is REJECTED */}
+                {statusKey === 'REJECTED' && (
+                    <div className="changes-requirements-section">
+                        {loadingChanges ? (
+                            <div className="changes-loading">
+                                <LoadingSpinner message="Loading changes..." />
+                            </div>
+                        ) : changes.length > 0 ? (
+                            <div className="changes-list">
+                                {/* Show consolidated remarks */}
+                                {consolidatedRemarks && (
+                                    <div className="rejection-remarks-section">
+                                        <p className="remarks-title">Remarks:</p>
+                                        <strong className="remarks-text">{consolidatedRemarks}</strong>
+                                    </div>
+                                )}
+                                
+                                <p className="changes-title">Required Changes:</p>
+                                {changes.map((change, index) => (
+                                    <div key={change.change_id || index} className="change-item">
+
+                                        <div className="change-header">
+                                            <span className="change-requirement-name">{change.requirement_name}</span>
+
+                                            <span className="change-status">
+                                                {change.status === 'uploaded' ? 'Uploaded' : 
+                                                 change.status === 'pending' ? 'Pending' : 
+                                                 change.status.charAt(0).toUpperCase() + change.status.slice(1)}
+                                            </span>
+                                        </div>
+                                        
+
+                                        {/* File upload section for each change */}
+                                        <div className="change-file-upload">
+                                            <input
+                                                ref={(el) => (fileInputRefs.current[String(change.change_id)] = el)}
+                                                type="file"
+                                                onChange={(e) => handleFileChange(change.change_id, e)}
+                                                style={{ display: 'none' }}
+                                                accept=".pdf,.jpg,.jpeg,.png"
+                                                disabled={uploadingFiles}
+                                            />
+                                            
+                                            {/* Check if file is already uploaded */}
+                                            {change.file_link ? (
+                                                <div className="file-uploaded-info">
+                                                    <span className="file-name">File already uploaded</span>
+                                                    <a 
+                                                        href={change.file_link} 
+                                                        target="_blank" 
+                                                        rel="noopener noreferrer"
+                                                        className="view-file-btn"
+                                                    >
+                                                        View File
+                                                    </a>
+                                                </div>
+                                            ) : changeFiles[String(change.change_id)] ? (
+                                                <div className="file-uploaded-info">
+                                                    <span className="file-name">{changeFiles[String(change.change_id)].name}</span>
+                                                    <button 
+                                                        className="remove-file-btn"
+                                                        onClick={() => {
+                                                            setChangeFiles(prev => ({
+                                                                ...prev,
+                                                                [String(change.change_id)]: null
+                                                            }));
+                                                            if (fileInputRefs.current[String(change.change_id)]) {
+                                                                fileInputRefs.current[String(change.change_id)].value = "";
+                                                            }
+                                                        }}
+                                                        disabled={uploadingFiles}
+                                                    >
+                                                        Remove
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <button 
+                                                    className="upload-file-btn"
+                                                    onClick={() => fileInputRefs.current[String(change.change_id)]?.click()}
+                                                    disabled={uploadingFiles}
+                                                >
+                                                    Upload File
+                                                </button>
+                                            )}
+                                        </div>
+                                        
+                                        {index < changes.length - 1 && <hr className="change-divider" />}
+                                    </div>
+                                ))}
+                                
+                                {/* Upload all files button */}
+                                {Object.keys(changeFiles).length > 0 && (
+                                    <div className="upload-all-files-section">
+                                        <ButtonLink 
+                                            onClick={handleUploadFiles}
+                                            placeholder={uploadingFiles ? "Uploading..." : "Upload Files"}
+                                            variant="primary"
+                                            disabled={uploadingFiles}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="no-changes-section">
+                                {(consolidatedRemarks || trackData.remarks) && (
+                                    <div className="rejection-remarks-section">
+                                        <p className="remarks-title">Remarks:</p>
+                                        <strong className="remarks-text">{consolidatedRemarks || trackData.remarks}</strong>
+                                    </div>
+                                )}
+                                <p className="no-changes-text">No specific changes required.</p>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

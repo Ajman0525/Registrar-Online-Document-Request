@@ -2,11 +2,13 @@ from flask import g
 from collections import defaultdict
 
 class ManageRequestModel:
+
     @staticmethod
-    def fetch_requests(page=1, limit=20, search=None, admin_id=None):
+    def fetch_requests(page=1, limit=20, search=None, admin_id=None, college_code=None, requester_type=None, has_others_docs=None):
         """
         Fetch paginated requests with full details.
         If admin_id is provided, only fetch requests assigned to that admin.
+        Supports filtering by college_code, requester_type (student/outsider), and has_others_docs.
         """
         conn = g.db_conn
         cur = conn.cursor()
@@ -14,7 +16,7 @@ class ManageRequestModel:
             offset = (page - 1) * limit
 
             # --------------------------
-            # 1. Base query
+            # 1. Base query with filters
             # --------------------------
             params = []
             where_clauses = []
@@ -27,6 +29,22 @@ class ManageRequestModel:
                 where_clauses.append("(r.full_name ILIKE %s OR r.student_id ILIKE %s OR r.email ILIKE %s OR r.contact_number ILIKE %s)")
                 search_param = f"%{search}%"
                 params.extend([search_param] * 4)
+
+            if college_code:
+                where_clauses.append("r.college_code = %s")
+                params.append(college_code)
+
+            if requester_type:
+                if requester_type == "outsider":
+                    where_clauses.append("r.request_id IN (SELECT id FROM auth_letters)")
+                elif requester_type == "student":
+                    where_clauses.append("r.request_id NOT IN (SELECT id FROM auth_letters)")
+
+            if has_others_docs is not None:
+                if has_others_docs:
+                    where_clauses.append("r.request_id IN (SELECT DISTINCT request_id FROM others_docs)")
+                else:
+                    where_clauses.append("r.request_id NOT IN (SELECT DISTINCT request_id FROM others_docs)")
 
             where_sql = f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
 
@@ -67,18 +85,20 @@ class ManageRequestModel:
             """, params)
             total_count = cur.fetchone()[0]
 
+
+
             # --------------------------
             # 4. Bulk fetch documents
             # --------------------------
             cur.execute(f"""
-                SELECT rd.request_id, d.doc_name, rd.quantity, d.cost
+                SELECT rd.request_id, rd.doc_id, d.doc_name, rd.quantity, d.cost, rd.is_done
                 FROM request_documents rd
                 JOIN documents d ON rd.doc_id = d.doc_id
                 WHERE rd.request_id IN ({placeholders})
             """, request_ids)
             docs_map = defaultdict(list)
-            for rid, name, qty, cost in cur.fetchall():
-                docs_map[rid].append({"name": name, "quantity": qty, "cost": cost})
+            for rid, doc_id, name, qty, cost, is_done in cur.fetchall():
+                docs_map[rid].append({"doc_id": doc_id, "name": name, "quantity": qty, "cost": cost, "is_done": is_done})
 
             # --------------------------
             # 5. Bulk fetch requirements
@@ -398,6 +418,7 @@ class ManageRequestModel:
         finally:
             cur.close()
 
+
     @staticmethod
     def is_assigned(request_id):
         """Check if a request is assigned."""
@@ -413,6 +434,27 @@ class ManageRequestModel:
             return count > 0
         finally:
             cur.close()
+
+    @staticmethod
+    def get_admin_info_by_request_id(request_id):
+        """Get the admin information assigned to a specific request."""
+        conn = g.db_conn
+        cur = conn.cursor()
+        try:
+            cur.execute("""
+                SELECT admin_id
+                FROM request_assignments 
+                WHERE request_id = %s
+            """, (request_id,))
+            result = cur.fetchone()
+            if result:
+                return {
+                    "admin_id": result[0],
+                }
+            return None
+        finally:
+            cur.close()
+
 
     @staticmethod
     def delete_request(request_id, admin_id):
@@ -465,6 +507,12 @@ class ManageRequestModel:
                 DELETE FROM request_documents
                 WHERE request_id = %s
             """, (request_id,))
+            
+            # Delete changes
+            cur.execute("""
+                DELETE FROM changes
+                WHERE request_id = %s
+            """, (request_id,))
 
             # Finally, delete the request itself
             cur.execute("""
@@ -477,6 +525,45 @@ class ManageRequestModel:
         except Exception as e:
             conn.rollback()
             print(f"Error deleting request {request_id}: {e}")
+            return False
+        finally:
+            cur.close()
+
+
+
+
+
+    @staticmethod
+    def create_change_request(request_id, admin_id, wrong_requirements, remarks, file_link=None):
+        """Create a change request and set request status to REJECTED."""
+        conn = g.db_conn
+        cur = conn.cursor()
+        try:
+            # Insert into changes table - one row for each requirement ID
+            for requirement_id in wrong_requirements:
+                cur.execute("""
+                    INSERT INTO changes (request_id, admin_id, requirement_id, remarks, file_link, status)
+                    VALUES (%s, %s, %s, %s, %s, 'pending')
+                """, (request_id, admin_id, requirement_id, remarks, file_link))
+            
+            # Update request status to REJECTED
+            cur.execute("""
+                UPDATE requests
+                SET status = 'REJECTED'
+                WHERE request_id = %s
+            """, (request_id,))
+            
+            # Log the action
+            cur.execute("""
+                INSERT INTO logs (admin_id, action, details, request_id)
+                VALUES (%s, 'Request Changes', %s, %s)
+            """, (admin_id, f'Requested changes for {request_id}. Status set to REJECTED.', request_id))
+            
+            conn.commit()
+            return True
+        except Exception as e:
+            conn.rollback()
+            print(f"Error creating change request: {e}")
             return False
         finally:
             cur.close()
@@ -511,6 +598,43 @@ class ManageRequestModel:
         finally:
             cur.close()
 
+
+
+
+
+    @staticmethod
+    def get_request_changes(request_id):
+        """Fetch all changes for a specific request."""
+        conn = g.db_conn
+        cur = conn.cursor()
+        try:
+            cur.execute("""
+                SELECT c.change_id, c.admin_id, c.requirement_id, c.remarks, c.file_link, c.status, c.created_at, c.updated_at,
+                       r.requirement_name
+                FROM changes c
+                LEFT JOIN requirements r ON c.requirement_id = r.req_id
+                WHERE c.request_id = %s
+                ORDER BY c.created_at DESC
+            """, (request_id,))
+            changes = cur.fetchall()
+            
+            return [
+                {
+                    "change_id": change[0],
+                    "admin_id": change[1],
+                    "requirement_id": change[2],
+                    "requirement_name": change[8] or "Unknown Requirement",
+                    "remarks": change[3],
+                    "file_link": change[4],
+                    "status": change[5],
+                    "created_at": change[6].strftime("%Y-%m-%d %H:%M:%S") if change[6] else None,
+                    "updated_at": change[7].strftime("%Y-%m-%d %H:%M:%S") if change[7] else None
+                }
+                for change in changes
+            ]
+        finally:
+            cur.close()
+
     @staticmethod
     def get_request_by_id(request_id):
         """Fetch a single request by ID with all details."""
@@ -518,7 +642,7 @@ class ManageRequestModel:
         cur = conn.cursor()
         try:
             cur.execute("""
-                SELECT request_id, student_id, full_name, contact_number, email, preferred_contact, status, requested_at, remarks, total_cost, payment_status
+                SELECT request_id, student_id, full_name, contact_number, email, preferred_contact, status, requested_at, remarks, total_cost, payment_status, college_code, order_type, payment_date
                 FROM requests
                 WHERE request_id = %s
             """, (request_id,))
@@ -538,29 +662,56 @@ class ManageRequestModel:
                 "requested_at": req[7].strftime("%Y-%m-%d %H:%M:%S") if req[7] else None,
                 "remarks": req[8],
                 "total_cost": req[9],
-                "payment_status": req[10]
+                "payment_status": req[10],
+                "college_code": req[11],
+                "pickup_option": req[12],
+                "payment_date":req[13]
             }
 
-            # Fetch requested documents with cost
+            # Check if request exists in auth_letters table to determine requester type
             cur.execute("""
-                SELECT d.doc_name, rd.quantity, d.cost
+                SELECT id, file_url, requester_name
+                FROM auth_letters
+                WHERE id = %s
+            """, (request_id,))
+            auth_letter = cur.fetchone()
+            
+            if auth_letter:
+                request_data["requester_type"] = "Outsider"
+                request_data["authorization_letter"] = {
+                    "id": auth_letter[0],
+                    "file_url": auth_letter[1],
+                    "requester_name": auth_letter[2]
+                }
+            else:
+                request_data["requester_type"] = "Student"
+                request_data["authorization_letter"] = None
+
+
+
+            # Fetch requested documents with cost and payment requirements
+            cur.execute("""
+                SELECT rd.doc_id, d.doc_name, rd.quantity, d.cost, d.requires_payment_first, rd.is_done
                 FROM request_documents rd
                 JOIN documents d ON rd.doc_id = d.doc_id
                 WHERE rd.request_id = %s
             """, (request_id,))
             docs = cur.fetchall()
-            request_data["documents"] = [{"name": doc[0], "quantity": doc[1], "cost": doc[2]} for doc in docs]
+            request_data["documents"] = [{"doc_id": doc[0], "name": doc[1], "quantity": doc[2], "cost": doc[3], "requires_payment_first": doc[4], "is_done": doc[5]} for doc in docs]
+
 
             # Fetch requirements
             cur.execute("""
-                SELECT DISTINCT r.requirement_name
+                SELECT DISTINCT r.req_id, r.requirement_name
                 FROM request_documents rd
                 JOIN document_requirements dr ON rd.doc_id = dr.doc_id
                 JOIN requirements r ON dr.req_id = r.req_id
                 WHERE rd.request_id = %s
             """, (request_id,))
             reqs = cur.fetchall()
-            request_data["requirements"] = [req[0] for req in reqs]
+            request_data["requirements"] = [req[1] for req in reqs]
+            request_data["all_requirements"] = [{"req_id": req[0], "name": req[1]} for req in reqs]
+
 
             # Fetch uploaded files
             cur.execute("""
@@ -572,13 +723,38 @@ class ManageRequestModel:
             files = cur.fetchall()
             request_data["uploaded_files"] = [{"requirement": file[0], "file_path": file[1]} for file in files]
 
+
+            # Fetch others documents (custom documents)
+            cur.execute("""
+                SELECT id, document_name, document_description, created_at, is_done
+                FROM others_docs
+                WHERE request_id = %s
+                ORDER BY created_at ASC
+            """, (request_id,))
+            others_docs = cur.fetchall()
+            request_data["others_documents"] = [
+                {
+                    "id": doc[0], 
+                    "name": doc[1], 
+                    "description": doc[2], 
+                    "created_at": doc[3].strftime("%Y-%m-%d %H:%M:%S") if doc[3] else None,
+                    "is_done": doc[4]
+                } 
+                for doc in others_docs
+            ]
+
+
             # Fetch recent logs
             recent_logs = ManageRequestModel.get_recent_logs_for_request(request_id, limit=1)
             request_data["recent_log"] = recent_logs[0] if recent_logs else None
 
+            # Fetch changes for this request
+            request_data["changes"] = ManageRequestModel.get_request_changes(request_id)
+
             return request_data
         finally:
             cur.close()
+
 
     @staticmethod
     def unassign_request_from_admin(request_id, admin_id):
@@ -596,5 +772,98 @@ class ManageRequestModel:
             conn.rollback()
             print(f"Error unassigning request {request_id} from admin {admin_id}: {e}")
             return False
+        finally:
+            cur.close()
+
+
+    @staticmethod
+    def toggle_document_completion(request_id, doc_id, admin_id):
+        """Toggle the is_done status of a document in a request."""
+        conn = g.db_conn
+        cur = conn.cursor()
+        try:
+            # First, get the current status
+            cur.execute("""
+                SELECT is_done
+                FROM request_documents
+                WHERE request_id = %s AND doc_id = %s
+            """, (request_id, doc_id))
+            result = cur.fetchone()
+            
+            if not result:
+                return False, "Document not found"
+            
+            current_status = result[0]
+            new_status = not current_status
+            
+            # Update the status
+            cur.execute("""
+                UPDATE request_documents
+                SET is_done = %s
+                WHERE request_id = %s AND doc_id = %s
+            """, (new_status, request_id, doc_id))
+            
+            if cur.rowcount > 0:
+                # Log the action
+                cur.execute("""
+                    INSERT INTO logs (admin_id, action, details, request_id)
+                    VALUES (%s, %s, %s, %s)
+                """, (admin_id, 'Document Status Toggled', 
+                      f'Toggled document {doc_id} completion status to {"completed" if new_status else "not completed"} for request {request_id}', 
+                      request_id))
+                conn.commit()
+                return True, new_status
+            else:
+                return False, "Failed to update document status"
+        except Exception as e:
+            conn.rollback()
+            print(f"Error toggling document completion for request {request_id}, doc {doc_id}: {e}")
+            return False, str(e)
+        finally:
+            cur.close()
+
+    @staticmethod
+    def toggle_others_document_completion(request_id, doc_id, admin_id):
+        """Toggle the is_done status of an others document in a request."""
+        conn = g.db_conn
+        cur = conn.cursor()
+        try:
+            # First, get the current status
+            cur.execute("""
+                SELECT is_done
+                FROM others_docs
+                WHERE id = %s AND request_id = %s
+            """, (doc_id, request_id))
+            result = cur.fetchone()
+            
+            if not result:
+                return False, "Others document not found"
+            
+            current_status = result[0]
+            new_status = not current_status
+            
+            # Update the status
+            cur.execute("""
+                UPDATE others_docs
+                SET is_done = %s
+                WHERE id = %s AND request_id = %s
+            """, (new_status, doc_id, request_id))
+            
+            if cur.rowcount > 0:
+                # Log the action
+                cur.execute("""
+                    INSERT INTO logs (admin_id, action, details, request_id)
+                    VALUES (%s, %s, %s, %s)
+                """, (admin_id, 'Others Document Status Toggled', 
+                      f'Toggled others document {doc_id} completion status to {"completed" if new_status else "not completed"} for request {request_id}', 
+                      request_id))
+                conn.commit()
+                return True, new_status
+            else:
+                return False, "Failed to update others document status"
+        except Exception as e:
+            conn.rollback()
+            print(f"Error toggling others document completion for request {request_id}, doc {doc_id}: {e}")
+            return False, str(e)
         finally:
             cur.close()

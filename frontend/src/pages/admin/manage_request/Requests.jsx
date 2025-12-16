@@ -1,8 +1,10 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { getCSRFToken } from "../../../utils/csrf";
+import { useAuth } from "../../../contexts/AuthContext";
 
 import StatusChangeConfirmModal from "../../../components/admin/StatusChangeConfirmModal";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
@@ -94,11 +96,13 @@ const StatusColumn = ({ title, requests, onDropRequest, uiLabel, onCardClick, on
   );
 };
 
+
 // =======================================
 // MAIN COMPONENT
 // =======================================
 export default function AdminRequestsDashboard() {
   const navigate = useNavigate();
+  const { role } = useAuth();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -108,20 +112,56 @@ export default function AdminRequestsDashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRequests, setTotalRequests] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+
+
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState('all'); // 'all' or 'my'
+  const [collegeCodeFilter, setCollegeCodeFilter] = useState('');
+  const [requesterTypeFilter, setRequesterTypeFilter] = useState('');
+  const [hasOthersDocsFilter, setHasOthersDocsFilter] = useState('');
+  const [availableCollegeCodes, setAvailableCollegeCodes] = useState([]);
   const limit = 20;
 
   useEffect(() => {
-    fetchRequests(1, '', 'all');
-  }, []);
+    // Set initial view mode and fetch data based on role
+    const initialMode = role === 'staff' ? 'my' : 'all';
+    setViewMode(initialMode);
+    fetchRequests(1, '', initialMode);
+    fetchAvailableFilters();
+  }, [role]);
+
+  const fetchAvailableFilters = async () => {
+    try {
+      const res = await fetch('/api/admin/requests/filters', {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-TOKEN": getCSRFToken(),
+        },
+        credentials: "include",
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setAvailableCollegeCodes(data.college_codes || []);
+      }
+    } catch (err) {
+      console.error('Error fetching filter options:', err);
+    }
+  };
 
   const fetchRequests = async (page, search, mode) => {
     setLoading(true);
     try {
-      const searchParam = search ? `&search=${encodeURIComponent(search)}` : '';
-      const endpoint = mode === 'my' ? '/api/admin/my-requests' : '/api/admin/requests';
-      const res = await fetch(`${endpoint}?page=${page}&limit=${limit}${searchParam}`, {
+      let endpoint = mode === 'my' ? '/api/admin/my-requests' : '/api/admin/requests';
+      let params = [`page=${page}`, `limit=${limit}`];
+      
+      if (search) params.push(`search=${encodeURIComponent(search)}`);
+      if (collegeCodeFilter) params.push(`college_code=${encodeURIComponent(collegeCodeFilter)}`);
+      if (requesterTypeFilter) params.push(`requester_type=${encodeURIComponent(requesterTypeFilter)}`);
+      if (hasOthersDocsFilter) params.push(`has_others_docs=${encodeURIComponent(hasOthersDocsFilter)}`);
+
+      const res = await fetch(`${endpoint}?${params.join('&')}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -162,6 +202,7 @@ export default function AdminRequestsDashboard() {
     }
   };
 
+
   const confirmStatusChange = async () => {
     if (!statusChangeRequest) return;
 
@@ -178,6 +219,20 @@ export default function AdminRequestsDashboard() {
     fetchRequests(currentPage, searchQuery, viewMode);
     setStatusChangeRequest(null);
     setNewStatus(null);
+  };
+
+  const applyFilters = () => {
+    setCurrentPage(1);
+    fetchRequests(1, searchQuery, viewMode);
+  };
+
+  const clearFilters = () => {
+    setCollegeCodeFilter('');
+    setRequesterTypeFilter('');
+    setHasOthersDocsFilter('');
+    setSearchQuery('');
+    setCurrentPage(1);
+    fetchRequests(1, '', viewMode);
   };
 
   const handleCardClick = (request) => {
@@ -233,22 +288,39 @@ export default function AdminRequestsDashboard() {
   return (
     <DndProvider backend={HTML5Backend}>
       <div className="p-8 bg-gray-100 min-h-screen">
-        {/* Top title + search */}
-        <h1 className="text-3xl font-bold mb-6 text-gray-900">Manage Request</h1>
+
+
+
+        {/* Role-based notice for staff users */}
+        {role === 'staff' && (
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-center gap-2 text-blue-800">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+              </svg>
+              <span className="font-medium">You are viewing your assigned tasks only</span>
+            </div>
+          </div>
+        )}
 
         {/* Filter buttons */}
         <div className="mb-4 flex gap-2">
-          <button
-            onClick={() => {
-              setViewMode('all');
-              setSearchQuery('');
-              setCurrentPage(1);
-              fetchRequests(1, '', 'all');
-            }}
-            className={`px-4 py-2 rounded ${viewMode === 'all' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
-          >
-            All View
-          </button>
+          {/* Only show "All View" button for non-staff users */}
+          {role !== 'staff' && (
+            <button
+              onClick={() => {
+                if (role !== 'staff') { // Double-check role before switching
+                  setViewMode('all');
+                  setSearchQuery('');
+                  setCurrentPage(1);
+                  fetchRequests(1, '', 'all');
+                }
+              }}
+              className={`px-4 py-2 rounded ${viewMode === 'all' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+            >
+              All View
+            </button>
+          )}
           <button
             onClick={() => {
               setViewMode('my');
@@ -260,20 +332,85 @@ export default function AdminRequestsDashboard() {
           >
             My Task
           </button>
-          <button
-            onClick={() => navigate('/admin/AssignRequests')}
-            className="px-4 py-2 rounded bg-green-500 text-white hover:bg-green-600"
-          >
-            Assign Requests
-          </button>
-        </div>
+          {/* Only show "Assign Requests" button for non-staff users */}
+          {role !== 'staff' && (
+            <button
+              onClick={() => navigate('/admin/AssignRequests')}
+              className="px-4 py-2 rounded bg-green-500 text-white hover:bg-green-600"
+            >
+              Assign Requests
+            </button>
+          )}
 
-        <div className="mb-8">
           <ReqSearchbar onSearch={(value) => {
             setSearchQuery(value);
             setCurrentPage(1);
             fetchRequests(1, value, viewMode);
           }} />
+        </div>
+        {/* Filter Controls */}
+        <div className="mb-6 p-4 bg-white rounded-lg shadow-sm border border-gray-200">
+          <h3 className="text-lg font-semibold mb-4 text-gray-800">Filters</h3>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* College Code Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">College Code</label>
+              <select
+                value={collegeCodeFilter}
+                onChange={(e) => setCollegeCodeFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">All Colleges</option>
+                {availableCollegeCodes.map(code => (
+                  <option key={code} value={code}>{code}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Requester Type Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Requester Type</label>
+              <select
+                value={requesterTypeFilter}
+                onChange={(e) => setRequesterTypeFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">All Requesters</option>
+                <option value="student">Student</option>
+                <option value="outsider">Outsider</option>
+              </select>
+            </div>
+
+            {/* Others Documents Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Others Documents</label>
+              <select
+                value={hasOthersDocsFilter}
+                onChange={(e) => setHasOthersDocsFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">All Requests</option>
+                <option value="true">Has Others Documents</option>
+                <option value="false">No Others Documents</option>
+              </select>
+            </div>
+
+            {/* Filter Action Buttons */}
+            <div className="flex items-end gap-2">
+              <button
+                onClick={applyFilters}
+                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+              >
+                Apply Filters
+              </button>
+              <button
+                onClick={clearFilters}
+                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Columns */}

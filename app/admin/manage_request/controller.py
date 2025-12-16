@@ -6,9 +6,6 @@ from app.utils.decorator import jwt_required_with_role
 from .models import ManageRequestModel
 
 
-# Admin role
-role = "admin"
-
 def send_whatsapp_status_update(phone, full_name, request_id, status_update):
     status_template_map = {
         "PENDING": "odr_request_submitted_v2", 
@@ -40,24 +37,41 @@ def send_whatsapp_status_update(phone, full_name, request_id, status_update):
 
     return {"status": "success"}
 
+
 @manage_request_bp.route("/api/admin/requests", methods=["GET"])
-@jwt_required_with_role(role)
+@jwt_required()
 def get_requests():
     """
-    Get paginated requests for admin management.
+    Get paginated requests for admin management with filtering options.
     """
     try:
         page = int(request.args.get('page', 1))
         limit = int(request.args.get('limit', 20))
         search = request.args.get('search')
-        result = ManageRequestModel.fetch_requests(page=page, limit=limit, search=search)
+        college_code = request.args.get('college_code')
+        requester_type = request.args.get('requester_type')
+        has_others_docs = request.args.get('has_others_docs')
+        
+        # Parse has_others_docs parameter
+        has_others_docs_filter = None
+        if has_others_docs is not None:
+            has_others_docs_filter = has_others_docs.lower() in ('true', '1', 'yes')
+        
+        result = ManageRequestModel.fetch_requests(
+            page=page, 
+            limit=limit, 
+            search=search,
+            college_code=college_code,
+            requester_type=requester_type,
+            has_others_docs=has_others_docs_filter
+        )
         return jsonify({"requests": result["requests"], "total": result["total"]}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
 @manage_request_bp.route("/api/admin/requests/<request_id>/status", methods=["PUT"])
-@jwt_required_with_role(role)
+@jwt_required()
 def update_request_status(request_id):
     """
     Update the status of a specific request.
@@ -102,7 +116,7 @@ def update_request_status(request_id):
 
 
 @manage_request_bp.route("/api/admin/requests/<request_id>", methods=["DELETE"])
-@jwt_required_with_role(role)
+@jwt_required()
 def delete_request(request_id):
     """
     Delete a specific request and all associated data.
@@ -120,25 +134,69 @@ def delete_request(request_id):
         return jsonify({"error": str(e)}), 500
 
 
+
 @manage_request_bp.route("/api/admin/my-requests", methods=["GET"])
-@jwt_required_with_role(role)
+@jwt_required()
 def get_my_requests():
     """
-    Get paginated requests assigned to the logged-in admin.
+    Get paginated requests assigned to the logged-in admin with filtering options.
     """
     try:
         page = int(request.args.get('page', 1))
         limit = int(request.args.get('limit', 20))
         search = request.args.get('search')
+        college_code = request.args.get('college_code')
+        requester_type = request.args.get('requester_type')
+        has_others_docs = request.args.get('has_others_docs')
+        
+        # Parse has_others_docs parameter
+        has_others_docs_filter = None
+        if has_others_docs is not None:
+            has_others_docs_filter = has_others_docs.lower() in ('true', '1', 'yes')
+        
         admin_id = get_jwt_identity()
-        result = ManageRequestModel.fetch_requests(page=page, limit=limit, search=search, admin_id=admin_id)
+
+        result = ManageRequestModel.fetch_requests(
+            page=page, 
+            limit=limit, 
+            search=search, 
+            admin_id=admin_id,
+            college_code=college_code,
+            requester_type=requester_type,
+            has_others_docs=has_others_docs_filter
+        )
         return jsonify({"requests": result["requests"], "total": result["total"]}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
+
+@manage_request_bp.route("/api/admin/requests/<request_id>/changes", methods=["POST"])
+@jwt_required()
+def request_changes(request_id):
+    """
+    Submit a change request and reject the current request.
+    """
+    try:
+        data = request.get_json()
+        wrong_requirements = data.get("wrong_requirements", [])
+        remarks = data.get("remarks", "")
+        file_link = data.get("file_link", None)
+        
+        # Get admin ID from JWT token
+        admin_id = get_jwt_identity()
+
+        success = ManageRequestModel.create_change_request(request_id, admin_id, wrong_requirements, remarks, file_link)
+        if success:
+            return jsonify({"message": "Request changes submitted and request rejected successfully"}), 200
+        else:
+            return jsonify({"error": "Failed to submit request changes"}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @manage_request_bp.route("/api/admin/auto-assign", methods=["POST"])
-@jwt_required_with_role(role)
+@jwt_required()
 def auto_assign_requests():
     """
     Auto-assign a number of requests using load balancing across all admins.
@@ -159,7 +217,7 @@ def auto_assign_requests():
 
 
 @manage_request_bp.route("/api/admin/manual-assign", methods=["POST"])
-@jwt_required_with_role(role)
+@jwt_required()
 def manual_assign_requests():
     """
     Manually assign specific requests to the logged-in admin or a specified admin.
@@ -182,7 +240,7 @@ def manual_assign_requests():
 
 
 @manage_request_bp.route("/api/admin/unassigned-requests", methods=["GET"])
-@jwt_required_with_role(role)
+@jwt_required()
 def get_unassigned_requests():
     """
     Get unassigned requests for manual assignment with filtering and search.
@@ -249,7 +307,7 @@ def get_unassigned_requests():
 
 
 @manage_request_bp.route("/api/admin/unassigned-requests/filters", methods=["GET"])
-@jwt_required_with_role(role)
+@jwt_required()
 def get_unassigned_requests_filters():
     """
     Get available filter options for unassigned requests.
@@ -280,7 +338,7 @@ def get_unassigned_requests_filters():
 
 
 @manage_request_bp.route("/api/admin/assignment-progress", methods=["GET"])
-@jwt_required_with_role(role)
+@jwt_required()
 def get_assignment_progress():
     """
     Get assignment progress for the logged-in admin.
@@ -294,7 +352,7 @@ def get_assignment_progress():
 
 
 @manage_request_bp.route("/api/admin/admins-progress", methods=["GET"])
-@jwt_required_with_role(role)
+@jwt_required()
 def get_admins_progress():
     """
     Get assignment progress for all admins using optimized single query.
@@ -336,7 +394,7 @@ def get_admins_progress():
 
 
 @manage_request_bp.route("/api/admin/admin-requests/<admin_id>", methods=["GET"])
-@jwt_required_with_role(role)
+@jwt_required()
 def get_admin_requests(admin_id):
     """
     Get all requests assigned to a specific admin.
@@ -353,7 +411,7 @@ def get_admin_requests(admin_id):
 
 
 @manage_request_bp.route("/api/admin/admin-max-requests/<admin_id>", methods=["GET"])
-@jwt_required_with_role(role)
+@jwt_required()
 def get_admin_max_requests(admin_id):
     """
     Get the max requests for a specific admin.
@@ -366,7 +424,7 @@ def get_admin_max_requests(admin_id):
 
 
 @manage_request_bp.route("/api/admin/admin-max-requests/<admin_id>", methods=["PUT"])
-@jwt_required_with_role(role)
+@jwt_required()
 def set_admin_max_requests(admin_id):
     """
     Set the max requests for a specific admin.
@@ -381,7 +439,7 @@ def set_admin_max_requests(admin_id):
 
 
 @manage_request_bp.route("/api/admin/unassign", methods=["POST"])
-@jwt_required_with_role(role)
+@jwt_required()
 def unassign_request():
     """
     Unassign a request from an admin.
@@ -402,8 +460,10 @@ def unassign_request():
         return jsonify({"error": str(e)}), 500
 
 
+
+
 @manage_request_bp.route("/api/admin/requests/<request_id>", methods=["GET"])
-@jwt_required_with_role(role)
+@jwt_required()
 def get_single_request(request_id):
     """
     Get a single request by ID with all details.
@@ -414,5 +474,111 @@ def get_single_request(request_id):
             return jsonify(request_data), 200
         else:
             return jsonify({"error": "Request not found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@manage_request_bp.route("/api/admin/requests/<request_id>/changes", methods=["GET"])
+@jwt_required()
+def get_request_changes(request_id):
+    """
+    Get all changes for a specific request.
+    """
+    try:
+        changes = ManageRequestModel.get_request_changes(request_id)
+        return jsonify({"changes": changes}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+
+
+@manage_request_bp.route("/api/admin/requests/<request_id>/documents/<doc_id>/status", methods=["PUT"])
+@jwt_required()
+def toggle_document_status(request_id, doc_id):
+    """
+    Toggle the completion status of a document in a request.
+    """
+    try:
+        # Get admin ID from JWT token
+        admin_id = get_jwt_identity()
+
+        success, result = ManageRequestModel.toggle_document_completion(request_id, doc_id, admin_id)
+        if success:
+            return jsonify({
+                "message": "Document status toggled successfully",
+                "is_done": result
+            }), 200
+        else:
+            return jsonify({"error": result}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@manage_request_bp.route("/api/admin/requests/<request_id>/others_documents/<doc_id>/status", methods=["PUT"])
+@jwt_required()
+def toggle_others_document_status(request_id, doc_id):
+    """
+    Toggle the completion status of an others document in a request.
+    """
+    try:
+        # Get admin ID from JWT token
+        admin_id = get_jwt_identity()
+
+        success, result = ManageRequestModel.toggle_others_document_completion(request_id, doc_id, admin_id)
+        if success:
+            return jsonify({
+                "message": "Others document status toggled successfully",
+                "is_done": result
+            }), 200
+        else:
+            return jsonify({"error": result}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+
+@manage_request_bp.route("/api/admin/requests/filters", methods=["GET"])
+@jwt_required()
+def get_requests_filters():
+    """
+    Get available filter options for requests.
+    """
+    try:
+        conn = g.db_conn
+        cur = conn.cursor()
+        
+        # Get unique college codes
+        cur.execute("""
+            SELECT DISTINCT college_code
+            FROM requests
+            WHERE college_code IS NOT NULL
+            ORDER BY college_code
+        """)
+        college_codes = [row[0] for row in cur.fetchall()]
+        
+        cur.close()
+        
+        return jsonify({
+            "college_codes": college_codes,
+            "requester_types": ["Student", "Outsider"],
+            "others_docs_options": ["Has Others Documents", "No Others Documents"]
+        }), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@manage_request_bp.route("/api/admin/request-admin/<request_id>", methods=["GET"])
+@jwt_required()
+def get_request_admin(request_id):
+    """
+    Get the admin information assigned to a specific request.
+    """
+    try:
+        admin_info = ManageRequestModel.get_admin_info_by_request_id(request_id)
+        if admin_info:
+            return jsonify(admin_info), 200
+        else:
+            return jsonify({"error": "Request not found or not assigned to any admin"}), 404
     except Exception as e:
         return jsonify({"error": str(e)}), 500
