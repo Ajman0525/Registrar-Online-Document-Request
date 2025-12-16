@@ -23,10 +23,20 @@ const Settings = () => {
     const [endMinute, setEndMinute] = useState('00');
     const [endAmpm, setEndAmpm] = useState('PM');
     const [availableDays, setAvailableDays] = useState(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']);
+    const [adminFee, setAdminFee] = useState('');
+    const [initialAdminFee, setInitialAdminFee] = useState('');
+    const [announcement, setAnnouncement] = useState('');
+    const [initialAnnouncement, setInitialAnnouncement] = useState('');
+    const [initialAvailability, setInitialAvailability] = useState({
+        startHour: '9', startMinute: '00', startAmpm: 'AM',
+        endHour: '5', endMinute: '00', endAmpm: 'PM',
+        availableDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+    });
 
     useEffect(() => {
         fetchAdmins();
         fetchSettings();
+        fetchAdminFee();
     }, []);
 
     const fetchAdmins = async () => {
@@ -145,22 +155,52 @@ const Settings = () => {
                 // Parse 24-hour time to 12-hour
                 const [startH, startM] = data.start_time.split(':');
                 const startHour24 = parseInt(startH);
-                setStartHour(startHour24 === 0 ? '12' : startHour24 > 12 ? (startHour24 - 12).toString() : startHour24.toString());
+                const sHour = startHour24 === 0 ? '12' : startHour24 > 12 ? (startHour24 - 12).toString() : startHour24.toString();
+                const sAmpm = startHour24 >= 12 ? 'PM' : 'AM';
+                
+                setStartHour(sHour);
                 setStartMinute(startM);
-                setStartAmpm(startHour24 >= 12 ? 'PM' : 'AM');
+                setStartAmpm(sAmpm);
 
                 const [endH, endM] = data.end_time.split(':');
                 const endHour24 = parseInt(endH);
-                setEndHour(endHour24 === 0 ? '12' : endHour24 > 12 ? (endHour24 - 12).toString() : endHour24.toString());
+                const eHour = endHour24 === 0 ? '12' : endHour24 > 12 ? (endHour24 - 12).toString() : endHour24.toString();
+                const eAmpm = endHour24 >= 12 ? 'PM' : 'AM';
+
+
+                setEndHour(eHour);
                 setEndMinute(endM);
-                setEndAmpm(endHour24 >= 12 ? 'PM' : 'AM');
+                setEndAmpm(eAmpm);
 
                 setAvailableDays(data.available_days);
+                setAnnouncement(data.announcement || '');
+                setInitialAnnouncement(data.announcement || '');
+                setInitialAvailability({
+                    startHour: sHour, startMinute: startM, startAmpm: sAmpm,
+                    endHour: eHour, endMinute: endM, endAmpm: eAmpm,
+                    availableDays: data.available_days
+                });
             } else {
                 setError('Failed to fetch settings');
             }
         } catch (err) {
             setError('Error fetching settings');
+        }
+    };
+
+    const fetchAdminFee = async () => {
+        try {
+            const response = await fetch('/api/admin/settings/fee', {
+                credentials: 'include'
+            });
+            if (response.ok) {
+                const data = await response.json();
+                const fee = parseFloat(data.admin_fee || 0).toFixed(2);
+                setAdminFee(fee);
+                setInitialAdminFee(fee);
+            }
+        } catch (err) {
+            console.error('Error fetching admin fee:', err);
         }
     };
 
@@ -183,17 +223,54 @@ const Settings = () => {
                     "X-CSRF-TOKEN": getCSRFToken(),
                 },
                 credentials: 'include',
-                body: JSON.stringify({ start_time: startTime24, end_time: endTime24, available_days: availableDays }),
+                body: JSON.stringify({ start_time: startTime24, end_time: endTime24, available_days: availableDays, announcement: announcement }),
             });
+
 
             if (response.ok) {
                 // Settings updated successfully
+                setInitialAvailability({
+                    startHour, startMinute, startAmpm,
+                    endHour, endMinute, endAmpm,
+                    availableDays
+                });
+                setInitialAnnouncement(announcement);
             } else {
                 const errorData = await response.json();
                 setError(errorData.error || 'Failed to update settings');
             }
         } catch (err) {
             setError('Error updating settings');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const updateAdminFee = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setError('');
+
+        try {
+            const response = await fetch('/api/admin/settings/fee', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    "X-CSRF-TOKEN": getCSRFToken(),
+                },
+                credentials: 'include',
+                body: JSON.stringify({ admin_fee: parseFloat(adminFee) }),
+            });
+
+            if (!response.ok) {
+                setError('Failed to update admin fee');
+            } else {
+                const formatted = parseFloat(adminFee).toFixed(2);
+                setAdminFee(formatted);
+                setInitialAdminFee(formatted);
+            }
+        } catch (err) {
+            setError('Error updating admin fee');
         } finally {
             setLoading(false);
         }
@@ -206,6 +283,15 @@ const Settings = () => {
                 : [...prev, day]
         );
     };
+
+    const isAvailabilityChanged = 
+        startHour !== initialAvailability.startHour ||
+        startMinute !== initialAvailability.startMinute ||
+        startAmpm !== initialAvailability.startAmpm ||
+        endHour !== initialAvailability.endHour ||
+        endMinute !== initialAvailability.endMinute ||
+        endAmpm !== initialAvailability.endAmpm ||
+        JSON.stringify([...availableDays].sort()) !== JSON.stringify([...initialAvailability.availableDays].sort());
 
     return (
         <div className="settings-page">
@@ -331,8 +417,68 @@ const Settings = () => {
                         </div>
                     </div>
                     <div className="update-button-wrapper">
-                        <button type="submit" className="update-settings-btn" disabled={loading}>
+                        <button 
+                            type="submit" 
+                            className="update-settings-btn" 
+                            disabled={loading || !isAvailabilityChanged}
+                            style={(loading || !isAvailabilityChanged) ? { backgroundColor: '#cccccc', cursor: 'not-allowed' } : {}}
+                        >
                             {loading ? 'Updating...' : 'Update Settings'}
+                        </button>
+                    </div>
+                </form>
+
+            </div>
+
+            <div className="availability-settings" style={{ marginTop: '20px' }}>
+                <h2>Announcement Configuration</h2>
+                <p>Set the announcement text to display on the landing page.</p>
+                <form className="availability-form" onSubmit={updateSettings}>
+                    <div className="form-group">
+                        <label>Announcement Text:</label>
+                        <textarea 
+                            value={announcement} 
+                            onChange={(e) => setAnnouncement(e.target.value)} 
+                            placeholder="Enter announcement text that will be displayed on the landing page..."
+                            style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc', width: '100%', height: '100px', resize: 'vertical' }}
+                        />
+                    </div>
+                    <div className="update-button-wrapper">
+                        <button 
+                            type="submit" 
+                            className="update-settings-btn" 
+                            disabled={loading}
+                        >
+                            {loading ? 'Updating...' : 'Update Announcement'}
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div className="availability-settings" style={{ marginTop: '20px' }}>
+                <h2>Admin Fee Configuration</h2>
+                <p>Set the administrative fee applied to requests.</p>
+                <form className="availability-form" onSubmit={updateAdminFee}>
+                    <div className="form-group">
+                        <label>Fee Amount (₱):</label>
+                        <input 
+                            type="number" 
+                            step="0.01" 
+                            min="0" 
+                            value={adminFee} 
+                            onChange={(e) => setAdminFee(e.target.value)} 
+                            onBlur={(e) => setAdminFee(parseFloat(e.target.value || 0).toFixed(2))}
+                            style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc', width: '120px' }}
+                        />
+                    </div>
+                    <div className="update-button-wrapper">
+                        <button 
+                            type="submit" 
+                            className="update-settings-btn" 
+                            disabled={loading || !adminFee || parseFloat(adminFee) === parseFloat(initialAdminFee)}
+                            style={(loading || !adminFee || parseFloat(adminFee) === parseFloat(initialAdminFee)) ? { backgroundColor: '#cccccc', cursor: 'not-allowed' } : {}}
+                        >
+                            {loading ? 'Updating...' : 'Update Fee'}
                         </button>
                     </div>
                 </form>

@@ -50,23 +50,26 @@ function AddAdminPopup({ onClose, onSave }) {
             }}
             className="box-input"
           />
-          <select
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            className="box-input"
-          >
-            <option value="admin">Admin</option>
-            <option value="Manager">Manager</option>
-            <option value="Staff">Staff</option>
-            <option value="Auditor">Auditor</option>
-            <option value="none">None</option>
-          </select>
-          {error && (
-            <div className={`popup-error-section ${shake ? "shake" : ""}`}>
-              <p className="error-text">{error}</p>
-            </div>
-          )}
         </div>
+          <div className="input-section">
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              className="box-input"
+            >
+              <option value="admin">Admin</option>
+              <option value="Manager">Manager</option>
+              <option value="Staff">Staff</option>
+              <option value="Auditor">Auditor</option>
+              <option value="none">None</option>
+            </select>
+            {error && (
+              <div className={`popup-error-section ${shake ? "shake" : ""}`}>
+                <p className="error-text">{error}</p>
+              </div>
+            )}
+          </div>
+
 
         <div className="action-section">
           <div className="button-section">

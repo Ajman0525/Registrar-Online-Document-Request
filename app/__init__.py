@@ -1,4 +1,4 @@
-from flask import Flask, g, render_template, send_from_directory
+from flask import Flask, g, render_template, send_from_directory, request
 import os
 from config import DB_USERNAME, DB_PASSWORD, DB_NAME, DB_HOST, DB_PORT, JWT_SECRET_KEY
 from psycopg2 import pool
@@ -13,17 +13,18 @@ from datetime import timedelta
 from dotenv import load_dotenv
 from app.db_init import initialize_db
 
-from app.db_init import initialize_db
+from app.db_init import initialize_and_populate
+
+
 
 db_pool = None
 
 def create_app(test_config=None):
     
     #initialize the database (create tables if not exist)
-    initialize_db()
+    #initialize_and_populate()
     load_dotenv()
-    
-    
+
     #in production
     app = Flask(__name__, instance_relative_config=True, static_folder="static/react", template_folder="templates")
   
@@ -107,6 +108,8 @@ def create_app(test_config=None):
     app.register_blueprint(logging_blueprint)
     from .admin.manage_request import manage_request_bp as manage_request_blueprint
     app.register_blueprint(manage_request_blueprint)
+    from .admin.transactions import transactions_bp as transactions_blueprint
+    app.register_blueprint(transactions_blueprint)
     from .admin.settings import settings_bp as settings_blueprint
     app.register_blueprint(settings_blueprint)
 
@@ -122,6 +125,17 @@ def create_app(test_config=None):
     app.register_blueprint(request_blueprint)
     from .user.tracking import tracking_bp as tracking_blueprint
     app.register_blueprint(tracking_blueprint)
+    from .user.payment import payment_bp as payment_blueprint
+    app.register_blueprint(payment_blueprint, url_prefix='/user/payment')
+
+    # ===================== 
+    # MAYA WEBHOOK EXEMPTION
+    # =====================
+    # Maya can't send csrf tokens, so verify using signature instead
+    @app.before_request
+    def exempt_webhook_from_csrf():
+        if request.path == '/user/payment/maya/webhook' and request.method == 'POST':
+            g._jwt_extended_jwt_in_request_context = False
 
     #WHATSAPP BLUEPRINT
     from .whatsapp import whatsapp_bp as whatsapp_blueprint 

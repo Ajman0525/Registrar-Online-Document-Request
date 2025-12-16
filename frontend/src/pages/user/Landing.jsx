@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import ButtonLink from "../../components/common/ButtonLink";
 import ContentBox from "../../components/user/ContentBox";
@@ -9,6 +10,25 @@ function Landing() {
   const navigate = useNavigate();
   const [showModal, setShowModal] = useState(false);
   const [settings, setSettings] = useState(null);
+  const [announcement, setAnnouncement] = useState('');
+
+  useEffect(() => {
+    fetchAnnouncement();
+  }, []);
+
+  const fetchAnnouncement = async () => {
+    try {
+      const response = await fetch('/api/admin/settings', {
+        credentials: 'include'
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setAnnouncement(data.announcement || '');
+      }
+    } catch (error) {
+      console.error('Error fetching announcement:', error);
+    }
+  };
 
   const handleRequestClick = async () => {
     try {
@@ -115,10 +135,11 @@ function Landing() {
         </ContentBox>
       </div>
 
+
       <div className="announcement-container">
         <div className="announcement-title">Announcement:</div>
         <div className="announcement-content">
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+        {announcement || "No announcement at this time."}
         </div>
       </div>
 

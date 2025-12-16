@@ -3,9 +3,22 @@ import { getCSRFToken } from "../../utils/csrf";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import "./Logs.css";
 
+const CACHE_KEY = "logs_data_cache";
+
+const getStoredState = (key, defaultValue) => {
+    try {
+        const stored = sessionStorage.getItem(key);
+        return stored ? JSON.parse(stored) : defaultValue;
+    } catch (error){
+        console.warn("Failed to parse session storage", error)
+        return defaultValue;
+    }       
+}
+
 function Logs() {
-    const [logs, setLogs] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const cachedData = getStoredState(CACHE_KEY, null);
+    const [logs, setLogs] = useState(cachedData?.logs || []);
+    const [loading, setLoading] = useState(cachedData == null);
     const [error, setError] = useState(null);
 
     useEffect(() => {
@@ -13,6 +26,8 @@ function Logs() {
     }, []);
 
     const fetchLogs = async () => {
+        if (!cachedData) setLoading(true);
+
         console.log('Fetching logs from /api/admin/logs');
         try {
             const response = await fetch('/api/admin/logs', {
@@ -28,6 +43,7 @@ function Logs() {
             }
             const data = await response.json();
             setLogs(data.logs);
+            sessionStorage.setItem(CACHE_KEY, JSON.stringify(data))
         } catch (err) {
             setError(err.message);
         } finally {
@@ -44,7 +60,7 @@ function Logs() {
     }
 
     return (
-        <div className="p-8 bg-gray-50 min-h-screen">
+        <div className="p-8 min-h-screen">
             <div className="max-w-7xl mx-auto bg-white rounded-2xl shadow-lg p-6">
                 <h1 className="logs-header text-3xl font-semibold mb-6 text-gray-800">Logs</h1>
                 {logs.length === 0 ? (

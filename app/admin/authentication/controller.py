@@ -123,6 +123,7 @@ def update_admin(email):
         return jsonify({"error": "Admin not found"}), 404
 
 
+
 @authentication_admin_bp.route("/api/admin/admins/<email>", methods=["DELETE"])
 @jwt_required()
 def delete_admin(email):
@@ -132,3 +133,39 @@ def delete_admin(email):
         return jsonify({"message": "Admin deleted successfully"}), 200
     else:
         return jsonify({"error": "Admin not found"}), 404
+
+
+
+@authentication_admin_bp.route("/api/admin/current-user", methods=["GET"])
+@jwt_required()
+def get_current_user():
+    """Get current authenticated user information."""
+    try:
+        current_email = get_jwt_identity()
+        admin = Admin.get_by_email(current_email)
+        
+        if admin:
+            return jsonify({
+                "email": admin['email'],
+                "role": admin['role']
+            }), 200
+        else:
+            return jsonify({"error": "User not found"}), 404
+    except Exception as e:
+        current_app.logger.error(f"Error fetching current user: {e}")
+        return jsonify({"error": "Failed to fetch user information"}), 500
+
+
+@authentication_admin_bp.route("/api/admin/logout", methods=["POST"])
+@jwt_required()
+def logout():
+    """Logout current user."""
+    try:
+        # Create response
+        response = jsonify({"message": "Logout successful"})
+        # Clear the JWT cookie
+        set_access_cookies(response, "", max_age=0)
+        return response, 200
+    except Exception as e:
+        current_app.logger.error(f"Error during logout: {e}")
+        return jsonify({"error": "Logout failed"}), 500

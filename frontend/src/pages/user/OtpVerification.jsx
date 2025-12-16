@@ -28,28 +28,39 @@ function OtpVerification({ onNext, onBack, studentId, maskedPhone, setMaskedPhon
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ student_id: studentId, otp: otpCode }) 
+        body: JSON.stringify({ otp: otpCode })
       });
 
       const data = await response.json();
-
-      console.log("Verify OTP response:", data);
 
       if (!response.ok || data.valid === false) {
         return triggerError(data.message || "Invalid OTP code. Try again.");
       }
 
-      // Success - navigate based on flow
+      // Only check liability if not tracking
+      if (!isTracking && data.status === "has_liability") {
+        onNext("liability"); // go to liability step
+        return;              // stop further execution
+      }
+
+
+      // If OTP is valid and no liability
       if (isTracking) {
         onNext();
       } else {
+        // Store user type for RequestFlow to access
+        const userType = sessionStorage.getItem("user_type") || "student";
+        localStorage.setItem("user_type", userType);
+        
         navigate("/user/request");
       }
-    } catch (err) {
-      triggerError("Server error. Please try again.");
-      console.error("Verify OTP error:", err);
-    }
+
+      } catch (err) {
+        triggerError("Server error. Please try again.");
+        console.error("Verify OTP error:", err);
+      }
   };
+
 
 
   const handleResendOtp = async () => {

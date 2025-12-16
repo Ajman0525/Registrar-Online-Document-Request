@@ -1,299 +1,197 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
+
+
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import "./Request.css";
-import { getCSRFToken } from "../../../utils/csrf";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
 import ButtonLink from "../../../components/common/ButtonLink";
 import ContentBox from "../../../components/user/ContentBox";
+import ConfirmModal from "../../../components/user/ConfirmModal";
+import { getCSRFToken } from "../../../utils/csrf";
 
-/**
- * UploadRequirements
- *
- * Props:
- *  - selectedDocs: array of selected document objects. Each must contain a `requirements` array of requirement_name strings.
- *  - uploadedFiles: object mapping req_id -> File instance | uploaded file path string | null
- *  - setUploadedFiles: function to update uploadedFiles (setter provided by parent)
- *  - onNext: callback when proceeding
- *  - onBack: callback when going back/editing
- */
+
+
+
 function UploadRequirements({
   selectedDocs = [],
   uploadedFiles = {},
-  setUploadedFiles,
+  onFileSelect,
+  onFileRemove,
   onNext = () => {},
   onBack = () => {},
 }) {
-  const [requirements, setRequirements] = useState([]); // fetched from backend
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
-  // map of req_id -> input ref so we can trigger click programmatically
+  const [error, setError] = useState("");
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [pendingFileToDelete, setPendingFileToDelete] = useState(null);
   const inputRefs = useRef({});
+  const [requirementsList, setRequirementsList] = useState([]);
   
-  /* ---------- Fetch requirements ---------- */
+  // Cache requirements to prevent unnecessary API calls
+  const requirementsCache = useRef(new Map());
+
+  // Memoize document IDs to prevent unnecessary re-fetches
+  const documentIds = useMemo(() => {
+    return selectedDocs.map((doc) => doc.doc_id).sort();
+  }, [selectedDocs]);
+
+  const cacheKey = useMemo(() => {
+    return documentIds.join(',');
+  }, [documentIds]);
+
+  // Fetch requirements from API with caching
   useEffect(() => {
-    let mounted = true;
     const fetchRequirements = async () => {
-      setLoading(true);
+      // Check cache first
+      if (requirementsCache.current.has(cacheKey)) {
+        setRequirementsList(requirementsCache.current.get(cacheKey));
+        setLoading(false);
+        return;
+      }
+
+      if (!selectedDocs || selectedDocs.length === 0) {
+        setRequirementsList([]);
+        setLoading(false);
+        return;
+      }
+
       try {
-        const res = await fetch("/api/list-requirements", {
-          method: "GET",
-          headers: { "X-CSRF-TOKEN": getCSRFToken() },
+        setLoading(true);
+        setError("");
+
+        const response = await fetch("/api/list-requirements", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-TOKEN": getCSRFToken(),
+          },
           credentials: "include",
+          body: JSON.stringify({ document_ids: documentIds }),
         });
-        const data = await res.json();
-        if (!mounted) return;
-        if (data && data.success && Array.isArray(data.requirements)) {
-          setRequirements(data.requirements);
-        } else {
-          setRequirements([]);
-          console.error("Unexpected response listing requirements:", data);
-        }
+
+        if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+
+        const data = await response.json();
+        if (!data.success) throw new Error(data.notification || "Fetch failed");
+
+        const requirements = data.requirements || [];
+        setRequirementsList(requirements);
+        
+        // Cache the results
+        requirementsCache.current.set(cacheKey, requirements);
       } catch (err) {
         console.error("Error fetching requirements:", err);
-        setRequirements([]);
+        setError(err.message || "Failed to load requirements");
+        setRequirementsList([]);
       } finally {
-        if (mounted) setLoading(false);
+        setLoading(false);
       }
     };
 
     fetchRequirements();
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  /* ---------- Build unique requirements list from selectedDocs ---------- */
-  const requirementsList = useMemo(() => {
-    const unique = new Map();
-    if (!Array.isArray(selectedDocs) || selectedDocs.length === 0) return [];
-
-    selectedDocs.forEach((doc) => {
-      const docReqs = Array.isArray(doc.requirements) ? doc.requirements : [];
-      docReqs.forEach((reqName) => {
-        const reqObj = requirements.find((r) => r.requirement_name === reqName);
-        if (reqObj && !unique.has(String(reqObj.req_id))) {
-          unique.set(String(reqObj.req_id), {
-            req_id: String(reqObj.req_id),
-            requirement_name: reqObj.requirement_name,
-          });
-        }
-      });
-    });
-
-    return Array.from(unique.values());
-  }, [selectedDocs, requirements]);
-
-  /* ---------- Fetch previously uploaded files (server-side) for current valid requirements ---------- */
-  useEffect(() => {
-    let mounted = true;
-    const fetchUploadedFiles = async () => {
-      try {
-        const res = await fetch("/api/get-uploaded-files", {
-          method: "GET",
-          headers: { "X-CSRF-TOKEN": getCSRFToken() },
-          credentials: "include",
-        });
-        const data = await res.json();
-        if (!mounted) return;
-
-        if (data?.success && data.uploaded_files) {
-          const serverFiles = data.uploaded_files;
-          const validReqIds = new Set(requirementsList.map(r => String(r.req_id)));
-
-          setUploadedFiles(prev => {
-            const next = { ...prev };
-            Object.entries(serverFiles).forEach(([req_id, path]) => {
-              req_id = String(req_id);
-              if (validReqIds.has(req_id) && !next[req_id]) {
-                // Only add if parent state doesn't already have a value
-                next[req_id] = path;
-              }
-            });
-
-            // Ensure all current requirements have a key
-            requirementsList.forEach(({ req_id }) => {
-              const key = String(req_id);
-              if (!(key in next)) next[key] = null;
-            });
-
-            return next;
-          });
-        }
-      } catch (err) {
-        console.error("Error fetching uploaded files:", err);
-      }
-    };
-
-    if (requirementsList.length > 0) fetchUploadedFiles();
-    return () => { mounted = false; };
-  }, [requirementsList, setUploadedFiles]);
+  }, [cacheKey, documentIds]);
 
 
-  /* ---------- Sync uploadedFiles shape to include all current requirements and remove deselected ---------- */
-  useEffect(() => {
-    setUploadedFiles((prev = {}) => {
-      const next = { ...prev };
-      const currentIds = new Set(requirementsList.map((r) => String(r.req_id)));
 
-      // Identify keys to remove (they are no longer in current requirements)
-      Object.keys(next).forEach((k) => {
-        if (!currentIds.has(String(k))) {
-          // Remove the entry locally (clear local File or server path)
-          // Note: Server-side files will be cleaned up during upload process
-          delete next[k];
-        }
-      });
 
-      // Ensure every requirement has an entry (null if missing)
-      requirementsList.forEach(({ req_id }) => {
-        const key = String(req_id);
-        if (!(key in next)) next[key] = null;
-      });
 
-      return next;
-    });
-  }, [requirementsList, setUploadedFiles]);
 
-  /* ---------- Utility: get displayed file name ---------- */
+  // Display file name helper
   const displayFileName = (entry) => {
     if (!entry) return "";
     if (entry instanceof File) return entry.name;
     if (typeof entry === "string") {
-      try {
-        const parts = entry.split("/");
-        return parts[parts.length - 1] || entry;
-      } catch {
-        return entry;
-      }
+      const parts = entry.split("/");
+      return parts.pop() || entry;
     }
     return "";
   };
 
 
-
-  /* ---------- File selection handler ---------- */
+  // Handle file selection
   const handleFileChange = (req_id, e) => {
-    const file = e.target.files && e.target.files[0] ? e.target.files[0] : null;
+    const file = e.target.files?.[0] || null;
+    const key = String(req_id);
 
     if (file) {
       const maxSize = 10 * 1024 * 1024; // 10MB
       const allowedTypes = ["application/pdf", "image/jpeg", "image/png", "image/jpg"];
+
       if (file.size > maxSize) {
-        window.alert("File size must be less than 10MB.");
-        if (inputRefs.current[req_id]) inputRefs.current[req_id].value = "";
+        alert("File must be less than 10MB.");
+        if (inputRefs.current[key]) inputRefs.current[key].value = "";
         return;
       }
       if (!allowedTypes.includes(file.type)) {
-        window.alert("Only PDF and image files (JPEG, PNG) are allowed.");
-        if (inputRefs.current[req_id]) inputRefs.current[req_id].value = "";
+        alert("Only PDF, JPG, JPEG, PNG allowed.");
+        if (inputRefs.current[key]) inputRefs.current[key].value = "";
         return;
       }
     }
 
-    setUploadedFiles((prev = {}) => ({ ...prev, [String(req_id)]: file }));
+    onFileSelect && onFileSelect(req_id, file);
   };
 
-  /* ---------- Delete file handler (user clicks trash) ---------- */
-  const handleDeleteFile = async (req_id) => {
-    const confirmed = window.confirm("Are you sure you want to delete this file?");
-    if (!confirmed) return;
 
-    const entry = uploadedFiles && uploadedFiles[String(req_id)];
+  // Delete file
+  const handleDeleteFile = (req_id) => {
+    const key = String(req_id);
+    setPendingFileToDelete(req_id);
+    setShowConfirmModal(true);
+  };
 
-    if (typeof entry === "string") {
-      // server-side file: call API to delete
-      try {
-        const res = await fetch(`/api/delete-file/${encodeURIComponent(req_id)}`, {
-          method: "DELETE",
-          headers: { "X-CSRF-TOKEN": getCSRFToken() },
-          credentials: "include",
-        });
-        const data = await res.json();
-        if (data && data.success) {
-          setUploadedFiles((prev = {}) => ({ ...prev, [String(req_id)]: null }));
-        } else {
-          // still clear local entry so UI reflects deletion; notify user about server issue
-          setUploadedFiles((prev = {}) => ({ ...prev, [String(req_id)]: null }));
-          window.alert((data && data.notification) || "Failed to delete file on server.");
-        }
-      } catch (err) {
-        setUploadedFiles((prev = {}) => ({ ...prev, [String(req_id)]: null }));
-        console.error("Failed to delete file:", err);
-        window.alert("Failed to delete file. Please try again.");
-      }
-    } else {
-      // local File object or null: just remove locally
-      setUploadedFiles((prev = {}) => ({ ...prev, [String(req_id)]: null }));
-      if (inputRefs.current[req_id]) inputRefs.current[req_id].value = "";
+  const confirmDeleteFile = () => {
+    if (pendingFileToDelete !== null) {
+      const key = String(pendingFileToDelete);
+      onFileRemove && onFileRemove(pendingFileToDelete);
+      if (inputRefs.current[key]) inputRefs.current[key].value = "";
     }
+    setShowConfirmModal(false);
+    setPendingFileToDelete(null);
   };
 
-  /* ---------- Check if all required uploaded ---------- */
-  const allRequiredUploaded = useMemo(() => {
-    if (requirementsList.length === 0) return false;
-    return requirementsList.every(({ req_id }) => {
-      const entry = uploadedFiles && uploadedFiles[String(req_id)];
-      return entry instanceof File || typeof entry === "string";
-    });
-  }, [requirementsList, uploadedFiles]);
+  const cancelDeleteFile = () => {
+    setShowConfirmModal(false);
+    setPendingFileToDelete(null);
+  };
 
-  /* ---------- Proceed action (upload new local files, delete deselected server files) ---------- */
+
+
+
+  // Check all required files uploaded
+  const allRequiredUploaded = useMemo(() => {
+    if (!requirementsList || requirementsList.length === 0) return true;
+    
+    return requirementsList.every(({ req_id }) => {
+      const entry = uploadedFiles[String(req_id)];
+      return entry instanceof File || (typeof entry === "string" && entry.trim() !== "");
+    });
+  }, [requirementsList.length, uploadedFiles]);
+
+
+  // Proceed
   const handleProceedClick = async () => {
-    if (!allRequiredUploaded) {
-      window.alert("Please upload all required files before proceeding.");
+    if (requirementsList.length > 0 && !allRequiredUploaded) {
+      alert("Please upload all required files.");
       return;
     }
 
+
     setUploading(true);
-
-    try {
-      const formData = new FormData();
-      const reqsMeta = requirementsList.map(({ req_id }) => ({
-        requirement_id: String(req_id),
-        alreadyUploaded: typeof (uploadedFiles && uploadedFiles[String(req_id)]) === "string",
-      }));
-      formData.append("requirements", JSON.stringify(reqsMeta));
-
-      requirementsList.forEach(({ req_id }) => {
-        const val = uploadedFiles && uploadedFiles[String(req_id)];
-        if (val instanceof File) {
-          formData.append(`file_${String(req_id)}`, val, val.name);
-        }
-      });
-
-      const res = await fetch("/api/save-file-supabase", {
-        method: "POST",
-        headers: { "X-CSRF-TOKEN": getCSRFToken() },
-        credentials: "include",
-        body: formData,
-      });
-
-      const data = await res.json();
-      if (data && data.success) {
-        onNext();
-      } else {
-        window.alert((data && data.notification) || "An error occurred while uploading files.");
-      }
-    } catch (err) {
-      console.error("Error uploading files:", err);
-      window.alert("An error occurred while uploading files. Please try again.");
-    } finally {
-      setUploading(false);
-    }
+    onNext(uploadedFiles);
+    setUploading(false);
   };
 
-  /* ---------- Render ---------- */
   if (loading) return <LoadingSpinner message="Loading requirements..." />;
 
   return (
     <>
-      {uploading && <LoadingSpinner message="Uploading files..." />}
+      {uploading && <LoadingSpinner message="Processing files..." />}
       <ContentBox className="upload-requirements-box">
         <div className="upload-request-title-container">
           <h2 className="title">Upload Requirements</h2>
           <p className="subtext">
-            Please upload the required documents. Note that all submissions are subject
-            <br />
-            to verification before approval.
+            Please upload the required documents. Verification occurs before approval.
           </p>
         </div>
 
@@ -307,38 +205,35 @@ function UploadRequirements({
             {requirementsList.length === 0 ? (
               <p>No requirements to upload.</p>
             ) : (
-              requirementsList.map(({ req_id, requirement_name }) => {
+              requirementsList.map(({ req_id, requirement_name, doc_names }) => {
                 const key = String(req_id);
-                if (!inputRefs.current[key]) inputRefs.current[key] = null;
-                const entry = uploadedFiles && uploadedFiles[key];
+                const entry = uploadedFiles[key];
+
+                const handleClick = () => {
+                  if (!uploading && inputRefs.current[key]) {
+                    inputRefs.current[key].click();
+                  }
+                };
 
                 return (
                   <div
                     key={key}
                     className="requirement-item"
-                    onClick={() => {
-                      if (uploading) return;
-                      if (inputRefs.current[key]) inputRefs.current[key].click();
-                    }}
+                    onClick={handleClick}
                     style={{ cursor: uploading ? "not-allowed" : "pointer" }}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        if (!uploading && inputRefs.current[key]) inputRefs.current[key].click();
-                      }
-                    }}
                   >
                     <div className="file-upload-info">
-                      <span className="requirement-text">{requirement_name}</span>
+                      <div>
+                        <span className="requirement-text">{requirement_name}</span>
+                      </div>
 
                       <input
                         ref={(el) => (inputRefs.current[key] = el)}
                         type="file"
-                        id={`upload-${key}`}
-                        onChange={(e) => handleFileChange(key, e)}
-                        disabled={uploading}
+                        onChange={(e) => handleFileChange(req_id, e)}
                         style={{ display: "none" }}
+                        disabled={uploading}
+                        accept=".pdf,.jpg,.jpeg,.png"
                       />
 
                       {entry ? (
@@ -346,12 +241,11 @@ function UploadRequirements({
                           <span className="file-name">{displayFileName(entry)}</span>
                           <img
                             src="/assets/Trash.svg"
-                            alt="Remove Icon"
-                            style={{ cursor: uploading ? "not-allowed" : "pointer" }}
+                            alt="Remove"
                             className="remove-icon"
                             onClick={(e) => {
                               e.stopPropagation();
-                              if (!uploading) handleDeleteFile(key);
+                              if (!uploading) handleDeleteFile(req_id);
                             }}
                           />
                         </div>
@@ -369,7 +263,7 @@ function UploadRequirements({
 
         <div className="action-section">
           {!allRequiredUploaded && (
-            <p className="error-text">All required fields are required*</p>
+            <p className="error-text">All required files must be uploaded*</p>
           )}
 
           <div className="action-buttons">
@@ -380,14 +274,23 @@ function UploadRequirements({
               disabled={uploading}
             />
             <ButtonLink
-              placeholder={uploading ? "Uploading..." : "Proceed"}
+              placeholder={uploading ? "Processing..." : "Proceed"}
               onClick={handleProceedClick}
               variant="primary"
               disabled={!allRequiredUploaded || uploading}
             />
+
           </div>
         </div>
       </ContentBox>
+
+      <ConfirmModal
+        isOpen={showConfirmModal}
+        onClose={cancelDeleteFile}
+        onConfirm={confirmDeleteFile}
+        title="Delete File"
+        message="Are you sure you want to delete this file?"
+      />
     </>
   );
 }

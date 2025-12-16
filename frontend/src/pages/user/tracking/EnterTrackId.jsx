@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import "./Tracking.css";
 import ButtonLink from "../../../components/common/ButtonLink";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
+import { getCSRFToken } from "../../../utils/csrf";
 
 function EnterTrackId({ onNext }) {
     const [trackingNumber, setTrackingNumber] = useState("");
@@ -9,6 +10,12 @@ function EnterTrackId({ onNext }) {
     const [error, setError] = useState("");
     const [shake, setShake] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [recentTracking, setRecentTracking] = useState([]);
+
+    useEffect(() => {
+        const history = JSON.parse(localStorage.getItem("trackingHistory") || "[]");
+        setRecentTracking(history);
+    }, []);
 
     const handleStudentIdChange = (e) => {
         let value = e.target.value.replace(/[^0-9]/g, "");
@@ -17,7 +24,7 @@ function EnterTrackId({ onNext }) {
     };
 
     const handleSubmit = async () => {
-        if (!trackingNumber || !studentId) {
+        if (!trackingNumber) {
             triggerError("Please fill in all fields.");
             return;
         }
@@ -35,7 +42,9 @@ function EnterTrackId({ onNext }) {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': getCSRFToken(),
                 },
+                credentials: 'include',
                 body: JSON.stringify({ tracking_number: trackingNumber, student_id: studentId }),
             });
 
@@ -51,12 +60,19 @@ function EnterTrackId({ onNext }) {
                 return;
             }
 
+            // Save successful tracking number to history
+            const history = JSON.parse(localStorage.getItem("trackingHistory") || "[]");
+            if (!history.includes(trackingNumber)) {
+                const newHistory = [trackingNumber, ...history].slice(0, 5);
+                localStorage.setItem("trackingHistory", JSON.stringify(newHistory));
+            }
+
             setError("");
             onNext({
                 trackData: data.track_data,
                 maskedPhone: data.masked_phone,
                 studentId: studentId
-            }); // pass the data from the backend to the next step
+            }, data.require_otp === false); // pass the data from the backend to the next step
         } catch (err) {
             console.error("Full error object:", err);
             console.error("Error message:", err.message);
@@ -83,36 +99,35 @@ function EnterTrackId({ onNext }) {
     return (
         <div className="track-page">
             {loading && <LoadingSpinner message="Tracking request..." />}
+            
             <div className="text-section">
                 <h3 className="title">Track your request</h3>
                 <p className="subtext">Only verified students can access request status. Make sure you have your registered number ready.</p>
             </div>
 
             <div className="input-section">
-                    <div className="input-wrapper">
-                        <p className="subtext">Tracking Number</p>
-                        <input
-                            type="text"
-                            className={`box-input ${error && !trackingNumber ? "input-error" : ""} ${shake ? "shake" : ""}`}
-                            placeholder="e.g., R2134000"
-                            value={trackingNumber}
-                            onChange={(e) => setTrackingNumber(e.target.value)}
-                            disabled={loading}
-                        />
-                    </div>
-                    <div className="input-wrapper">
-                        <p className="subtext">ID Number</p>
-                        <input
-                            type="text"
-                            className={`box-input ${error && !studentId ? "input-error" : ""} ${shake ? "shake" : ""}`}
-                            placeholder="0000-0000"
-                            value={studentId}
-                            onChange={handleStudentIdChange}
-                            maxLength={9}
-                            disabled={loading}
-                        />
-                    </div>
+                <p className="subtext" style={{ textAlign: "center" }}>Tracking Number</p>
+                <div className="input-wrapper">
+                    <input
+                        type="text"
+                        className={`box-input ${error && !trackingNumber ? "input-error" : ""} ${shake ? "shake" : ""}`}
+                        placeholder="e.g., R2134000"
+                        value={trackingNumber}
+                        onChange={(e) => setTrackingNumber(e.target.value)}
+                        disabled={loading}
+                        style={{ textAlign: "center" }}
+                        autoComplete="off"
+                        list="tracking-history"
+                    />
+                    <datalist id="tracking-history">
+                        {recentTracking.map((num, index) => (
+                            <option key={index} value={num} />
+                        ))}
+                    </datalist>
+                </div>
+                <div className="error-section">
                     {error && <p className={`error-text ${shake ? "shake" : ""}`}>{error}</p>}
+                </div>
             </div>
 
             <div className="action-section">

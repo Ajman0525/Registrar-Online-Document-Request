@@ -1,10 +1,17 @@
+
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { getCSRFToken } from "../../../utils/csrf";
-import RequestModal from "../../../components/admin/RequestModal";
+import { useAuth } from "../../../contexts/AuthContext";
+
 import StatusChangeConfirmModal from "../../../components/admin/StatusChangeConfirmModal";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
+import ReqSearchbar from "../../../components/admin/ReqSearchbar";
+import AssignDropdown from "../../../components/admin/AssignDropdown";
+import ButtonLink from "../../../components/common/ButtonLink";
+import "./Requests.css";
 
 // =======================================
 // STATUS MAPPING 
@@ -21,9 +28,10 @@ const STATUS_MAP = {
 const UI_STATUSES = Object.keys(STATUS_MAP);
 
 // =======================================
-// Card Component 
+// Card Component
 // =======================================
-const RequestCard = ({ request, onClick }) => {
+const RequestCard = ({ request, onClick, onAssign }) => {
+  const [isAssigning, setIsAssigning] = useState(false);
   const [{ isDragging }, drag] = useDrag(() => ({
     type: "REQUEST",
     item: { id: request.request_id },
@@ -37,8 +45,8 @@ const RequestCard = ({ request, onClick }) => {
   return (
     <div
       ref={drag}
-      onClick={() => onClick(request)}
-      className={`bg-white rounded-xl p-4 mb-4 shadow-sm border border-gray-200 cursor-pointer transition 
+      onClick={() => !isAssigning && onClick(request)}
+      className={`bg-white rounded-xl p-4 mb-4 shadow-sm border border-gray-200 ${isAssigning ? 'cursor-not-allowed' : 'cursor-pointer'} transition
       ${isDragging ? "opacity-50" : "opacity-100"}`}
     >
       <div className="text-gray-900 font-medium">
@@ -48,16 +56,16 @@ const RequestCard = ({ request, onClick }) => {
       <div className="text-gray-400 text-sm">{date}</div>
 
       <div className="flex justify-end mt-2">
-        <div className="w-6 h-6 bg-gray-300 rounded-full"></div>
+        <AssignDropdown requestId={request.request_id} onAssign={onAssign} onToggleOpen={setIsAssigning} />
       </div>
     </div>
   );
 };
 
 // =======================================
-// Column Component 
+// Column Component
 // =======================================
-const StatusColumn = ({ title, requests, onDropRequest, uiLabel, onCardClick }) => {
+const StatusColumn = ({ title, requests, onDropRequest, uiLabel, onCardClick, onAssign }) => {
   const [, drop] = useDrop({
     accept: "REQUEST",
     drop: (item) => onDropRequest(item.id, uiLabel),
@@ -79,7 +87,7 @@ const StatusColumn = ({ title, requests, onDropRequest, uiLabel, onCardClick }) 
 
       <div className="flex flex-col">
         {requests.map((r) => (
-          <RequestCard key={r.request_id} request={r} onClick={onCardClick} />
+          <RequestCard key={r.request_id} request={r} onClick={onCardClick} onAssign={onAssign} />
         ))}
 
         {requests.length === 0 && (
@@ -90,29 +98,43 @@ const StatusColumn = ({ title, requests, onDropRequest, uiLabel, onCardClick }) 
   );
 };
 
+
 // =======================================
 // MAIN COMPONENT
 // =======================================
 export default function AdminRequestsDashboard() {
+  const navigate = useNavigate();
+  const { role } = useAuth();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedRequest, setSelectedRequest] = useState(null);
+
   const [statusChangeRequest, setStatusChangeRequest] = useState(null);
   const [newStatus, setNewStatus] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRequests, setTotalRequests] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState('all'); // 'all' or 'my'
+  const [collegeCodeFilter, setCollegeCodeFilter] = useState('');
+  const [requesterTypeFilter, setRequesterTypeFilter] = useState('');
+  const [hasOthersDocsFilter, setHasOthersDocsFilter] = useState('');
+  const [availableCollegeCodes, setAvailableCollegeCodes] = useState([]);
   const limit = 20;
 
   useEffect(() => {
-    fetchRequests(currentPage);
-  }, [currentPage]);
+    // Set initial view mode and fetch data based on role
+    const initialMode = role === 'staff' ? 'my' : 'all';
+    setViewMode(initialMode);
+    fetchRequests(1, '', initialMode);
+    fetchAvailableFilters();
+  }, [role]);
 
-  const fetchRequests = async (page = 1) => {
-    setLoading(true);
+  const fetchAvailableFilters = async () => {
     try {
-      const res = await fetch(`/api/admin/requests?page=${page}&limit=${limit}`, {
+      const res = await fetch('/api/admin/requests/filters', {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -121,6 +143,39 @@ export default function AdminRequestsDashboard() {
         credentials: "include",
       });
 
+      if (res.ok) {
+        const data = await res.json();
+        setAvailableCollegeCodes(data.college_codes || []);
+      }
+    } catch (err) {
+      console.error('Error fetching filter options:', err);
+    }
+  };
+
+  const fetchRequests = async (page, search, mode) => {
+    setLoading(true);
+    try {
+      let endpoint = mode === 'my' ? '/api/admin/my-requests' : '/api/admin/requests';
+      let params = [`page=${page}`, `limit=${limit}`];
+      
+      if (search) params.push(`search=${encodeURIComponent(search)}`);
+      if (collegeCodeFilter) params.push(`college_code=${encodeURIComponent(collegeCodeFilter)}`);
+      if (requesterTypeFilter) params.push(`requester_type=${encodeURIComponent(requesterTypeFilter)}`);
+      if (hasOthersDocsFilter) params.push(`has_others_docs=${encodeURIComponent(hasOthersDocsFilter)}`);
+
+      const res = await fetch(`${endpoint}?${params.join('&')}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-TOKEN": getCSRFToken(),
+        },
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
       const data = await res.json();
       console.log('Fetched data:', data);
       setRequests(data.requests.map(req => ({ ...req, paymentStatus: req.payment_status })));
@@ -128,6 +183,7 @@ export default function AdminRequestsDashboard() {
       setTotalPages(Math.ceil(data.total / limit));
       console.log('Total pages:', Math.ceil(data.total / limit));
     } catch (err) {
+      console.error('Error fetching requests:', err);
       setError("Failed to load requests");
     } finally {
       setLoading(false);
@@ -148,6 +204,7 @@ export default function AdminRequestsDashboard() {
     }
   };
 
+
   const confirmStatusChange = async () => {
     if (!statusChangeRequest) return;
 
@@ -161,9 +218,51 @@ export default function AdminRequestsDashboard() {
       body: JSON.stringify(newStatus),
     });
 
-    fetchRequests(currentPage);
+    fetchRequests(currentPage, searchQuery, viewMode);
     setStatusChangeRequest(null);
     setNewStatus(null);
+  };
+
+  const applyFilters = () => {
+    setCurrentPage(1);
+    fetchRequests(1, searchQuery, viewMode);
+  };
+
+  const clearFilters = () => {
+    setCollegeCodeFilter('');
+    setRequesterTypeFilter('');
+    setHasOthersDocsFilter('');
+    setSearchQuery('');
+    setCurrentPage(1);
+    fetchRequests(1, '', viewMode);
+  };
+
+  const handleCardClick = (request) => {
+    navigate(`/admin/Requests/${request.request_id}`);
+  };
+
+  const handleAssignRequest = async (requestId, adminId) => {
+    try {
+      const res = await fetch("/api/admin/manual-assign", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-TOKEN": getCSRFToken(),
+        },
+        credentials: "include",
+        body: JSON.stringify({ request_ids: [requestId], admin_id: adminId }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(data.message);
+        fetchRequests(currentPage, searchQuery, viewMode);
+      } else {
+        alert(data.error);
+      }
+    } catch (err) {
+      console.error("Error assigning request:", err);
+      alert("Error assigning request");
+    }
   };
 
   if (loading) return <LoadingSpinner message="Loading requests..." />;
@@ -190,16 +289,111 @@ export default function AdminRequestsDashboard() {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="p-8 bg-gray-100 min-h-screen">
+      <div className="manage-requests-page">
         {/* Top title + search */}
-        <h1 className="text-3xl font-bold mb-6 text-gray-900">Manage Request</h1>
+        <h1 className="title">Manage Request</h1>
 
-        <div className="mb-8">
-          <input
-            type="text"
-            placeholder="Search Request"
-            className="w-full p-4 rounded-full shadow-sm border border-gray-200 bg-white text-gray-700"
-          />
+        {/* Filter buttons */}
+        <div className="toolbar">
+          <div className="filter-buttons-continer">
+            <ButtonLink
+              onClick={() => {
+                setViewMode('all');
+                setSearchQuery('');
+                setCurrentPage(1);
+                fetchRequests(1, '', 'all');
+              }}
+              placeholder="All View"
+              variant="secondary"
+              className="filter-button"
+            >
+            </ButtonLink>
+            <ButtonLink
+              onClick={() => {
+                setViewMode('my');
+                setSearchQuery('');
+                setCurrentPage(1);
+                fetchRequests(1, '', 'my');
+              }}
+              placeholder="My Task"
+              variant="secondary"
+            >
+            </ButtonLink>
+            <ButtonLink
+              onClick={() => navigate('/admin/AssignRequests')}
+              placeholder={"Auto Assign"}
+              variant="secondary"
+            >
+            </ButtonLink>
+          </div>
+          <ReqSearchbar onSearch={(value) => {
+              setSearchQuery(value);
+              setCurrentPage(1);
+              fetchRequests(1, value, viewMode);
+            }} />
+        </div>
+        {/* Filter Controls */}
+        <div className="p-4 bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* College Code Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">College Code</label>
+              <select
+                value={collegeCodeFilter}
+                onChange={(e) => setCollegeCodeFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">All Colleges</option>
+                {availableCollegeCodes.map(code => (
+                  <option key={code} value={code}>{code}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Requester Type Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Requester Type</label>
+              <select
+                value={requesterTypeFilter}
+                onChange={(e) => setRequesterTypeFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">All Requesters</option>
+                <option value="student">Student</option>
+                <option value="outsider">Outsider</option>
+              </select>
+            </div>
+
+            {/* Others Documents Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Request Type</label>
+              <select
+                value={hasOthersDocsFilter}
+                onChange={(e) => setHasOthersDocsFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">All Requests</option>
+                <option value="true">With Others Documents</option>
+                <option value="false">Without Others Documents</option>
+              </select>
+            </div>
+
+            {/* Filter Action Buttons */}
+            <div className="flex items-end gap-2">
+              <button
+                onClick={applyFilters}
+                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+              >
+                Apply Filters
+              </button>
+              <button
+                onClick={clearFilters}
+                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Columns */}
@@ -211,7 +405,8 @@ export default function AdminRequestsDashboard() {
               requests={grouped[label]}
               uiLabel={label}
               onDropRequest={handleDropRequest}
-              onCardClick={setSelectedRequest}
+              onCardClick={handleCardClick}
+              onAssign={handleAssignRequest}
             />
           ))}
         </div>
@@ -220,7 +415,11 @@ export default function AdminRequestsDashboard() {
         {totalPages > 1 && (
           <div className="flex justify-center items-center mt-8 gap-4">
             <button
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              onClick={() => {
+                const newPage = Math.max(currentPage - 1, 1);
+                setCurrentPage(newPage);
+                fetchRequests(newPage, searchQuery, viewMode);
+              }}
               disabled={currentPage === 1}
               className="px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300 disabled:cursor-not-allowed"
             >
@@ -230,7 +429,11 @@ export default function AdminRequestsDashboard() {
               Page {currentPage} of {totalPages} ({totalRequests} total requests)
             </span>
             <button
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              onClick={() => {
+                const newPage = Math.min(currentPage + 1, totalPages);
+                setCurrentPage(newPage);
+                fetchRequests(newPage, searchQuery, viewMode);
+              }}
               disabled={currentPage === totalPages}
               className="px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300 disabled:cursor-not-allowed"
             >
@@ -240,13 +443,7 @@ export default function AdminRequestsDashboard() {
         )}
       </div>
 
-      {selectedRequest && (
-        <RequestModal
-          request={selectedRequest}
-          onClose={() => setSelectedRequest(null)}
-          onStatusChange={handleDropRequest}
-        />
-      )}
+
 
       {statusChangeRequest && (
         <StatusChangeConfirmModal

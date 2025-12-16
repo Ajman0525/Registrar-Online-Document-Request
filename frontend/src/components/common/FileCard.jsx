@@ -11,7 +11,10 @@ function FileCard({
   selectable = false,
   isSelected = false
 }) {
+  const MAX_REQUIREMENTS = 3;
   const { doc_name, description, requirements = [], cost, logo_link } = document;
+  const extraCount = requirements.length - MAX_REQUIREMENTS;
+
 
   console.log(document.doc_name, document.hidden);
 
@@ -33,9 +36,14 @@ function FileCard({
       <div className="requirements-section">
         <p className="requirements-title">Requirements:</p>
         <ul className="subtext">
-          {requirements.map((req, index) => (
+          {requirements.slice(0, MAX_REQUIREMENTS).map((req, index) => (
             <li key={index}>{req}</li>
           ))}
+          {extraCount > 0 && (
+            <li className="more-requirements">
+              +{extraCount} more
+            </li>
+          )}
         </ul>
       </div>
 

@@ -9,32 +9,35 @@ class OpenRequestRestriction:
         conn = g.db_conn
         cur = conn.cursor()
         try:
-            cur.execute("SELECT start_time, end_time, available_days FROM open_request_restriction WHERE id = 1")
+            cur.execute("SELECT start_time, end_time, available_days, announcement FROM open_request_restriction WHERE id = 1")
             row = cur.fetchone()
             if row:
                 return {
                     "start_time": str(row[0]),
                     "end_time": str(row[1]),
-                    "available_days": row[2]
+                    "available_days": row[2],
+                    "announcement": row[3] or ""
                 }
             return None
         finally:
             cur.close()
 
+
     @staticmethod
-    def update_settings(start_time, end_time, available_days):
+    def update_settings(start_time, end_time, available_days, announcement=""):
         """Update settings."""
         conn = g.db_conn
         cur = conn.cursor()
         try:
             cur.execute("""
-                INSERT INTO open_request_restriction (id, start_time, end_time, available_days)
-                VALUES (1, %s, %s, %s)
+                INSERT INTO open_request_restriction (id, start_time, end_time, available_days, announcement)
+                VALUES (1, %s, %s, %s, %s)
                 ON CONFLICT (id) DO UPDATE SET
                     start_time = EXCLUDED.start_time,
                     end_time = EXCLUDED.end_time,
-                    available_days = EXCLUDED.available_days
-            """, (start_time, end_time, json.dumps(available_days)))
+                    available_days = EXCLUDED.available_days,
+                    announcement = EXCLUDED.announcement
+            """, (start_time, end_time, json.dumps(available_days), announcement))
             conn.commit()
             return True
         except Exception as e:
@@ -108,5 +111,37 @@ class Admin:
             if admin:
                 return {"email": admin[0], "role": admin[1]}
             return None
+        finally:
+            cur.close()
+
+class Fee:
+    @staticmethod
+    def get_value(key):
+        """Fetch fee value by key."""
+        conn = g.db_conn
+        cur = conn.cursor()
+        try:
+            cur.execute("SELECT value FROM fee WHERE key = %s", (key,))
+            row = cur.fetchone()
+            return row[0] if row else 0.0
+        finally:
+            cur.close()
+
+    @staticmethod
+    def update_value(key, value):
+        """Update fee value."""
+        conn = g.db_conn
+        cur = conn.cursor()
+        try:
+            cur.execute("""
+                INSERT INTO fee (key, value) VALUES (%s, %s)
+                ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
+            """, (key, value))
+            conn.commit()
+            return True
+        except Exception as e:
+            conn.rollback()
+            print(f"Error updating fee: {e}")
+            return False
         finally:
             cur.close()

@@ -2,18 +2,24 @@ import React, { useEffect, useState, useRef } from "react";
 import { getCSRFToken } from "../../utils/csrf";
 import { useNavigate } from "react-router-dom";
 import './Dashboard.css';
-import NotificationIcon from '../../components/icons/NotificationIcon';
-import SearchIcon from "../../components/icons/SearchIcon";
 import TotalRequestsIcon from "../../components/icons/TotalRequestsIcon";
 import PendingIcon from "../../components/icons/PendingIcon";
 import UnpaidIcon from "../../components/icons/UnpaidIcon";
 import ProcessedIcon from "../../components/icons/ProcessedIcon";
 import ScrollLeft from "../../components/icons/ScrollLeft";
 import ScrollRight from "../../components/icons/ScrollRight";
-import SettingsIcon from "../../components/icons/SettingsIcon";
-import ProfileIcon from "../../components/icons/ProfileIcon";
-import LogoutIcon from "../../components/icons/LogoutIcon";
 
+const CACHE_KEY = 'dashboard_data_cache';
+
+const getStoredState = (key, defaultValue) => {
+  try{
+    const stored = sessionStorage.getItem(key);
+    return stored ? JSON.parse(stored) : defaultValue;
+  } catch (error) {
+    console.warn("Failed to parse session storage", error)
+    return defaultValue;
+  }
+}
 
 const ActivityItem = ({ activity }) => (
   <div className="activity-item">
@@ -25,64 +31,6 @@ const ActivityItem = ({ activity }) => (
     </div>
   </div>
 );
-
-
-const NotificationPanel = ({ notifications, onClose }) => (
-  <div className="notification-panel">
-    <div className="panel-header">
-      <h3>Notifications</h3>
-    </div>
-    <div className="panel-content">
-      {notifications.length === 0 ? (
-        <div className="notification-empty-state">
-          <p>No new notifications.</p>
-        </div>
-      ) : (
-        notifications.map(n => (
-          <div key={n.id} className="notification-item">
-            <div className="item-icon-type">
-              <span className={`item-icon ${n.type.replace(/\s/g, '-')}`}>{n.type === 'New Request' ? 'R' : n.type === 'Payment Due' ? 'P' : 'D'}</span>  {/* To be replaced by icons based on the type of notification */}
-              <p className="item-type">{n.type}</p>
-            </div>
-            <p className="item-message">{n.message}</p>
-            <span className="item-time">{n.time}</span>
-          </div>
-        ))
-      )}
-    </div>
-  </div>
-);
-
-
-const UserProfilePanel = ({ onClose, onLogout }) => (
-  <div className="user-profile-panel">
-    <div className="profile-panel-header">
-      <div className="profile-avatar-large">
-        <span>A</span>
-      </div>
-      <div className="profile-info">
-        <h4>Administrator</h4>
-        <p>admin@example.com</p>
-      </div>
-    </div>
-    <div className="profile-panel-content">
-      <button className="profile-menu-item">
-        <ProfileIcon />
-        <span>My Profile</span>
-      </button>
-      <button className="profile-menu-item">
-        <SettingsIcon />
-        <span>Settings</span>
-      </button>
-      <div className="profile-divider"></div>
-      <button className="profile-menu-item logout" onClick={onLogout}>
-        <LogoutIcon />
-        <span>Logout</span>
-      </button>
-    </div>
-  </div>
-);
-
 
 const StatCard = ({ title, icon: Icon, value, subText, percentage, trend }) => (
   <div className="stat-card">
@@ -162,6 +110,7 @@ const ScrollButton = ({ direction, onClick, isVisible }) => {
 
 
 function Dashboard() {
+
   const scrollContainerReference = useRef(null);
   const notificationReference = useRef(null);
   const profileReference = useRef(null);
@@ -169,46 +118,11 @@ function Dashboard() {
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-  const [dashboardData, setDashboardData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const navigate = useNavigate();
-
-
-
-
-  const toggleProfile = () => {
-    setIsProfileOpen(prev => !prev);
-  };
-
-
-  const handleLogout = async () => {
-    try {
-      const csrfToken = getCSRFToken();
-      const response = await fetch('/api/admin/logout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': csrfToken,
-        },
-        credentials: 'include',
-      });
-      if (response.ok) {
-        navigate('/admin/login');
-      } else {
-        console.error('Logout failed');
-      }
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
-    setIsProfileOpen(false);
-  };
-
-
-  const toggleNotifications = () => {
-    setIsNotificationsOpen(prev => !prev);
-  };
-
+  const cachedData = getStoredState(CACHE_KEY, null);
+  const [dashboardData, setDashboardData] = useState(cachedData);
+  const [loading, setLoading] = useState (cachedData == null);
+  const [error, setError] = useState(null);
 
   const scrollCards = (direction) => {
     if (scrollContainerReference.current) {
@@ -256,6 +170,9 @@ function Dashboard() {
         if (response.ok) {
           const data = await response.json();
           setDashboardData(data);
+
+          sessionStorage.setItem(CACHE_KEY, JSON.stringify(data))
+          
         } else if (response.status === 401) {
           navigate('/admin/login');
         } else {
@@ -345,19 +262,6 @@ function Dashboard() {
   if (loading) {
     return (
       <div className="dashboard-content">
-        {/* Header Skeleton */}
-        <div className="dashboard-header-wrapper">
-          <div className="header-content">
-            <div className="skeleton skeleton-title" style={{ width: '300px', height: '32px' }}></div>
-
-            <div className="header-controls">
-              <div className="skeleton skeleton-search" style={{ width: '300px', height: '40px' }}></div>
-              <div className="skeleton skeleton-circle" style={{ width: '40px', height: '40px' }}></div>
-              <div className="skeleton skeleton-profile" style={{ width: '150px', height: '40px' }}></div>
-            </div>
-          </div>
-        </div>
-
         {/* Stat Cards Skeleton */}
         <div className="stat-cards-content">
           <div className="stat-cards-wrapper scroll-hide">
@@ -433,67 +337,6 @@ function Dashboard() {
 
   return (
     <div className="dashboard-content">
-
-
-      {/*------------------- START OF HEADER CONTENT -------------------*/}
-      <div className="dashboard-header-wrapper">
-        <div className="header-content">
-          <h1>Welcome, Administrator.</h1>
-
-
-          <div className="header-controls">
-            <div className="search-input-wrapper">
-              <SearchIcon className="search-icon" />
-              <input
-                type="text"
-                placeholder="Search requests, documents..."
-                className="header-search"
-              />
-            </div>
-
-
-            <div className="notification-wrapper" ref={notificationReference}>
-              <button className="notification-icon-btn" onClick={toggleNotifications}>
-                <NotificationIcon className="notification-icon" />
-                {notificationsData.length > 0 && (
-                  <span className="notification-badge">{notificationsData.length}</span>
-                )}
-              </button>
-              {isNotificationsOpen && (
-                <NotificationPanel
-                  notifications={notificationsData}
-                  onClose={() => setIsNotificationsOpen(false)}
-                />
-              )}
-            </div>
-
-
-            <div className="user-profile-container" ref={profileReference}>
-              <div className={`user-profile-wrapper ${isProfileOpen ? 'dropdown-menu-inverted' : ''}`} onClick={toggleProfile}>
-                <div className="user-profile">
-                  <span className="user-initials">A</span>
-                </div>
-                <div className="user-info">
-                  <div className="user-name">Administrator</div>
-                </div>
-                <span className="dropdown-menu">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="6 9 12 15 18 9"></polyline>
-                  </svg>
-                </span>
-              </div>
-              {isProfileOpen && (
-                <UserProfilePanel
-                  onClose={() => setIsProfileOpen(false)}
-                  onLogout={handleLogout}
-                />
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-      {/*--------------------- END OF HEADER CONTENT -------------------*/}
-
 
       {/*--------------------- START OF STAT CARDS ---------------------*/}
       <div className="stat-cards-content">

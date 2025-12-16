@@ -9,6 +9,8 @@ function RequestInBehalf({ onNext, onBack, maskedPhone, setMaskedPhone, goBackTo
     const [Lastname, setLastname] = useState("");
     const [WhatsappNo, setWhatsappNo] = useState("");
     const [whatsappError, setWhatsappError] = useState("");
+    const [requesterName, setRequesterName] = useState("");
+    const [requesterNameError, setRequesterNameError] = useState("");
     const [firstnameError, setFirstnameError] = useState("");
     const [lastnameError, setLastnameError] = useState("");
     const [uploadError, setUploadError] = useState("");
@@ -60,6 +62,14 @@ function RequestInBehalf({ onNext, onBack, maskedPhone, setMaskedPhone, goBackTo
     const handleSubmit = async () => {
         let hasError = false;
 
+        // Validate requester name
+        if (!requesterName) {
+            setRequesterNameError("Please fill in Name (Person or Organization).");
+            hasError = true;
+        } else {
+            setRequesterNameError("");
+        }
+
         // Validate WhatsApp number
         if (!WhatsappNo) {
             setWhatsappError("Please fill in WhatsApp No.");
@@ -100,6 +110,7 @@ function RequestInBehalf({ onNext, onBack, maskedPhone, setMaskedPhone, goBackTo
             return;
         }
 
+
         setLoading(true);
 
         try {
@@ -107,7 +118,7 @@ function RequestInBehalf({ onNext, onBack, maskedPhone, setMaskedPhone, goBackTo
             const verifyResponse = await fetch("/user/check-name", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ firstname: Firstname, lastname: Lastname })
+                body: JSON.stringify({ firstname: Firstname, lastname: Lastname, requester_name: requesterName, whatsapp_number: WhatsappNo })
             });
 
             const verifyData = await verifyResponse.json();
@@ -122,36 +133,43 @@ function RequestInBehalf({ onNext, onBack, maskedPhone, setMaskedPhone, goBackTo
                 return;
             }
 
-            if (verifyData.status === "has_liability") {
-                onNext("liability");
-                setLoading(false);
-                return;
-            }
+            // if (verifyData.status === "has_liability") {
+            //     onNext("liability");
+            //     setLoading(false);
+            //     return;
+            // }
 
-            // 2. Upload authorization letter
-            const formData = new FormData();
-            formData.append("file", selectedFile);
-            formData.append("firstname", Firstname);
-            formData.append("lastname", Lastname);
-            formData.append("number", WhatsappNo);
+            // 2. Store auth letter data for later upload
+            // Convert file to base64 for storage
+            const fileToBase64 = (file) => {
+                return new Promise((resolve, reject) => {
+                    const fileReader = new FileReader();
+                    fileReader.readAsDataURL(file);
+                    fileReader.onload = () => {
+                        resolve(fileReader.result.split(',')[1]); // Remove data:mime;base64, prefix
+                    };
+                    fileReader.onerror = error => reject(error);
+                });
+            };
 
-            const uploadResponse = await fetch("/user/upload-authletter", {
-                method: "POST",
-                body: formData
-            });
+            const fileData = await fileToBase64(selectedFile);
+            const authLetterData = {
+                fileName: selectedFile.name,
+                fileType: selectedFile.type,
+                fileData: fileData,
+                firstname: Firstname,
+                lastname: Lastname,
+                number: WhatsappNo,
+                requesterName: requesterName
+            };
+            
+            // Store in sessionStorage for use in request flow
+            sessionStorage.setItem("authLetterData", JSON.stringify(authLetterData));
+            console.log("Auth letter data stored for later upload");
 
-            const uploadData = await uploadResponse.json();
-
-            if (!uploadResponse.ok || !uploadData.success) {
-                setError(uploadData.notification || "Failed to upload authorization letter.");
-                triggerShake();
-                setLoading(false);
-                return;
-            }
-
-            console.log("File uploaded:", uploadData.file_url);
-
-            // 3. Proceed to OTP
+            // 3. Set user type and proceed to OTP
+            sessionStorage.setItem("user_type", "outsider");
+            localStorage.setItem("user_type", "outsider");
             setMaskedPhone(verifyData.masked_phone);
             onNext(); // proceed to OTP
 
@@ -176,6 +194,21 @@ function RequestInBehalf({ onNext, onBack, maskedPhone, setMaskedPhone, goBackTo
                     <div className="input-section">
                         <h5>Requester Details</h5>
                         <div className="input-wrapper">
+                            <p className="subtext">Name (Person or Organization)</p>
+                            <input
+                                id="requester-name"
+                                type="text"
+                                className={`box-input ${error ? "input-error" : ""} ${shake ? "shake" : ""}`}
+                                placeholder="e.g. Juan Dela Cruz or ABC Corporation"
+                                value={requesterName}
+                                onChange={e => setRequesterName(e.target.value)}
+                                disabled={loading}
+                            />
+                            <div className="error-section">
+                                 {requesterNameError && <p className="error-text">{requesterNameError}</p>}
+                            </div>
+                        </div>
+                        <div className="input-wrapper">
                             <p className="subtext">Whatsapp No.</p>
                             <input
                                 id="Whatsapp-no"
@@ -190,6 +223,7 @@ function RequestInBehalf({ onNext, onBack, maskedPhone, setMaskedPhone, goBackTo
                                 {whatsappError && <p className="error-text">{whatsappError}</p>}
                             </div>
                         </div>
+                        
                         <h5>Student Information</h5>
                         <div className="input-wrapper">
                             <p className="subtext">Firstname</p>
@@ -197,7 +231,7 @@ function RequestInBehalf({ onNext, onBack, maskedPhone, setMaskedPhone, goBackTo
                                 id="student-id"
                                 type="text"
                                 className={`box-input ${error ? "input-error" : ""} ${shake ? "shake" : ""}`}
-                                placeholder="Smith"
+                                placeholder="e.g. John"
                                 value={Firstname}
                                 onChange={e => setFirstname(e.target.value)}
                                 disabled={loading}
@@ -213,7 +247,7 @@ function RequestInBehalf({ onNext, onBack, maskedPhone, setMaskedPhone, goBackTo
                             id="student-id"
                             type="text"
                             className={`box-input ${error ? "input-error" : ""} ${shake ? "shake" : ""}`}
-                            placeholder="Doe"
+                            placeholder="e.g. Doe"
                             value={Lastname}
                             onChange={e => setLastname(e.target.value)}
                             disabled={loading}
