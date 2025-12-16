@@ -45,6 +45,7 @@ function RequestFlow() {
   const [paymentInfo, setPaymentInfo] = useState(null);
 
   const [hasActiveRequests, setHasActiveRequests] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
 
 
@@ -646,6 +647,7 @@ function RequestFlow() {
 
         const hasImmediatePayment = requestData.documents.some(doc => doc.requires_payment_first);
         if (hasImmediatePayment) {
+          setIsRedirecting(true);
           const studentId = requestData.studentInfo.student_id;
           window.location.href = `/user/track?tracking=${requestId}&student_id=${studentId}`;
         } else {
@@ -662,8 +664,8 @@ function RequestFlow() {
   return (
     <>
 
-      {step === "checkActiveRequests" && (
-        <LoadingSpinner message="Checking for active requests..." />
+      {(step === "checkActiveRequests" || isRedirecting) && (
+        <LoadingSpinner message={isRedirecting ? "Redirecting to tracking..." : "Checking for active requests..."} />
       )}
       
       {step === "pendingRequests" && (
@@ -674,7 +676,7 @@ function RequestFlow() {
       )}
 
       {/* Progress Indicator - only for non-documents, non-checkActiveRequests, non-pendingRequests, and non-paymentGateway steps */}
-      {step !== "documents" && step !== "checkActiveRequests" && step !== "pendingRequests" && step !== "paymentGateway" && (
+      {step !== "documents" && step !== "checkActiveRequests" && step !== "pendingRequests" && step !== "paymentGateway" && !isRedirecting && (
         <div className="request-progress-container">
           <div className="request-progress-bar">
             {currentSteps.map((stepInfo, index) => (
@@ -759,7 +761,7 @@ function RequestFlow() {
         />
       )}
 
-      {step === "summary" && (
+      {step === "summary" && !isRedirecting && (
         <Summary
           selectedDocs={requestData.documents}
           uploadedFiles={requestData.requirements}
@@ -788,7 +790,7 @@ function RequestFlow() {
         />
       )}
 
-      {step === "submitRequest" && (
+      {step === "submitRequest" && trackingId && (
         <SubmitRequest
           trackingId={trackingId}
           onBack={goBackStep}
