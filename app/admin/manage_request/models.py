@@ -25,10 +25,11 @@ class ManageRequestModel:
                 where_clauses.append("ra.admin_id = %s")
                 params.append(admin_id)
 
+
             if search:
-                where_clauses.append("(r.full_name ILIKE %s OR r.student_id ILIKE %s OR r.email ILIKE %s OR r.contact_number ILIKE %s)")
+                where_clauses.append("(r.full_name ILIKE %s OR r.student_id ILIKE %s OR r.email ILIKE %s OR r.contact_number ILIKE %s OR r.request_id ILIKE %s)")
                 search_param = f"%{search}%"
-                params.extend([search_param] * 4)
+                params.extend([search_param] * 5)
 
             if college_code:
                 where_clauses.append("r.college_code = %s")

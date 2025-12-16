@@ -267,11 +267,12 @@ def get_unassigned_requests():
         """
         params = []
         
+
         # Add search condition
         if search:
-            query += " AND (r.full_name ILIKE %s OR r.request_id ILIKE %s)"
+            query += " AND (r.full_name ILIKE %s OR r.student_id ILIKE %s OR r.email ILIKE %s OR r.contact_number ILIKE %s OR r.request_id ILIKE %s)"
             search_param = f"%{search}%"
-            params.extend([search_param, search_param])
+            params.extend([search_param] * 5)
         
         # Add college_code filter
         if college_code and college_code != 'all':
