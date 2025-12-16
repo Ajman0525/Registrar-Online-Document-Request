@@ -1,5 +1,7 @@
+
 import React from 'react';
 import LoadingSpinner from '../common/LoadingSpinner';
+import { getDisplayStatus } from '../../utils/statusRestrictions';
 import './StatusChangeConfirmModal.css';
 
 const StatusChangeConfirmModal = ({ request, newStatus, onConfirm, onCancel, isLoading = false }) => {
@@ -8,9 +10,10 @@ const StatusChangeConfirmModal = ({ request, newStatus, onConfirm, onCancel, isL
   return (
     <div className="status-change-modal-overlay">
       <div className="status-change-modal-popup">
+
         <h3 className="status-change-modal-title">Confirm Status Change</h3>
         <p className="status-change-modal-message">
-          Are you sure you want to change the status of <strong>{request.request_id}</strong> ({request.full_name}) from <strong>{request.status}</strong> to <strong>{newStatus.status}</strong>?
+          Are you sure you want to change the status of <strong>{request.request_id}</strong> ({request.full_name}) from <strong>{getDisplayStatus(request.status)}</strong> to <strong>{getDisplayStatus(newStatus.status)}</strong>?
         </p>
         {isLoading && <LoadingSpinner message="Updating status..." />}
         <div className="status-change-modal-action-section">
