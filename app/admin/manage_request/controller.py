@@ -70,6 +70,7 @@ def get_requests():
         return jsonify({"error": str(e)}), 500
 
 
+
 @manage_request_bp.route("/api/admin/requests/<request_id>/status", methods=["PUT"])
 @jwt_required()
 def update_request_status(request_id):
@@ -80,6 +81,9 @@ def update_request_status(request_id):
         data = request.get_json()
         new_status = data.get("status")
         payment_status = data.get("payment_status")
+        payment_reference = data.get("payment_reference", "")
+        payment_type = data.get("payment_type")
+        
         if not new_status:
             return jsonify({"error": "Status is required"}), 400
 
@@ -97,7 +101,7 @@ def update_request_status(request_id):
         phone = request_data.get("contact_number")
         full_name = request_data.get("full_name")
 
-        success = ManageRequestModel.update_request_status(request_id, new_status, admin_id, payment_status)
+        success = ManageRequestModel.update_request_status(request_id, new_status, admin_id, payment_status, payment_reference, payment_type)
         
         if success:
             if phone:

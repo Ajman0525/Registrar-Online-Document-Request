@@ -229,9 +229,6 @@ const RequestViewPage_Pending = ({ request, onRefresh }) => {
             request.documents.map((doc, index) => (
               <div key={index} className="document-row">
                 <span>{doc.name} {doc.quantity}x</span>
-                {doc.requires_payment_first && (
-                  <span className="payment-required-badge">Payment Required</span>
-                )}
               </div>
             ))
           ) : (

@@ -80,15 +80,12 @@ class Admin:
 
 
     @staticmethod
-    def update(email, role, profile_picture=None):
-        """Update an admin's role and profile picture."""
+    def update(email, role):
+        """Update an admin's role"""
         conn = g.db_conn
         cur = conn.cursor()
         try:
-            if profile_picture is not None:
-                cur.execute("UPDATE admins SET role = %s, profile_picture = %s WHERE email = %s", (role, profile_picture, email))
-            else:
-                cur.execute("UPDATE admins SET role = %s WHERE email = %s", (role, email))
+            cur.execute("UPDATE admins SET role = %s WHERE email = %s", (role, email))
             conn.commit()
             return cur.rowcount > 0
         finally:

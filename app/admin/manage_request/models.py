@@ -180,8 +180,9 @@ class ManageRequestModel:
         finally:
             cur.close()
 
+
     @staticmethod
-    def update_request_status(request_id, new_status, admin_id=None, payment_status=None):
+    def update_request_status(request_id, new_status, admin_id=None, payment_status=None, payment_reference="", payment_type=None):
         """Update the status of a specific request and log the change."""
         conn = g.db_conn
         cur = conn.cursor()
@@ -189,9 +190,9 @@ class ManageRequestModel:
             if payment_status is not None:
                 cur.execute("""
                     UPDATE requests
-                    SET status = %s, payment_status = %s
+                    SET status = %s, payment_status = %s, payment_reference = %s, payment_type = %s
                     WHERE request_id = %s
-                """, (new_status, payment_status, request_id))
+                """, (new_status, payment_status, payment_reference, payment_type, request_id))
             else:
                 cur.execute("""
                     UPDATE requests
