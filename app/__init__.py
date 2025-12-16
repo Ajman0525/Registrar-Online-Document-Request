@@ -1,6 +1,7 @@
+
 from flask import Flask, g, render_template, send_from_directory, request
 import os
-from config import DB_USERNAME, DB_PASSWORD, DB_NAME, DB_HOST, DB_PORT, JWT_SECRET_KEY
+from config import DB_USERNAME, DB_PASSWORD, DB_NAME, DB_HOST, DB_PORT, JWT_SECRET_KEY, FRONTEND_URL
 from psycopg2 import pool
 from .utils.error_handlers import register_error_handlers
 from flask_cors import CORS
@@ -49,11 +50,12 @@ def create_app(test_config=None):
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
     app.config["JWT_COOKIE_SECURE"] = False  # set True in production (HTTPS only)
     app.config["JWT_COOKIE_SAMESITE"] = "lax"  
+
     # CORS CONFIGURATION - Allow frontend origin with credentials
     CORS(
         app,
         supports_credentials=True,
-        origins=["http://localhost:3000", "https://registrar-odr.onrender.com"],
+        origins=[FRONTEND_URL],
         allow_headers=["Content-Type", "Authorization"],
         expose_headers=["Content-Type"],
         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]

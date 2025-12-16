@@ -13,12 +13,14 @@ function AdminLogin() {
   const [error, setError] = useState("");
 
 
+
   const handleGoogleLogin = () => {
     setIsLoading(true);
     setError("");
     
     // Redirect to server-side OAuth flow using full URL to bypass React Router
-    const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+    // In production, this should be the same domain as the frontend
+    const apiUrl = process.env.REACT_APP_API_URL || window.location.origin;
     window.location.href = `${apiUrl}/api/admin/google/initiate`;
   };
 
