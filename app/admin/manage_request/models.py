@@ -57,6 +57,7 @@ class ManageRequestModel:
                 join_assignments = ""
 
 
+
             cur.execute(f"""
                 SELECT r.request_id, r.student_id, r.full_name, r.contact_number, r.email,
                        r.preferred_contact, r.status, r.requested_at,r.remarks,
@@ -649,8 +650,9 @@ class ManageRequestModel:
         conn = g.db_conn
         cur = conn.cursor()
         try:
+
             cur.execute("""
-                SELECT request_id, student_id, full_name, contact_number, email, preferred_contact, status, requested_at, remarks, total_cost, payment_status, college_code, order_type, payment_date
+                SELECT request_id, student_id, full_name, contact_number, email, preferred_contact, status, requested_at, remarks, total_cost, payment_status, college_code, order_type, payment_date, payment_reference, payment_type
                 FROM requests
                 WHERE request_id = %s
             """, (request_id,))
@@ -658,6 +660,7 @@ class ManageRequestModel:
 
             if not req:
                 return None
+
 
             request_data = {
                 "request_id": req[0],
@@ -673,7 +676,9 @@ class ManageRequestModel:
                 "payment_status": req[10],
                 "college_code": req[11],
                 "pickup_option": req[12],
-                "payment_date":req[13]
+                "payment_date": req[13],
+                "payment_reference": req[14],
+                "payment_type": req[15]
             }
 
             # Check if request exists in auth_letters table to determine requester type
