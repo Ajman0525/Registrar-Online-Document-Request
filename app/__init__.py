@@ -54,7 +54,7 @@ def create_app(test_config=None):
     CORS(
         app,
         supports_credentials=True,
-        origins=["http://localhost:3000"],
+        origins=["http://localhost:3000", "https://registrar-odr.onrender.com"],
         allow_headers=["Content-Type", "Authorization"],
         expose_headers=["Content-Type"],
         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
