@@ -15,12 +15,11 @@ from app.db_init import initialize_db
 
 from app.db_init import initialize_and_populate
 
-
-
 db_pool = None
 
 def create_app(test_config=None):
     
+   
     #initialize the database (create tables if not exist)
     #initialize_and_populate()
     load_dotenv()
@@ -54,7 +53,7 @@ def create_app(test_config=None):
     CORS(
         app,
         supports_credentials=True,
-        origins=["http://localhost:3000"],
+        origins=["http://localhost:3000", "https://registrar-odr.onrender.com"],
         allow_headers=["Content-Type", "Authorization"],
         expose_headers=["Content-Type"],
         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
@@ -93,6 +92,7 @@ def create_app(test_config=None):
         if conn is not None:
             db_pool.putconn(conn)
             
+    
     # =====================
     #  REGISTER BLUEPRINTS
     # =====================
@@ -141,6 +141,7 @@ def create_app(test_config=None):
     from .whatsapp import whatsapp_bp as whatsapp_blueprint 
     app.register_blueprint(whatsapp_blueprint)           
 
+
     # === FRONTEND ROUTES (React) ===
     @app.route("/", defaults={"path": ""})
     @app.route("/<path:path>")
@@ -149,5 +150,18 @@ def create_app(test_config=None):
             return send_from_directory(app.static_folder, path)
         return send_from_directory(app.template_folder, "index.html")
 
+    from .admin.authentication.controller import init_oauth
+    init_oauth(app)
+
+
+    @app.after_request
+    def set_coop_headers(response):
+        # Needed for Google Sign-In popup to communicate via postMessage
+        response.headers["Cross-Origin-Opener-Policy"] = "same-origin-allow-popups"
+        response.headers["Cross-Origin-Embedder-Policy"] = "unsafe-none"
+        return response
+
     register_error_handlers(app)
+
+    init_oauth(app)
     return app
