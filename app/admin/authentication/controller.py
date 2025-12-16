@@ -71,7 +71,7 @@ def google_oauth_callback():
 
 
     
-        profile_picture = id_info['picture']
+        profile_picture = user_info['picture']
         email = user_info.get("email")
         hd = user_info.get("hd")
 
