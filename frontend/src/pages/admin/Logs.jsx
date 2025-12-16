@@ -60,7 +60,7 @@ function Logs() {
     }
 
     return (
-        <div className="p-8 bg-gray-50 min-h-screen">
+        <div className="p-8 min-h-screen">
             <div className="max-w-7xl mx-auto bg-white rounded-2xl shadow-lg p-6">
                 <h1 className="logs-header text-3xl font-semibold mb-6 text-gray-800">Logs</h1>
                 {logs.length === 0 ? (

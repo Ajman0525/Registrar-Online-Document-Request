@@ -316,11 +316,9 @@ function Transactions() {
 
       {/* Header */}
       <div className="dashboard-header-wrapper">
-        <div className="header-content">
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', flexDirection: 'row'}}>
             <h1>Transactions Management</h1>
           </div>
-        </div>
 
         <div className="header-actions">
           <div 

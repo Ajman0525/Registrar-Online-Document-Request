@@ -6,7 +6,7 @@
 }
 
 .registrar-content-area {
-  background: var(--color-primary);
+  background: var(--color-admin-primary);
   display: flex;
   flex-direction: column;
   flex: 1;

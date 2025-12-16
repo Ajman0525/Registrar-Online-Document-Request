@@ -31,12 +31,9 @@
   margin: 0;
   padding: 0;
 }
-
-.header-content {
+.transactions-page .header-text {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 5px;
+  width: 100%;
 }
 
 .header-actions {

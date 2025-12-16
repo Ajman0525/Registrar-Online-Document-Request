@@ -239,6 +239,7 @@ function Popup({ onClose, onSuccess, document }) {
               type="text"
               placeholder="Document Description"
               value={description}
+              maxLength={100}
               onChange={(e) => setDescription(e.target.value)}
             />
             <hr />
