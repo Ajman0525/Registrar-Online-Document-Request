@@ -69,7 +69,9 @@ def google_oauth_callback():
         token = google.authorize_access_token()
         user_info = google.parse_id_token(token, nonce=nonce)  # pass nonce here
 
-        print(user_info)
+
+    
+        profile_picture = id_info['picture']
         email = user_info.get("email")
         hd = user_info.get("hd")
 
@@ -168,6 +170,7 @@ def get_current_user():
         current_email = get_jwt_identity()
         admin = Admin.get_by_email(current_email)
         
+
         if admin:
             return jsonify({
                 "email": admin['email'],

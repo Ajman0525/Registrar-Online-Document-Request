@@ -622,6 +622,7 @@ export default function AssignRequests() {
           <div className="bg-white p-6 rounded-lg max-w-md w-full">
             <h2 className="text-2xl font-bold mb-4">Assign {selectedRequests.length} Request(s)</h2>
             <p className="mb-4 text-gray-600">Select an admin to assign the selected requests to:</p>
+
             <div className="space-y-2 max-h-60 overflow-y-auto">
               {admins.map((admin) => {
                 const isAtCapacity = admin.total >= admin.max_requests;
@@ -637,11 +638,33 @@ export default function AssignRequests() {
                     }`}
                     onClick={() => !isAtCapacity && setSelectedAdminForManual(admin.admin_id)}
                   >
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <div className="font-medium">{admin.admin_id}</div>
-                        <div className="text-sm text-gray-600">
-                          {admin.total} / {admin.max_requests} requests
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-8 h-8 flex-shrink-0">
+                          {admin.profile_picture ? (
+                            <img 
+                              src={admin.profile_picture} 
+                              alt="Admin Profile"
+                              className="w-8 h-8 rounded-full object-cover border border-gray-200"
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                                e.target.nextSibling.style.display = 'flex';
+                              }}
+                            />
+                          ) : null}
+                          <div 
+                            className={`w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 text-sm font-medium ${
+                              admin.profile_picture ? 'hidden' : 'flex'
+                            }`}
+                          >
+                            {admin.admin_id ? admin.admin_id.charAt(0).toUpperCase() : 'A'}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="font-medium">{admin.admin_id}</div>
+                          <div className="text-sm text-gray-600">
+                            {admin.total} / {admin.max_requests} requests
+                          </div>
                         </div>
                       </div>
                       {isAtCapacity && (

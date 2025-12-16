@@ -48,25 +48,27 @@ class OpenRequestRestriction:
             cur.close()
 
 class Admin:
+
     @staticmethod
     def get_all():
         """Fetch all admins."""
         conn = g.db_conn
         cur = conn.cursor()
         try:
-            cur.execute("SELECT email, role FROM admins ORDER BY email")
+            cur.execute("SELECT email, role, profile_picture FROM admins ORDER BY email")
             admins = cur.fetchall()
-            return [{"email": admin[0], "role": admin[1]} for admin in admins]
+            return [{"email": admin[0], "role": admin[1], "profile_picture": admin[2]} for admin in admins]
         finally:
             cur.close()
 
+
     @staticmethod
-    def add(email, role):
+    def add(email, role, profile_picture=None):
         """Add a new admin."""
         conn = g.db_conn
         cur = conn.cursor()
         try:
-            cur.execute("INSERT INTO admins (email, role) VALUES (%s, %s)", (email, role))
+            cur.execute("INSERT INTO admins (email, role, profile_picture) VALUES (%s, %s, %s)", (email, role, profile_picture))
             conn.commit()
             return True
         except Exception as e:
@@ -76,9 +78,10 @@ class Admin:
         finally:
             cur.close()
 
+
     @staticmethod
     def update(email, role):
-        """Update an admin's role."""
+        """Update an admin's role"""
         conn = g.db_conn
         cur = conn.cursor()
         try:
@@ -100,16 +103,17 @@ class Admin:
         finally:
             cur.close()
 
+
     @staticmethod
     def get_by_email(email):
         """Fetch an admin by email."""
         conn = g.db_conn
         cur = conn.cursor()
         try:
-            cur.execute("SELECT email, role FROM admins WHERE email = %s", (email,))
+            cur.execute("SELECT email, role, profile_picture FROM admins WHERE email = %s", (email,))
             admin = cur.fetchone()
             if admin:
-                return {"email": admin[0], "role": admin[1]}
+                return {"email": admin[0], "role": admin[1], "profile_picture": admin[2]}
             return None
         finally:
             cur.close()

@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { getCSRFToken } from "../../utils/csrf";
 
-const AssignDropdown = ({ requestId, onAssign, onToggleOpen }) => {
+
+const AssignDropdown = ({ requestId, onAssign, onToggleOpen, assignedAdminId, assignedAdminProfilePicture }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [admins, setAdmins] = useState([]);
   const [filteredAdmins, setFilteredAdmins] = useState([]);
@@ -66,17 +67,37 @@ const AssignDropdown = ({ requestId, onAssign, onToggleOpen }) => {
     onToggleOpen(false);
   };
 
+
   return (
     <div className="relative" ref={dropdownRef}>
       <div
-        className="w-6 h-6 bg-gray-300 rounded-full cursor-pointer hover:bg-gray-400 transition-colors"
+        className="w-6 h-6 cursor-pointer hover:bg-gray-400 transition-colors flex items-center justify-center"
         onClick={(e) => {
           e.stopPropagation();
           const newIsOpen = !isOpen;
           setIsOpen(newIsOpen);
           onToggleOpen(newIsOpen);
         }}
-      ></div>
+      >
+        {assignedAdminProfilePicture ? (
+          <img 
+            src={assignedAdminProfilePicture} 
+            alt="Assigned Admin"
+            className="w-6 h-6 rounded-full object-cover border border-gray-200"
+            onError={(e) => {
+              e.target.style.display = 'none';
+              e.target.nextSibling.style.display = 'flex';
+            }}
+          />
+        ) : null}
+        <div 
+          className={`w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 text-xs font-medium ${
+            assignedAdminProfilePicture ? 'hidden' : 'flex'
+          }`}
+        >
+          {assignedAdminId ? assignedAdminId.charAt(0).toUpperCase() : '+'}
+        </div>
+      </div>
 
       {isOpen && (
         <div className="absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50">

@@ -141,6 +141,7 @@ def ready_document_requirements_table():
 
 
 
+
 def ready_requests_table():
    query = """
    CREATE TABLE IF NOT EXISTS requests (
@@ -158,10 +159,24 @@ def ready_requests_table():
        remarks VARCHAR(255),
        order_type varchar(20),
        college_code VARCHAR(20),
-       admin_fee_amount NUMERIC(10,2) DEFAULT 0.00
+       admin_fee_amount NUMERIC(10,2) DEFAULT 0.00,
+       payment_reference VARCHAR(255),
+       payment_type VARCHAR(200)
    )
    """
    execute_query(query)
+
+   # Add payment_reference column if it doesn't exist
+   alter_query_payment_reference = """
+   ALTER TABLE requests ADD COLUMN IF NOT EXISTS payment_reference VARCHAR(255)
+   """
+   execute_query(alter_query_payment_reference)
+
+   # Add payment_type column if it doesn't exist
+   alter_query_payment_type = """
+   ALTER TABLE requests ADD COLUMN IF NOT EXISTS payment_type VARCHAR(200)
+   """
+   execute_query(alter_query_payment_type)
 
 
 #mapping table between requests and requested documents for each request and quantity
@@ -241,11 +256,13 @@ def ready_fee_table():
    execute_query(query)
 
 
+
 def ready_admins_table():
    query = """
    CREATE TABLE IF NOT EXISTS admins (
        email VARCHAR(100) PRIMARY KEY,
-       role VARCHAR(50) NOT NULL
+       role VARCHAR(50) NOT NULL,
+       profile_picture VARCHAR(500)
    )
    """
    execute_query(query)
