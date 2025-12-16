@@ -1,3 +1,4 @@
+
 from os import getenv
 
 FLASK_SECRET_KEY = getenv("FLASK_SECRET_KEY")
@@ -12,3 +13,6 @@ GOOGLE_CLIENT_ID = getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = getenv("GOOGLE_CLIENT_SECRET")
 SUPABASE_URL = getenv("SUPABASE_URL")
 SUPABASE_ANON_KEY = getenv("SUPABASE_ANON_KEY")
+
+# Frontend configuration
+FRONTEND_URL = getenv("FRONTEND_URL", "http://localhost:3000")

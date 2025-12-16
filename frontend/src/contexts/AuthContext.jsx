@@ -27,6 +27,7 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
 
+
   /**
    * Fetch current user information and role
    */
@@ -46,23 +47,28 @@ export const AuthProvider = ({ children }) => {
         setUser(userData);
         setRole(normalizeRole(userData.role));
         setIsAuthenticated(true);
+        console.log('User authentication successful:', userData);
+        return true;
       } else if (response.status === 401) {
         // Token expired or invalid, clear authentication state
         setUser(null);
         setRole(null);
         setIsAuthenticated(false);
         console.log('Authentication token expired or invalid');
+        return false;
       } else {
         // User not authenticated or token invalid
         setUser(null);
         setRole(null);
         setIsAuthenticated(false);
+        return false;
       }
     } catch (error) {
       console.error('Error fetching current user:', error);
       setUser(null);
       setRole(null);
       setIsAuthenticated(false);
+      return false;
     } finally {
       setIsLoading(false);
     }
