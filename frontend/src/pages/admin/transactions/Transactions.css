@@ -523,23 +523,27 @@
 }
 
 .th-request-id {
-  width: 10%;
+  width: 15%;
 }
 
 .th-user {
-  width: 35%;
+  width: 30%;
 }
 
 .th-student-id {
-  width: 12%;
+  width: 15%;
 }
 
 .th-amount {
   width: 10%;
 }
 
+.th-type {
+  width: 10%;
+}
+
 .th-date {
-  width: 33%;
+  width: 20%;
 }
 
 /* --- Search Bar in Toolbar --- */
@@ -617,6 +621,15 @@
   white-space: nowrap;
   font-size: 0.875rem;
   font-weight: 600;
+  color: var(--color-black);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.td-type {
+  padding: 0.5rem 1rem;
+  white-space: nowrap;
+  font-size: 0.875rem;
   color: var(--color-black);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -827,9 +840,14 @@
   width: 10%;
 }
 
-.transactions-page.print-mode .td-date,
+.transactions-page.print-mode .td-type,
 .transactions-page.print-mode .transactions-table th:nth-child(5) {
-  width: 30%;
+  width: 10%;
+}
+
+.transactions-page.print-mode .td-date,
+.transactions-page.print-mode .transactions-table th:nth-child(6) {
+  width: 20%;
 }
 
 .transactions-page.print-mode .td-request-id,

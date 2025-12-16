@@ -418,6 +418,7 @@ class ManageRequestModel:
         finally:
             cur.close()
 
+
     @staticmethod
     def is_assigned(request_id):
         """Check if a request is assigned."""
@@ -431,6 +432,26 @@ class ManageRequestModel:
             """, (request_id,))
             count = cur.fetchone()[0]
             return count > 0
+        finally:
+            cur.close()
+
+    @staticmethod
+    def get_admin_info_by_request_id(request_id):
+        """Get the admin information assigned to a specific request."""
+        conn = g.db_conn
+        cur = conn.cursor()
+        try:
+            cur.execute("""
+                SELECT admin_id
+                FROM request_assignments 
+                WHERE request_id = %s
+            """, (request_id,))
+            result = cur.fetchone()
+            if result:
+                return {
+                    "admin_id": result[0],
+                }
+            return None
         finally:
             cur.close()
 
@@ -621,7 +642,7 @@ class ManageRequestModel:
         cur = conn.cursor()
         try:
             cur.execute("""
-                SELECT request_id, student_id, full_name, contact_number, email, preferred_contact, status, requested_at, remarks, total_cost, payment_status, college_code
+                SELECT request_id, student_id, full_name, contact_number, email, preferred_contact, status, requested_at, remarks, total_cost, payment_status, college_code, order_type, payment_date
                 FROM requests
                 WHERE request_id = %s
             """, (request_id,))
@@ -642,7 +663,9 @@ class ManageRequestModel:
                 "remarks": req[8],
                 "total_cost": req[9],
                 "payment_status": req[10],
-                "college_code": req[11]
+                "college_code": req[11],
+                "pickup_option": req[12],
+                "payment_date":req[13]
             }
 
             # Check if request exists in auth_letters table to determine requester type

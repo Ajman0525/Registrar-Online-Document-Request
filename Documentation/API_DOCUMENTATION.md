@@ -31,6 +31,21 @@ The API uses JWT (JSON Web Tokens) for authentication with the following methods
 
 All API endpoints accept and return JSON data unless otherwise specified.
 
+
+---
+
+## User Landing API
+
+### GET `/user/landing`
+Get user landing page.
+
+**Response (Success - 200):**
+```json
+{
+    "status": "success"
+}
+```
+
 ---
 
 ## User Authentication API
@@ -479,8 +494,9 @@ Get paginated requests with filtering options.
 ### GET `/api/admin/my-requests`
 Get requests assigned to current admin.
 
-### PUT `/api/admin/>/status`
-Updaterequests/<request_id request status.
+
+### PUT `/api/admin/requests/<request_id>/status`
+Update request status.
 
 **Request Body:**
 ```json
@@ -575,8 +591,19 @@ Get current admin's assignment progress.
 ### GET `/api/admin/admins-progress`
 Get all admins' assignment progress.
 
+
 ### GET `/api/admin/admin-requests/<admin_id>`
 Get requests assigned to specific admin.
+
+### GET `/api/admin/request-admin/<request_id>`
+Get the admin information assigned to a specific request.
+
+**Response (Success - 200):**
+```json
+{
+    "admin_id": "admin@g.msuiit.edu.ph"
+}
+```
 
 ### GET `/api/admin/admin-max-requests/<admin_id>`
 Get admin's maximum requests limit.

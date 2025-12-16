@@ -537,6 +537,7 @@ def toggle_others_document_status(request_id, doc_id):
         return jsonify({"error": str(e)}), 500
 
 
+
 @manage_request_bp.route("/api/admin/requests/filters", methods=["GET"])
 @jwt_required()
 def get_requests_filters():
@@ -563,5 +564,21 @@ def get_requests_filters():
             "requester_types": ["Student", "Outsider"],
             "others_docs_options": ["Has Others Documents", "No Others Documents"]
         }), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@manage_request_bp.route("/api/admin/request-admin/<request_id>", methods=["GET"])
+@jwt_required()
+def get_request_admin(request_id):
+    """
+    Get the admin information assigned to a specific request.
+    """
+    try:
+        admin_info = ManageRequestModel.get_admin_info_by_request_id(request_id)
+        if admin_info:
+            return jsonify(admin_info), 200
+        else:
+            return jsonify({"error": "Request not found or not assigned to any admin"}), 404
     except Exception as e:
         return jsonify({"error": str(e)}), 500
