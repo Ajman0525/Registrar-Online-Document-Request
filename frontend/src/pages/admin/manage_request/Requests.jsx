@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { DndProvider, useDrag, useDrop } from "react-dnd";
@@ -7,10 +8,12 @@ import { getCSRFToken } from "../../../utils/csrf";
 import { useAuth } from "../../../contexts/AuthContext";
 
 import StatusChangeConfirmModal from "../../../components/admin/StatusChangeConfirmModal";
+import StatusRestrictionModal from "../../../components/admin/StatusRestrictionModal";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
 import ReqSearchbar from "../../../components/admin/ReqSearchbar";
 import AssignDropdown from "../../../components/admin/AssignDropdown";
 import ButtonLink from "../../../components/common/ButtonLink";
+import { validateStatusTransition } from "../../../utils/statusRestrictions";
 import "./Requests.css";
 
 // =======================================
@@ -116,11 +119,17 @@ export default function AdminRequestsDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+
   const [statusChangeRequest, setStatusChangeRequest] = useState(null);
   const [newStatus, setNewStatus] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRequests, setTotalRequests] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+  const [restrictionModal, setRestrictionModal] = useState({
+    isOpen: false,
+    restriction: null,
+    request: null
+  });
 
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -197,15 +206,33 @@ export default function AdminRequestsDashboard() {
     }
   };
 
+
   const handleDropRequest = (id, uiLabel) => {
     const request = requests.find((r) => r.request_id === id);
+    if (!request) return;
+
     const backendCode = STATUS_MAP[uiLabel];
+    const currentBackendStatus = request.status;
+    
+    // Validate the status transition using the comprehensive restriction system
+    const validation = validateStatusTransition(currentBackendStatus, backendCode, request);
+    
+    if (!validation.isValid) {
+      // Show restriction modal instead of allowing invalid transition
+      setRestrictionModal({
+        isOpen: true,
+        restriction: validation,
+        request: request
+      });
+      return;
+    }
 
     // Adjust payment status for Unpaid and Ready columns only
     const paymentStatus =
       uiLabel === "Unpaid" ? false : uiLabel === "Ready" ? true : request.paymentStatus;
 
-    if (request && (request.status !== backendCode || request.paymentStatus !== paymentStatus)) {
+    // Only proceed if the status or payment status actually changed
+    if (request.status !== backendCode || request.paymentStatus !== paymentStatus) {
       setStatusChangeRequest(request);
       setNewStatus({ status: backendCode, payment_status: paymentStatus });
     }
@@ -248,6 +275,7 @@ export default function AdminRequestsDashboard() {
     navigate(`/admin/Requests/${request.request_id}`);
   };
 
+
   const handleAssignRequest = async (requestId, adminId) => {
     try {
       const res = await fetch("/api/admin/manual-assign", {
@@ -270,6 +298,21 @@ export default function AdminRequestsDashboard() {
       console.error("Error assigning request:", err);
       alert("Error assigning request");
     }
+  };
+
+  const handleRestrictionModalClose = () => {
+    setRestrictionModal({
+      isOpen: false,
+      restriction: null,
+      request: null
+    });
+  };
+
+  const handleViewRequestDetails = (request) => {
+    if (request) {
+      navigate(`/admin/Requests/${request.request_id}`);
+    }
+    handleRestrictionModalClose();
   };
 
   if (loading) return <LoadingSpinner message="Loading requests..." />;
@@ -452,6 +495,7 @@ export default function AdminRequestsDashboard() {
 
 
 
+
       {statusChangeRequest && (
         <StatusChangeConfirmModal
           request={statusChangeRequest}
@@ -460,6 +504,15 @@ export default function AdminRequestsDashboard() {
           onCancel={() => setStatusChangeRequest(null)}
         />
       )}
+
+      {/* Status Restriction Modal */}
+      <StatusRestrictionModal
+        isOpen={restrictionModal.isOpen}
+        restriction={restrictionModal.restriction}
+        request={restrictionModal.request}
+        onClose={handleRestrictionModalClose}
+        onViewDetails={handleViewRequestDetails}
+      />
     </DndProvider>
   );
 }
