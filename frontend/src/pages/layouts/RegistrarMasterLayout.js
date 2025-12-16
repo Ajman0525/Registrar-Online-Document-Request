@@ -40,12 +40,17 @@ function RegistrarMasterLayout() {
     }
   };
 
-  // Get user display name from email
   const getDisplayName = () => {
     if (user?.email) {
-      const emailName = user.email.split('@')[0];
-      // Capitalize first letter and replace dots with spaces
-      return emailName.charAt(0).toUpperCase() + emailName.slice(1).replace('.', ' ');
+      const emailName = user.email.split("@")[0];
+
+      const parts = emailName.split(".");
+
+      const capitalizedParts = parts.map((part) => {
+        if (!part) return "";
+        return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+      });
+      return capitalizedParts.join(" ");
     }
     return "Administrator";
   };
