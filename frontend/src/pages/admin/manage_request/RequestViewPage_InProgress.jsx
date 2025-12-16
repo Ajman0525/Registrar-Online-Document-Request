@@ -386,8 +386,10 @@ const RequestViewPage_InProgress = ({ request, onRefresh }) => {
     <div className="request-view-wrapper">
       {/* LEFT PANEL */}
       <div className="left-panel-card">
-        <h1 className="request-username">{request.full_name}</h1>
-        <p className="student-id">{request.student_id || "N/A"}</p>
+        <div className="student-info-section">
+          <h1 className="request-username">{request.full_name}</h1>
+          <p className="student-id">{request.student_id || "N/A"}</p>
+        </div>
 
 
 
@@ -432,12 +434,12 @@ const RequestViewPage_InProgress = ({ request, onRefresh }) => {
           {request.uploaded_files?.length ? (
             request.uploaded_files.map((file, index) => (
               <div key={index} className="uploaded-file-row">
-                <span>{file.requirement || file.requirement_name}</span>
+                <span className="uploaded-file-name">{file.requirement || file.requirement_name}</span>
                 <button className="view-btn" onClick={() => window.open(file.file_path || file.url)}>View</button>
               </div>
             ))
           ) : (
-            <p>No uploaded files</p>
+            <p className="null-text">No uploaded files</p>
           )}
         </section>
 
@@ -474,7 +476,7 @@ const RequestViewPage_InProgress = ({ request, onRefresh }) => {
               </div>
             ))
           ) : (
-            <p>No other documents</p>
+            <p className="null-text">No other documents</p>
           )}
         </section>
 
@@ -517,7 +519,7 @@ const RequestViewPage_InProgress = ({ request, onRefresh }) => {
               ))}
             </div>
           ) : (
-            <p>No changes recorded for this request</p>
+            <p className="null-text">No changes recorded for this request</p>
           )}
         </section>
 
@@ -542,7 +544,7 @@ const RequestViewPage_InProgress = ({ request, onRefresh }) => {
         <section className="section-block">
           <h2>Preferred Contact</h2>
           <hr />
-          <p>{request.preferred_contact}</p>
+          <p className="null-text">{request.preferred_contact}</p>
         </section>
 
         {/* Price */}

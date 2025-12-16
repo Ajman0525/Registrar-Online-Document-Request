@@ -10,7 +10,6 @@ import StatusChangeConfirmModal from "../../../components/admin/StatusChangeConf
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
 import ReqSearchbar from "../../../components/admin/ReqSearchbar";
 import AssignDropdown from "../../../components/admin/AssignDropdown";
-import ButtonLink from "../../../components/common/ButtonLink";
 import "./Requests.css";
 
 // =======================================
@@ -46,7 +45,7 @@ const RequestCard = ({ request, onClick, onAssign }) => {
     <div
       ref={drag}
       onClick={() => !isAssigning && onClick(request)}
-      className={`bg-white rounded-xl p-4 mb-4 shadow-sm border border-gray-200 ${isAssigning ? 'cursor-not-allowed' : 'cursor-pointer'} transition
+      className={`column-item ${isAssigning ? 'cursor-not-allowed' : 'cursor-pointer'} transition
       ${isDragging ? "opacity-50" : "opacity-100"}`}
     >
       <div className="text-gray-900 font-medium">
@@ -74,7 +73,7 @@ const StatusColumn = ({ title, requests, onDropRequest, uiLabel, onCardClick, on
   return (
     <div
       ref={drop}
-      className="w-64 bg-white rounded-2xl shadow-sm p-4 flex flex-col"
+      className="box-columns"
     >
       <div className="flex items-center justify-between mb-4">
         <div className="font-semibold text-gray-800 flex items-center gap-2">
@@ -85,7 +84,7 @@ const StatusColumn = ({ title, requests, onDropRequest, uiLabel, onCardClick, on
         </div>
       </div>
 
-      <div className="flex flex-col">
+      <div className="column-items">
         {requests.map((r) => (
           <RequestCard key={r.request_id} request={r} onClick={onCardClick} onAssign={onAssign} />
         ))}
@@ -289,52 +288,74 @@ export default function AdminRequestsDashboard() {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="manage-requests-page">
-        {/* Top title + search */}
-        <h1 className="title">Manage Request</h1>
+      <div className="requests-page">
+        <h1 className="title">Manage Requests</h1>
+        {/* Role-based notice for staff users */}
+        {role === 'staff' && (
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-center gap-2 text-blue-800">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+              </svg>
+              <span className="font-medium">You are viewing your assigned tasks only</span>
+            </div>
+          </div>
+        )}
 
         {/* Filter buttons */}
-        <div className="toolbar">
-          <div className="filter-buttons-continer">
-            <ButtonLink
+        <div className="request-toolbar">
+
+          <ReqSearchbar onSearch={(value) => {
+            setSearchQuery(value);
+            setCurrentPage(1);
+            fetchRequests(1, value, viewMode);
+          }} />
+
+          {/* Only show "All View" button for non-staff users */}
+          {role !== 'staff' && (
+            <button
               onClick={() => {
-                setViewMode('all');
-                setSearchQuery('');
-                setCurrentPage(1);
-                fetchRequests(1, '', 'all');
+                if (role !== 'staff') { // Double-check role before switching
+                  setViewMode('all');
+                  setSearchQuery('');
+                  setCurrentPage(1);
+                  fetchRequests(1, '', 'all');
+                }
               }}
-              placeholder="All View"
-              variant="secondary"
-              className="filter-button"
+              className={`square-button ${viewMode === 'all' ? 'selected' : ''}`}
             >
-            </ButtonLink>
-            <ButtonLink
+              <img src={ viewMode === 'all' ? "/assets/GlobeWhite.svg": "/assets/GlobeBlack.svg"} alt=" Globe Icon"/>
+              <p>All</p>
+            </button>
+          )}
+            <button
               onClick={() => {
                 setViewMode('my');
                 setSearchQuery('');
                 setCurrentPage(1);
                 fetchRequests(1, '', 'my');
               }}
-              placeholder="My Task"
-              variant="secondary"
+              className={`square-button ${viewMode === 'my' ? 'selected' : ''}`}
             >
-            </ButtonLink>
-            <ButtonLink
+              <img src={ viewMode === 'my' ? "/assets/UserWhite.svg": "/assets/UserBlack.svg"} alt="User Icon"/>
+              <p>Mine</p>
+            </button>
+          {/* Only show "Assign Requests" button for non-staff users */}
+          {role !== 'staff' && (
+            <button
               onClick={() => navigate('/admin/AssignRequests')}
-              placeholder={"Auto Assign"}
-              variant="secondary"
+              className="square-button"
+              id="assign-requests-button"
             >
-            </ButtonLink>
-          </div>
-          <ReqSearchbar onSearch={(value) => {
-              setSearchQuery(value);
-              setCurrentPage(1);
-              fetchRequests(1, value, viewMode);
-            }} />
+              <img src="/assets/Tag.svg" alt="Tag Icon" />
+              <p>Assign</p>
+            </button>
+          )}
+
+
         </div>
         {/* Filter Controls */}
-        <div className="p-4 bg-white rounded-lg shadow-sm border border-gray-200">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="filter-controls">
             {/* College Code Filter */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">College Code</label>
@@ -366,15 +387,15 @@ export default function AdminRequestsDashboard() {
 
             {/* Others Documents Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Request Type</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Others Documents</label>
               <select
                 value={hasOthersDocsFilter}
                 onChange={(e) => setHasOthersDocsFilter(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">All Requests</option>
-                <option value="true">With Others Documents</option>
-                <option value="false">Without Others Documents</option>
+                <option value="true">Has Others Documents</option>
+                <option value="false">No Others Documents</option>
               </select>
             </div>
 
@@ -382,22 +403,23 @@ export default function AdminRequestsDashboard() {
             <div className="flex items-end gap-2">
               <button
                 onClick={applyFilters}
-                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+                className="square-button"
+                id="filter-button-apply"
               >
                 Apply Filters
               </button>
               <button
                 onClick={clearFilters}
-                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors"
+                className="square-button"
+                id="filter-button-clear"
               >
                 Clear
               </button>
             </div>
-          </div>
         </div>
 
         {/* Columns */}
-        <div className="flex gap-6 overflow-x-auto">
+        <div className="box-columns-container">
           {UI_STATUSES.map((label) => (
             <StatusColumn
               key={label}

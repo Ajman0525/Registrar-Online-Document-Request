@@ -217,8 +217,10 @@ const RequestViewPage_Pending = ({ request, onRefresh }) => {
   return (
     <div className="request-view-wrapper">
       <div className="left-panel-card">
-        <h1 className="request-username">{request.full_name}</h1>
-        <p className="student-id">{request.student_id || "N/A"}</p>
+        <div className="student-info-section">
+          <h1 className="request-username">{request.full_name}</h1>
+          <p className="student-id">{request.student_id || "N/A"}</p>
+        </div> 
 
 
         {/* Selected Documents */}
@@ -228,14 +230,14 @@ const RequestViewPage_Pending = ({ request, onRefresh }) => {
           {request.documents?.length ? (
             request.documents.map((doc, index) => (
               <div key={index} className="document-row">
-                <span>{doc.name} {doc.quantity}x</span>
+                <span className="document-name">{doc.name} {doc.quantity}x</span>
                 {doc.requires_payment_first && (
                   <span className="payment-required-badge">Payment Required</span>
                 )}
               </div>
             ))
           ) : (
-            <p>No selected documents</p>
+            <p className="null-text">No selected documents</p>
           )}
         </section>
 
@@ -246,10 +248,10 @@ const RequestViewPage_Pending = ({ request, onRefresh }) => {
           <hr />
           {request.uploaded_files?.length ? (
             request.uploaded_files.map((file, index) => (
-              <p key={index}>{file.requirement}</p>
+              <p key={index} className="uploaded-file-name">{file.requirement}</p>
             ))
           ) : (
-            <p>No uploaded files</p>
+            <p className="null-text">No uploaded files</p>
           )}
         </section>
 
@@ -273,7 +275,7 @@ const RequestViewPage_Pending = ({ request, onRefresh }) => {
               </div>
             ))
           ) : (
-            <p>No other documents</p>
+            <p className="null-text">No other documents</p>
           )}
         </section>
 
@@ -340,7 +342,7 @@ const RequestViewPage_Pending = ({ request, onRefresh }) => {
         <section className="section-block">
           <h2>Preferred Contact</h2>
           <hr />
-          <p>{request.preferred_contact}</p>
+          <p className="preferred-contact">{request.preferred_contact}</p>
         </section>
 
         {/* Price */}
