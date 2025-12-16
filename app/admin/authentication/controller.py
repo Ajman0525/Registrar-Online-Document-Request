@@ -39,7 +39,9 @@ def google_login():
        CLIENT_ID = GOOGLE_CLIENT_ID
        id_info = id_token.verify_oauth2_token(token, google_requests.Request(), CLIENT_ID)
 
+
        email = id_info['email']
+       profile_picture = id_info['picture']
 
     # Check if email is authorized (e.g., domain check)
        if not email.endswith('@g.msuiit.edu.ph'):
@@ -47,10 +49,11 @@ def google_login():
 
        # Check if email is in admins table
        admin = Admin.get_by_email(email)
+
        if not admin:
-           # Add email with role "none"
-           Admin.add(email, "none")
-           current_app.logger.info(f"New admin {email} added with role 'none'")
+           # Add email with role "none" and profile picture
+           Admin.add(email, "none", profile_picture)
+           current_app.logger.info(f"New admin {email} added with role 'none' and profile picture")
            return jsonify({"message": "Account created. Waiting for admin approval.", "redirect": "/admin/waiting"}), 201
 
        # Check if role is "none"
@@ -144,6 +147,7 @@ def get_current_user():
         current_email = get_jwt_identity()
         admin = Admin.get_by_email(current_email)
         
+
         if admin:
             return jsonify({
                 "email": admin['email'],

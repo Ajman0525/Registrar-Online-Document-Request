@@ -30,6 +30,7 @@ const UI_STATUSES = Object.keys(STATUS_MAP);
 // =======================================
 // Card Component
 // =======================================
+
 const RequestCard = ({ request, onClick, onAssign }) => {
   const [isAssigning, setIsAssigning] = useState(false);
   const [{ isDragging }, drag] = useDrag(() => ({
@@ -56,7 +57,13 @@ const RequestCard = ({ request, onClick, onAssign }) => {
       <div className="text-gray-400 text-sm">{date}</div>
 
       <div className="flex justify-end mt-2">
-        <AssignDropdown requestId={request.request_id} onAssign={onAssign} onToggleOpen={setIsAssigning} />
+        <AssignDropdown 
+          requestId={request.request_id} 
+          onAssign={onAssign} 
+          onToggleOpen={setIsAssigning}
+          assignedAdminId={request.assigned_admin_id}
+          assignedAdminProfilePicture={request.assigned_admin_profile_picture}
+        />
       </div>
     </div>
   );

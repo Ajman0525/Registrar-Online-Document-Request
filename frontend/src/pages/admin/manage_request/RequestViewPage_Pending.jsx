@@ -497,6 +497,7 @@ const RequestViewPage_Pending = ({ request, onRefresh }) => {
               {admins.map((admin) => {
                 const isAtCapacity = admin.total >= admin.max_requests;
                 return (
+
                   <div
                     key={admin.admin_id}
                     className={`p-3 border rounded cursor-pointer ${
@@ -508,8 +509,28 @@ const RequestViewPage_Pending = ({ request, onRefresh }) => {
                     }`}
                     onClick={() => !isAtCapacity && setSelectedAdmin(admin.admin_id)}
                   >
-                    <div className="flex justify-between items-center">
-                      <div>
+                    <div className="flex items-center space-x-3">
+                      <div className="flex-shrink-0">
+                        {admin.profile_picture ? (
+                          <img 
+                            src={admin.profile_picture} 
+                            alt={`${admin.admin_id} profile`}
+                            className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                              e.target.nextSibling.style.display = 'flex';
+                            }}
+                          />
+                        ) : null}
+                        <div 
+                          className={`w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 font-medium ${
+                            admin.profile_picture ? 'hidden' : 'flex'
+                          }`}
+                        >
+                          {admin.admin_id.charAt(0).toUpperCase()}
+                        </div>
+                      </div>
+                      <div className="flex-grow">
                         <div className="font-medium">{admin.admin_id}</div>
                         <div className="text-sm text-gray-600">
                           {admin.completed} / {admin.total} requests completed

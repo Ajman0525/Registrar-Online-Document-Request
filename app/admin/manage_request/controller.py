@@ -360,9 +360,11 @@ def get_admins_progress():
     try:
         conn = g.db_conn
         cur = conn.cursor()
-        # Single query to get all admins' progress and max_requests
+
+        # Single query to get all admins' progress, max_requests, and profile pictures
         cur.execute("""
             SELECT a.email,
+                   a.profile_picture,
                    COALESCE(asp.value::int, 10) as max_requests,
                    COALESCE(prog.total, 0) as total,
                    COALESCE(prog.completed, 0) as completed
@@ -378,12 +380,14 @@ def get_admins_progress():
             ) prog ON a.email = prog.admin_id
             ORDER BY a.email
         """)
+
         admins_progress = [
             {
                 "admin_id": row[0],
-                "completed": row[3],
-                "total": row[2],
-                "max_requests": row[1]
+                "profile_picture": row[1],
+                "completed": row[4],
+                "total": row[3],
+                "max_requests": row[2]
             }
             for row in cur.fetchall()
         ]

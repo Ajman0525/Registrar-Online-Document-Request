@@ -56,12 +56,16 @@ class ManageRequestModel:
             else:
                 join_assignments = ""
 
+
             cur.execute(f"""
                 SELECT r.request_id, r.student_id, r.full_name, r.contact_number, r.email,
                        r.preferred_contact, r.status, r.requested_at,r.remarks,
-                       r.total_cost, r.payment_status
+                       r.total_cost, r.payment_status,
+                       ra.admin_id as assigned_admin_id,
+                       a.profile_picture as assigned_admin_profile_picture
                 FROM requests r
-                {join_assignments}
+                LEFT JOIN request_assignments ra ON r.request_id = ra.request_id
+                LEFT JOIN admins a ON ra.admin_id = a.email
                 {where_sql}
                 ORDER BY r.requested_at DESC
                 LIMIT %s OFFSET %s
@@ -145,6 +149,7 @@ class ManageRequestModel:
                     "timestamp": ts.strftime("%Y-%m-%d %H:%M:%S") if ts else None
                 }
 
+
             # --------------------------
             # 8. Assemble results
             # --------------------------
@@ -163,6 +168,8 @@ class ManageRequestModel:
                     "remarks": r[8],
                     "total_cost": r[9],
                     "payment_status": r[10],
+                    "assigned_admin_id": r[11],
+                    "assigned_admin_profile_picture": r[12],
                     "documents": docs_map[rid],
                     "requirements": reqs_map[rid],
                     "uploaded_files": files_map[rid],

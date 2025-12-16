@@ -562,10 +562,16 @@ const RequestViewPage_InProgress = ({ request, onRefresh }) => {
 
         <div className="details-grid">
 
+
           <div className="details-item">
             <span>Assignee</span>
             <span className="assignee-tag">
-              <div className="avatar-icon">👤</div> {assigneeInfo?.admin_id.split("@")[0] || "Loading..."}
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 font-medium">
+                  {assigneeInfo?.admin_id ? assigneeInfo.admin_id.charAt(0).toUpperCase() : '?'}
+                </div>
+                <span>{assigneeInfo?.admin_id?.split("@")[0] || "Loading..."}</span>
+              </div>
             </span>
           </div>
 

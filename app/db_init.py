@@ -241,11 +241,13 @@ def ready_fee_table():
    execute_query(query)
 
 
+
 def ready_admins_table():
    query = """
    CREATE TABLE IF NOT EXISTS admins (
        email VARCHAR(100) PRIMARY KEY,
-       role VARCHAR(50) NOT NULL
+       role VARCHAR(50) NOT NULL,
+       profile_picture VARCHAR(500)
    )
    """
    execute_query(query)
