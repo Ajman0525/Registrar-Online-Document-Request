@@ -26,7 +26,7 @@ def create_app(test_config=None):
     load_dotenv()
 
     #in production
-    app = Flask(__name__, instance_relative_config=True, static_folder="static/react", template_folder="templates")
+    app = Flask(__name__, instance_relative_config=True, static_folder="static/react",  template_folder="static/react" )
   
     #in development
     #app = Flask(__name__, static_folder="../frontend/build/static", template_folder="../frontend/")
@@ -145,9 +145,9 @@ def create_app(test_config=None):
     @app.route("/", defaults={"path": ""})
     @app.route("/<path:path>")
     def serve_react(path):
-        if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
+        if path and os.path.exists(os.path.join(app.static_folder, path)):
             return send_from_directory(app.static_folder, path)
-        return render_template("index.html")
-    
+        return send_from_directory(app.template_folder, "index.html")
+
     register_error_handlers(app)
     return app
