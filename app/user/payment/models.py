@@ -106,7 +106,7 @@ class Payment:
             # Update payment status
             if docs_to_update:
                 placeholders = ','.join(['%s'] * len(docs_to_update))
-                query = f"UPDATE request_documents SET payment_status = TRUE WHERE request_id = %s AND doc_id IN ({placeholders})"
+                query = f"UPDATE request_documents SET payment_status = TRUE, payment_date = (NOW() AT TIME ZONE 'UTC' + INTERVAL '8 HOURS') WHERE request_id = %s AND doc_id IN ({placeholders})"
                 cur.execute(query, [tracking_number] + docs_to_update)
             
             # 2. Check if all documents are paid before updating main request
