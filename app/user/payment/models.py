@@ -106,8 +106,12 @@ class Payment:
             # Update payment status
             if docs_to_update:
                 placeholders = ','.join(['%s'] * len(docs_to_update))
-                query = f"UPDATE request_documents SET payment_status = TRUE WHERE request_id = %s AND doc_id IN ({placeholders})"
+                query = f"UPDATE request_documents SET payment_status = TRUE, payment_date = (NOW() AT TIME ZONE 'UTC' + INTERVAL '8 HOURS') WHERE request_id = %s AND doc_id IN ({placeholders})"
                 cur.execute(query, [tracking_number] + docs_to_update)
+                
+                # If admin fee was included in this payment, ensure it is recorded in the requests table
+                if include_admin_fee:
+                    cur.execute("UPDATE requests SET admin_fee_amount = %s WHERE request_id = %s", (admin_fee, tracking_number))
             
             # 2. Check if all documents are paid before updating main request
             cur.execute("SELECT COUNT(*) FROM request_documents WHERE request_id = %s AND payment_status = FALSE", (tracking_number,))
@@ -262,7 +266,7 @@ class Payment:
             placeholders = ','.join(['%s'] * len(doc_ids))
             query = f"""
                 UPDATE request_documents
-                SET payment_status = TRUE
+                SET payment_status = TRUE, payment_date = (NOW() AT TIME ZONE 'UTC' + INTERVAL '8 HOURS')
                 WHERE request_id = %s AND doc_id IN ({placeholders})
             """
             
