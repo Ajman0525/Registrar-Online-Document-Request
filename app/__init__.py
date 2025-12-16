@@ -149,5 +149,13 @@ def create_app(test_config=None):
             return send_from_directory(app.static_folder, path)
         return send_from_directory(app.template_folder, "index.html")
 
+
+    @app.after_request
+    def set_coop_headers(response):
+        # Needed for Google Sign-In popup to communicate via postMessage
+        response.headers["Cross-Origin-Opener-Policy"] = "same-origin-allow-popups"
+        response.headers["Cross-Origin-Embedder-Policy"] = "unsafe-none"
+        return response
+
     register_error_handlers(app)
     return app
