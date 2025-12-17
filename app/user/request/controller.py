@@ -45,6 +45,7 @@ def check_request_allowed():
     """
     return jsonify({"allowed": True}), 200
 
+
 @request_bp.route("/api/public/request-status", methods=["GET"])
 def get_public_request_status():
     """
@@ -53,7 +54,7 @@ def get_public_request_status():
     """
     try:
         from app.utils.decorator import is_request_allowed
-        from app.admin.settings.models import OpenRequestRestriction
+        from app.admin.settings.models import OpenRequestRestriction, AvailableDates
         
         # Get current restriction status
         allowed = is_request_allowed()
@@ -61,7 +62,15 @@ def get_public_request_status():
         # Get current settings for display
         settings = OpenRequestRestriction.get_settings()
         
-        # Return both status and settings for frontend display
+        # Get today's date restriction info
+        import datetime
+        today = datetime.datetime.now().strftime('%Y-%m-%d')
+        today_availability = AvailableDates.is_date_available(today)
+        
+        # Get upcoming date restrictions
+        upcoming_restrictions = AvailableDates.get_upcoming_restrictions(30)
+        
+        # Return enhanced status with date information
         return jsonify({
             "allowed": allowed,
             "settings": settings or {
@@ -69,6 +78,12 @@ def get_public_request_status():
                 "end_time": "17:00:00", 
                 "available_days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
                 "announcement": ""
+            },
+            "date_info": {
+                "today": today,
+                "today_available": today_availability,
+                "has_today_restriction": today_availability is not None,
+                "upcoming_restrictions": upcoming_restrictions
             }
         }), 200
         
@@ -82,6 +97,12 @@ def get_public_request_status():
                 "end_time": "17:00:00",
                 "available_days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
                 "announcement": ""
+            },
+            "date_info": {
+                "today": datetime.datetime.now().strftime('%Y-%m-%d'),
+                "today_available": None,
+                "has_today_restriction": False,
+                "upcoming_restrictions": []
             },
             "error": "Could not fetch current restriction status"
         }), 200

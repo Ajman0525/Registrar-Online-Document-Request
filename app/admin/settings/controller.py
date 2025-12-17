@@ -1,8 +1,9 @@
 
+
 from . import settings_bp
 from flask import jsonify, request, current_app
 from app.utils.decorator import jwt_required_with_role
-from .models import Admin, OpenRequestRestriction, Fee
+from .models import Admin, OpenRequestRestriction, Fee, AvailableDates
 from flask_jwt_extended import jwt_required
 import json
 
@@ -140,6 +141,7 @@ def get_admin_fee():
         current_app.logger.error(f"Error fetching admin fee: {e}")
         return jsonify({"error": "Failed to fetch admin fee"}), 500
 
+
 @settings_bp.route("/api/admin/settings/fee", methods=["PUT"])
 @jwt_required()
 def update_admin_fee():
@@ -155,3 +157,126 @@ def update_admin_fee():
         return jsonify({"message": "Admin fee updated successfully"}), 200
     else:
         return jsonify({"error": "Failed to update admin fee"}), 500
+
+
+# ==========================
+# DATE AVAILABILITY MANAGEMENT ENDPOINTS
+# ==========================
+
+@settings_bp.route("/api/admin/available-dates", methods=["GET"])
+@jwt_required()
+def get_available_dates():
+    """Get all date availability settings."""
+    try:
+        date_settings = AvailableDates.get_all()
+        return jsonify({"date_settings": date_settings}), 200
+    except Exception as e:
+        current_app.logger.error(f"Error fetching available dates: {e}")
+        return jsonify({"error": "Failed to fetch available dates"}), 500
+
+
+@settings_bp.route("/api/admin/available-dates/<date>", methods=["GET"])
+@jwt_required()
+def get_available_date(date):
+    """Get availability for a specific date."""
+    try:
+        date_setting = AvailableDates.get_by_date(date)
+        if date_setting:
+            return jsonify(date_setting), 200
+        else:
+            return jsonify({"message": "No specific availability setting found for this date"}), 200
+    except Exception as e:
+        current_app.logger.error(f"Error fetching available date for {date}: {e}")
+        return jsonify({"error": "Failed to fetch available date"}), 500
+
+
+@settings_bp.route("/api/admin/available-dates", methods=["POST"])
+@jwt_required()
+def create_or_update_date():
+    """Create or update availability for a specific date."""
+    data = request.get_json(silent=True) or {}
+    date = data.get("date")
+    is_available = data.get("is_available")
+    reason = data.get("reason", "")
+
+    if not date or is_available is None:
+        return jsonify({"error": "date and is_available are required"}), 400
+
+    try:
+        if AvailableDates.create_or_update(date, is_available, reason):
+            current_app.logger.info(f"Date availability updated for {date}: {is_available}")
+            return jsonify({"message": "Date availability updated successfully"}), 200
+        else:
+            return jsonify({"error": "Failed to update date availability"}), 500
+    except Exception as e:
+        current_app.logger.error(f"Error updating date availability for {date}: {e}")
+        return jsonify({"error": "Failed to update date availability"}), 500
+
+
+@settings_bp.route("/api/admin/available-dates/<date>", methods=["DELETE"])
+@jwt_required()
+def delete_available_date(date):
+    """Delete availability setting for a specific date."""
+    try:
+        if AvailableDates.delete(date):
+            current_app.logger.info(f"Date availability deleted for {date}")
+            return jsonify({"message": "Date availability deleted successfully"}), 200
+        else:
+            return jsonify({"error": "Date availability setting not found"}), 404
+    except Exception as e:
+        current_app.logger.error(f"Error deleting date availability for {date}: {e}")
+        return jsonify({"error": "Failed to delete date availability"}), 500
+
+
+@settings_bp.route("/api/admin/available-dates/bulk", methods=["POST"])
+@jwt_required()
+def bulk_update_dates():
+    """Bulk update availability for multiple dates."""
+    data = request.get_json(silent=True) or {}
+    dates = data.get("dates", [])
+    is_available = data.get("is_available")
+    reason = data.get("reason", "")
+
+    if not dates or is_available is None:
+        return jsonify({"error": "dates array and is_available are required"}), 400
+
+    if not isinstance(dates, list) or len(dates) == 0:
+        return jsonify({"error": "dates must be a non-empty array"}), 400
+
+    try:
+        if AvailableDates.bulk_update(dates, is_available, reason):
+            current_app.logger.info(f"Bulk updated {len(dates)} dates to {is_available}")
+            return jsonify({"message": f"Successfully updated {len(dates)} dates"}), 200
+        else:
+            return jsonify({"error": "Failed to bulk update dates"}), 500
+    except Exception as e:
+        current_app.logger.error(f"Error bulk updating dates: {e}")
+        return jsonify({"error": "Failed to bulk update dates"}), 500
+
+
+@settings_bp.route("/api/admin/available-dates/upcoming", methods=["GET"])
+@jwt_required()
+def get_upcoming_restrictions():
+    """Get upcoming date restrictions."""
+    try:
+        days_ahead = request.args.get('days', 30, type=int)
+        restrictions = AvailableDates.get_upcoming_restrictions(days_ahead)
+        return jsonify({"restrictions": restrictions}), 200
+    except Exception as e:
+        current_app.logger.error(f"Error fetching upcoming restrictions: {e}")
+        return jsonify({"error": "Failed to fetch upcoming restrictions"}), 500
+
+
+@settings_bp.route("/api/public/date-availability/<date>", methods=["GET"])
+def check_date_availability(date):
+    """Public endpoint to check if a specific date is available for requests."""
+    try:
+        is_available = AvailableDates.is_date_available(date)
+        return jsonify({
+            "date": date,
+            "is_available": is_available,
+            "has_specific_setting": is_available is not None
+        }), 200
+    except Exception as e:
+        current_app.logger.error(f"Error checking availability for date {date}: {e}")
+        return jsonify({"error": "Failed to check date availability"}), 500

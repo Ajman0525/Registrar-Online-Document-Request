@@ -9,8 +9,10 @@ import "./Landing.css";
 function Landing() {
   const navigate = useNavigate();
   const [showModal, setShowModal] = useState(false);
+
   const [settings, setSettings] = useState(null);
   const [announcement, setAnnouncement] = useState('');
+  const [dateInfo, setDateInfo] = useState(null);
 
   useEffect(() => {
     fetchAnnouncement();
@@ -40,10 +42,12 @@ function Landing() {
         const data = await response.json();
         if (data.allowed) {
           navigate("/user/login");
+
         } else {
-          // Use settings from response or fetch if needed
+          // Use settings and date info from response or fetch if needed
           if (data.settings) {
             setSettings(data.settings);
+            setDateInfo(data.date_info || null);
             setShowModal(true);
           } else {
             // Fallback to fetching settings if not in response
@@ -150,17 +154,51 @@ function Landing() {
         </div>
       </div>
 
+
       {showModal && (
         <div className="modal-overlay">
           <div className="modal-content">
             <h2>Request Not Allowed</h2>
             <p>Requests are not allowed at this time.</p>
+            
+            {/* Date-specific restriction info */}
+            {dateInfo && dateInfo.has_today_restriction && (
+              <div className="date-restriction-info" style={{
+                backgroundColor: dateInfo.today_available ? '#d4edda' : '#f8d7da',
+                color: dateInfo.today_available ? '#155724' : '#721c24',
+                padding: '10px',
+                borderRadius: '4px',
+                marginBottom: '10px',
+                border: `1px solid ${dateInfo.today_available ? '#c3e6cb' : '#f5c6cb'}`
+              }}>
+                <p><strong>Today's Date ({dateInfo.today}):</strong></p>
+                <p>This date is specifically marked as {dateInfo.today_available ? 'AVAILABLE' : 'UNAVAILABLE'} for requests.</p>
+              </div>
+            )}
+            
+            {/* Standard time/day restrictions */}
             {settings && (
               <div className="settings-info">
                 <p><strong>Available Hours:</strong> {formatTime(settings.start_time)} - {formatTime(settings.end_time)}</p>
                 <p><strong>Available Days:</strong> {settings.available_days.join(', ')}</p>
               </div>
             )}
+            
+            {/* Upcoming restrictions info */}
+            {dateInfo && dateInfo.upcoming_restrictions && dateInfo.upcoming_restrictions.length > 0 && (
+              <div className="upcoming-restrictions" style={{ marginTop: '15px' }}>
+                <p><strong>Upcoming Date Restrictions:</strong></p>
+                <ul style={{ maxHeight: '100px', overflowY: 'auto', paddingLeft: '20px' }}>
+                  {dateInfo.upcoming_restrictions.map((restriction, index) => (
+                    <li key={index}>
+                      {restriction.date}: {restriction.is_available ? 'Available' : 'Unavailable'} 
+                      {restriction.reason && ` (${restriction.reason})`}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            
             <button onClick={() => setShowModal(false)} className="modal-close-btn">Close</button>
           </div>
         </div>
