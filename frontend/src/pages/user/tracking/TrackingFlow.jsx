@@ -206,7 +206,7 @@ function TrackFlow() {
                 console.log("[MAYA][CHECKOUT] Checkout created:", checkout);
 
                 localStorage.setItem('pendingPayment', JSON.stringify({
-                    checkoutId: checkout.id,
+                    checkoutId: checkout.checkoutId || checkout.id,
                     trackingNumber: trackData.trackingNumber,
                     amountDue: amountToPay,
                     studentId: currentStudentId,
@@ -254,6 +254,7 @@ function TrackFlow() {
                         const markPaid = async () => {
                             try {
                                 console.log("[MAYA][BROWSER] Trying to mark paid via backend");
+                                console.log("Payment Reference Number:", payment.checkoutId);
                                 const resp = await fetch('/user/payment/mark-paid', {
                                     method: 'POST',
                                     headers: {
