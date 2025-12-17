@@ -11,7 +11,9 @@ import LoadingSpinner from "../../../components/common/LoadingSpinner";
 import ReqSearchbar from "../../../components/admin/ReqSearchbar";
 import AssignDropdown from "../../../components/admin/AssignDropdown";
 import ButtonLink from "../../../components/common/ButtonLink";
+import Toast from "../../../components/common/Toast";
 import "./Requests.css";
+
 
 // =======================================
 // STATUS MAPPING 
@@ -108,21 +110,25 @@ export default function AdminRequestsDashboard() {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
   const [statusChangeRequest, setStatusChangeRequest] = useState(null);
   const [newStatus, setNewStatus] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRequests, setTotalRequests] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
-
-
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState('all'); // 'all' or 'my'
   const [collegeCodeFilter, setCollegeCodeFilter] = useState('');
   const [requesterTypeFilter, setRequesterTypeFilter] = useState('');
   const [hasOthersDocsFilter, setHasOthersDocsFilter] = useState('');
   const [availableCollegeCodes, setAvailableCollegeCodes] = useState([]);
+  const [toast, setToast] = useState({ show: false, message: "" });
   const limit = 20;
+
+    const showToast = (message, variant = "info") => {
+      setToast({ show: true, message, variant });
+    };
+
+
 
   useEffect(() => {
     // Set initial view mode and fetch data based on role
@@ -254,14 +260,14 @@ export default function AdminRequestsDashboard() {
       });
       const data = await res.json();
       if (res.ok) {
-        alert(data.message);
+        showToast(data.message, "success");
         fetchRequests(currentPage, searchQuery, viewMode);
       } else {
-        alert(data.error);
+        showToast(data.error, "error");
       }
     } catch (err) {
       console.error("Error assigning request:", err);
-      alert("Error assigning request");
+      showToast("Error assigning request", "error");
     }
   };
 
@@ -289,7 +295,15 @@ export default function AdminRequestsDashboard() {
 
   return (
     <DndProvider backend={HTML5Backend}>
+        <Toast
+          show={toast.show}
+          message={toast.message}
+          variant={toast.variant}
+          onClose={() => setToast({ ...toast, show: false })}
+        />
       <div className="manage-requests-page">
+
+
         {/* Top title + search */}
         <h1 className="title">Manage Request</h1>
 
