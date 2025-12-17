@@ -64,21 +64,15 @@ class Payment:
             docs = cur.fetchall()
 
             total_unpaid = 0.0
-            required_unpaid = 0.0
             unpaid_doc_ids = []
-            required_unpaid_doc_ids = []
 
             for doc_id, cost, qty, req_first, paid in docs:
                 if not paid:
                     val = float(cost) * qty
                     total_unpaid += val
                     unpaid_doc_ids.append(doc_id)
-                    if req_first:
-                        required_unpaid += val
-                        required_unpaid_doc_ids.append(doc_id)
 
             expected_full = float(total_unpaid + (admin_fee if include_admin_fee else 0.0))
-            expected_required = float(required_unpaid + (admin_fee if include_admin_fee else 0.0))
 
             received_amount = float(amount) if amount is not None else expected_full
             db_student_id = order[2]
@@ -94,12 +88,10 @@ class Payment:
             docs_to_update = []
             if abs(received_amount - expected_full) < 0.01:
                 docs_to_update = unpaid_doc_ids
-            elif abs(received_amount - expected_required) < 0.01:
-                docs_to_update = required_unpaid_doc_ids
             else:
                 return {
                     'success': False,
-                    'message': f'Payment amount mismatch: expected {expected_full} (Full) or {expected_required} (Required), received {received_amount}',
+                    'message': f'Payment amount mismatch: expected {expected_full} (Full), received {received_amount}',
                     'was_already_paid': previous_payment_status
                 }
             
