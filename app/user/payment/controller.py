@@ -9,8 +9,6 @@ import hmac
 import hashlib
 from flask_jwt_extended import jwt_required
 
-# Store Maya sandbox IPs to make sure webhooks only come from these addresses
-MAYA_SANDBOX_IPS = ['13.229.160.234', '3.1.199.75']
 # Toggle to true for local testing
 MAYA_DISABLE_SECURITY = os.getenv('MAYA_DISABLE_SECURITY', 'false').lower() == 'true'
 
@@ -38,7 +36,6 @@ def send_whatsapp_payment_confirmation(phone, full_name, request_id):
     return {"status": "success"}
 
 @payment_bp.before_request
-@jwt_required()
 def verify_maya_ip():
     """Verify request comes from Maya servers"""
     if MAYA_DISABLE_SECURITY:
@@ -48,22 +45,9 @@ def verify_maya_ip():
     # Skip IP verification for non-webhook routes if needed
     if request.endpoint != 'payment.maya_webhook':
         return
-    
-    client_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
-    if ',' in client_ip:
-        client_ip = client_ip.split(',')[0].strip()
-    
-    if client_ip not in MAYA_SANDBOX_IPS:
-        try:
-            current_app.logger.warning(f"Blocked webhook from unauthorized IP: {client_ip}")
-        except RuntimeError:
-            # Fallback if app context not available
-            print(f"Blocked webhook from unauthorized IP: {client_ip}")
-        return jsonify({'error': 'Unauthorized'}), 403
 
 
 @payment_bp.route('/maya/webhook', methods=['POST'])
-@jwt_required()
 def maya_webhook():
     """Handle Maya payment webhook"""
     try:
