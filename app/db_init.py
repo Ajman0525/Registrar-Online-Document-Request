@@ -333,6 +333,7 @@ def ready_others_docs_table():
 
 
 
+
 def ready_changes_table():
    query = """
    CREATE TABLE IF NOT EXISTS changes (
@@ -348,6 +349,26 @@ def ready_changes_table():
    )
    """
    execute_query(query)
+
+def ready_available_dates_table():
+   """Create table for managing date-specific availability restrictions."""
+   query = """
+   CREATE TABLE IF NOT EXISTS available_dates (
+       id SERIAL PRIMARY KEY,
+       date DATE NOT NULL UNIQUE,
+       is_available BOOLEAN NOT NULL DEFAULT TRUE,
+       reason TEXT DEFAULT '',
+       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+   )
+   """
+   execute_query(query)
+   
+   # Create index for fast date lookups
+   index_query = """
+   CREATE INDEX IF NOT EXISTS idx_available_dates_date ON available_dates(date)
+   """
+   execute_query(index_query)
 
 
 # ==========================
@@ -558,10 +579,21 @@ def populate_independent_tables():
 
 
 
+
        # Insert default admin_fee if it doesn't exist
        cur.execute(
            "INSERT INTO fee (key, value) VALUES (%s, %s) ON CONFLICT (key) DO NOTHING",
            ('admin_fee', 10.00)
+       )
+
+       # Insert default open request restriction settings if they don't exist
+       cur.execute(
+           """
+           INSERT INTO open_request_restriction (id, start_time, end_time, available_days, announcement)
+           VALUES (1, %s, %s, %s, %s)
+           ON CONFLICT (id) DO NOTHING
+           """,
+           ('09:00:00', '17:00:00', '["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]', '')
        )
 
        # Insert sample admin data
@@ -655,6 +687,7 @@ def insert_sample_data():
 
 
 
+
 def initialize_db():
    """Initialize database and all tables."""
    create_database()
@@ -676,6 +709,7 @@ def initialize_db():
    insert_sample_data()
    ready_others_docs_table()
    ready_changes_table()
+   ready_available_dates_table()
    print("Database and tables initialized successfully.")
 
 

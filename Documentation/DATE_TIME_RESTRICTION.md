@@ -1,0 +1,5 @@
+- **Precedence Order: Time → Date → Day**
+- If outside allowed time → Block request immediately (highest priority)
+- If date is marked unavailable → Block request regardless of day
+- If date is marked available → Allow request regardless of day
+- If no date restrictions set → Use existing day/time logic only
