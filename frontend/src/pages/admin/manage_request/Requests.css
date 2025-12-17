@@ -125,6 +125,7 @@
 .box-columns-container{
     display: flex;
     height: 100%;
+    width: 100%;
     gap: 12px;
 }
 
@@ -135,6 +136,7 @@
     justify-content: flex-start;
     border-radius: 20px;
     padding: 16px;
+    width: 100%;
     box-shadow: 2px 4px 12px #00000014;
     background-color: var(--color-white);
 }
