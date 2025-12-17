@@ -435,9 +435,41 @@ CORS(
 
 ---
 
-## 📚 API Documentation
 
+## 📚 Documentation
+
+### API Documentation
 The ODR system provides a comprehensive REST API with detailed endpoints for both users and administrators. For complete API documentation, see [Documentation/API_DOCUMENTATION.md](Documentation/API_DOCUMENTATION.md).
+
+### Admin Panel Documentation
+Comprehensive documentation covering all administrative features and functionality:
+
+#### 📊 [Admin Dashboard Documentation](Documentation/01_DASHBOARD_TAB.md)
+Central command center providing statistical overview and real-time monitoring of system performance, request statistics, and administrative activities.
+
+#### 🔐 [Admin Authentication Documentation](Documentation/02_AUTHENTICATION_TAB.md)
+Security gateway managing administrator access through Google OAuth integration and comprehensive admin user management with role-based access control.
+
+#### 📋 [Manage Request Documentation](Documentation/03_MANAGE_REQUEST_TAB.md)
+Complete request lifecycle management system enabling administrators to view, assign, process, and track document requests from submission to completion.
+
+#### 📄 [Document Management Documentation](Documentation/04_DOCUMENT_MANAGEMENT_TAB.md)
+Administrative control center for defining, configuring, and maintaining document types, requirements, and the foundational data structure for document processing.
+
+#### 📝 [Logging Documentation](Documentation/05_LOGGING_TAB.md)
+Comprehensive audit and monitoring system providing complete visibility into all administrative activities, system events, and operational logging for security and compliance.
+
+#### ⚙️ [Settings Documentation](Documentation/06_SETTINGS_TAB.md)
+Central configuration management hub for system parameters, operational constraints, user access policies, and administrative configurations affecting all system users.
+
+#### 💰 [Transactions Documentation](Documentation/07_TRANSACTIONS_TAB.md)
+Comprehensive financial management and reporting center for transaction oversight, revenue tracking, payment processing, and financial analytics.
+
+#### 📖 [Admin Documentation Index](Documentation/00_ADMIN_DOCUMENTATION_INDEX.md)
+Master index and overview document providing cross-tab integration details and comprehensive guide to all administrative functionality.
+
+### Complete Documentation Overview
+All admin documentation covers the complete implementation flow from **Database Models → Backend Controllers → Frontend Interfaces**, explaining each feature in detail without code examples, focusing on plain language explanations of functionality, integration points, and system architecture.
 
 ### 🔗 Quick API Reference
 
