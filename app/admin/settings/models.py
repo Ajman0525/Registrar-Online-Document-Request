@@ -1,3 +1,4 @@
+
 from flask import g
 from app import db_pool
 import json
@@ -12,12 +13,24 @@ class OpenRequestRestriction:
             cur.execute("SELECT start_time, end_time, available_days, announcement FROM open_request_restriction WHERE id = 1")
             row = cur.fetchone()
             if row:
+                # Handle available_days properly - it's stored as JSONB but may need parsing
+                available_days = row[2]
+                if isinstance(available_days, str):
+                    try:
+                        available_days = json.loads(available_days)
+                    except (json.JSONDecodeError, TypeError):
+                        # Fallback to default if parsing fails
+                        available_days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+                
                 return {
                     "start_time": str(row[0]),
                     "end_time": str(row[1]),
-                    "available_days": row[2],
+                    "available_days": available_days,
                     "announcement": row[3] or ""
                 }
+            return None
+        except Exception as e:
+            print(f"Error fetching restriction settings: {e}")
             return None
         finally:
             cur.close()

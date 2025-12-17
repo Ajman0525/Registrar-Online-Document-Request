@@ -30,9 +30,10 @@ function Landing() {
     }
   };
 
+
   const handleRequestClick = async () => {
     try {
-      const response = await fetch('/api/check-request-allowed', {
+      const response = await fetch('/api/public/request-status', {
         credentials: 'include'
       });
       if (response.ok) {
@@ -40,12 +41,18 @@ function Landing() {
         if (data.allowed) {
           navigate("/user/login");
         } else {
-          // Fetch settings to display in modal
-          fetchSettings();
-          setShowModal(true);
+          // Use settings from response or fetch if needed
+          if (data.settings) {
+            setSettings(data.settings);
+            setShowModal(true);
+          } else {
+            // Fallback to fetching settings if not in response
+            fetchSettings();
+            setShowModal(true);
+          }
         }
       } else {
-        // Fetch settings to display in modal
+        // Fetch settings to display in modal on error
         fetchSettings();
         setShowModal(true);
       }

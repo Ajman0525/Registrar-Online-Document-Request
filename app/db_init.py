@@ -558,10 +558,21 @@ def populate_independent_tables():
 
 
 
+
        # Insert default admin_fee if it doesn't exist
        cur.execute(
            "INSERT INTO fee (key, value) VALUES (%s, %s) ON CONFLICT (key) DO NOTHING",
            ('admin_fee', 10.00)
+       )
+
+       # Insert default open request restriction settings if they don't exist
+       cur.execute(
+           """
+           INSERT INTO open_request_restriction (id, start_time, end_time, available_days, announcement)
+           VALUES (1, %s, %s, %s, %s)
+           ON CONFLICT (id) DO NOTHING
+           """,
+           ('09:00:00', '17:00:00', '["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]', '')
        )
 
        # Insert sample admin data

@@ -1,8 +1,10 @@
+
 from . import settings_bp
 from flask import jsonify, request, current_app
 from app.utils.decorator import jwt_required_with_role
 from .models import Admin, OpenRequestRestriction, Fee
 from flask_jwt_extended import jwt_required
+import json
 
 role = "admin"
 
@@ -63,18 +65,43 @@ def delete_admin(email):
     else:
         return jsonify({"error": "Admin not found"}), 404
 
+
 @settings_bp.route("/api/admin/settings", methods=["GET"])
 def get_settings():
     """Get current settings."""
     try:
         settings = OpenRequestRestriction.get_settings()
         if settings:
-            return jsonify(settings), 200
+            # Ensure all required fields are present
+            default_settings = {
+                "start_time": "09:00:00",
+                "end_time": "17:00:00",
+                "available_days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+                "announcement": ""
+            }
+            
+            # Merge with defaults to ensure all fields exist
+            complete_settings = {**default_settings, **settings}
+            return jsonify(complete_settings), 200
         else:
-            return jsonify({"start_time": "09:00", "end_time": "17:00", "available_days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], "announcement": ""}), 200
+            # Return default settings if no settings exist
+            return jsonify({
+                "start_time": "09:00:00",
+                "end_time": "17:00:00",
+                "available_days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+                "announcement": ""
+            }), 200
     except Exception as e:
         current_app.logger.error(f"Error fetching settings: {e}")
-        return jsonify({"error": "Failed to fetch settings"}), 500
+        # Return default settings on error
+        return jsonify({
+            "start_time": "09:00:00",
+            "end_time": "17:00:00",
+            "available_days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+            "announcement": "",
+            "error": "Failed to fetch settings"
+        }), 200
+
 
 @settings_bp.route("/api/admin/settings", methods=["PUT"])
 @jwt_required()
@@ -88,6 +115,13 @@ def update_settings():
 
     if not start_time or not end_time or not available_days:
         return jsonify({"error": "start_time, end_time, and available_days are required"}), 400
+
+    # Ensure available_days is a list (in case it comes as a string)
+    if isinstance(available_days, str):
+        try:
+            available_days = json.loads(available_days)
+        except (json.JSONDecodeError, TypeError):
+            return jsonify({"error": "available_days must be a valid JSON array"}), 400
 
     if OpenRequestRestriction.update_settings(start_time, end_time, available_days, announcement):
         current_app.logger.info("Settings updated")
