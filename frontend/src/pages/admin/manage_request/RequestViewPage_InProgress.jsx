@@ -1,17 +1,17 @@
 
-
-
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getCSRFToken } from "../../../utils/csrf";
+import { useAuth } from "../../../contexts/AuthContext";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
 import "./RequestViewPage.css";
 
 
 
+
 const RequestViewPage_InProgress = ({ request, onRefresh }) => {
   const navigate = useNavigate();
+  const { role } = useAuth();
   const [togglingDocuments, setTogglingDocuments] = useState({});
   const [togglingOthersDocuments, setTogglingOthersDocuments] = useState({});
   const [assigneeInfo, setAssigneeInfo] = useState(null);
@@ -651,34 +651,39 @@ const RequestViewPage_InProgress = ({ request, onRefresh }) => {
 
 
 
-        <div className="details-buttons">
-          {(() => {
-            const buttonState = getButtonState();
-            return (
-              <>
 
-                {buttonState.showRequestChanges && (
-                  <button 
-                    className={`btn-warning ${areAllDocumentsCompleted() ? 'disabled' : ''}`}
-                    disabled={areAllDocumentsCompleted()}
-                    onClick={handleRequestChanges}
-                  >
-                    Request Changes
-                  </button>
-                )}
-                {buttonState.showPaymentButton && (
-                  <button 
-                    className={buttonState.paymentButtonClassName}
-                    onClick={buttonState.paymentButtonHandler}
-                    disabled={buttonState.paymentButtonDisabled || loading}
-                  >
-                    {loading ? "Processing..." : buttonState.paymentButtonText}
-                  </button>
-                )}
-              </>
-            );
-          })()}
-        </div>
+
+        {/* Only show action buttons for non-auditors */}
+        {role !== 'auditor' && (
+          <div className="details-buttons">
+            {(() => {
+              const buttonState = getButtonState();
+              return (
+                <>
+
+                  {buttonState.showRequestChanges && (
+                    <button 
+                      className={`btn-warning ${areAllDocumentsCompleted() ? 'disabled' : ''}`}
+                      disabled={areAllDocumentsCompleted()}
+                      onClick={handleRequestChanges}
+                    >
+                      Request Changes
+                    </button>
+                  )}
+                  {buttonState.showPaymentButton && (
+                    <button 
+                      className={buttonState.paymentButtonClassName}
+                      onClick={buttonState.paymentButtonHandler}
+                      disabled={buttonState.paymentButtonDisabled || loading}
+                    >
+                      {loading ? "Processing..." : buttonState.paymentButtonText}
+                    </button>
+                  )}
+                </>
+              );
+            })()}
+          </div>
+        )}
 
       </div>
 

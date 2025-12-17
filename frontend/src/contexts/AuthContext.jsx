@@ -121,10 +121,13 @@ export const AuthProvider = ({ children }) => {
   const hasPermission = (permission) => {
     if (!role || !permission) return false;
     
+
+
+
     const rolePermissions = {
       admin: ['dashboard', 'requests', 'transactions', 'documents', 'logs', 'settings'],
       manager: ['dashboard', 'requests', 'documents', 'logs'],
-      auditor:['dashboard', 'transactions'],
+      auditor:['dashboard', 'transactions', 'view_request_details'],
       staff: ['dashboard', 'requests'],
       none: [],
     };
