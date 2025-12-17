@@ -49,10 +49,9 @@ class Tracking:
             
             docs = cur.fetchall()
             total_unpaid = sum(float(d[0]) * d[1] for d in docs if not d[3])
-            required_unpaid = sum(float(d[0]) * d[1] for d in docs if not d[3] and d[2])
 
             amount_due = total_unpaid + (admin_fee if include_admin_fee else 0.0)
-            min_amount_due = required_unpaid + (admin_fee if include_admin_fee else 0.0)
+            min_amount_due = amount_due
 
             # Map database columns to frontend keys
             tracking_data = {

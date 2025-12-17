@@ -223,7 +223,7 @@ function Transactions() {
   /* Downloads the current transactions list as a csv file */
   function downloadCSV() {
     const csvRows = [];
-    const headers = ['Request ID', 'User', 'Student ID', 'Amount', 'Payment Type', 'Payment Date'];
+    const headers = ['Request ID', 'User', 'Student ID', 'Amount', 'Payment Date'];
     /* Add the headers row to the csv row array */
     csvRows.push(headers.join(','));
 
@@ -236,7 +236,6 @@ function Transactions() {
           t.full_name,
           t.student_id,
           t.amount,
-          t.is_partial ? 'Partial' : 'Full',
           `"${formattedDate}"`
         ].join(',')
       );
@@ -515,7 +514,6 @@ function Transactions() {
                 <th className="th-user">User</th>
                 <th className="th-student-id">Student ID</th>
                 <th className="th-amount">Amount</th>
-                <th className="th-type">Type</th>
                 <th className="th-date">Date</th>
               </tr>
             </thead>
@@ -536,18 +534,6 @@ function Transactions() {
                   <td className="td-student-id">{tx.student_id}</td>
                   <td className="td-amount">
                     ₱{parseFloat(tx.amount).toFixed(2)}
-                  </td>
-                  <td className="td-type">
-                    <span style={{ 
-                      padding: '4px 8px', 
-                      borderRadius: '4px', 
-                      backgroundColor: tx.is_partial ? '#fff3cd' : '#d1e7dd', 
-                      color: tx.is_partial ? '#856404' : '#0f5132',
-                      fontSize: '0.85em',
-                      fontWeight: '500'
-                    }}>
-                      {tx.is_partial ? 'Partial' : 'Full'}
-                    </span>
                   </td>
                   <td className="td-date">
                     {formatPaymentDate(tx.payment_date) || '-'}

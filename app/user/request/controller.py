@@ -14,7 +14,7 @@ from config import SUPABASE_URL, SUPABASE_ANON_KEY
 
 
 def send_whatsapp_tracking(phone, full_name, request_id):
-    template_name = "odr_request_submitted"
+    template_name = "odr_request_submitted_v2"
     
     components = [
         {
@@ -35,6 +35,7 @@ def send_whatsapp_tracking(phone, full_name, request_id):
         return {"status": "failed", "message": "Failed to send Tracking Number via WhatsApp"}
     
     return {"status": "success"}
+
 @request_bp.route("/api/check-request-allowed", methods=["GET"])
 @request_allowed_required()
 def check_request_allowed():
@@ -43,6 +44,68 @@ def check_request_allowed():
     If this function is reached, it means the decorator allowed it.
     """
     return jsonify({"allowed": True}), 200
+
+
+@request_bp.route("/api/public/request-status", methods=["GET"])
+def get_public_request_status():
+    """
+    Public endpoint to check current request restriction status.
+    No authentication required - used by landing page to show/hide request functionality.
+    """
+    try:
+        from app.utils.decorator import is_request_allowed
+        from app.admin.settings.models import OpenRequestRestriction, AvailableDates
+        
+        # Get current restriction status
+        allowed = is_request_allowed()
+        
+        # Get current settings for display
+        settings = OpenRequestRestriction.get_settings()
+        
+        # Get today's date restriction info
+        import datetime
+        today = datetime.datetime.now().strftime('%Y-%m-%d')
+        today_availability = AvailableDates.is_date_available(today)
+        
+        # Get upcoming date restrictions
+        upcoming_restrictions = AvailableDates.get_upcoming_restrictions(30)
+        
+        # Return enhanced status with date information
+        return jsonify({
+            "allowed": allowed,
+            "settings": settings or {
+                "start_time": "09:00:00",
+                "end_time": "17:00:00", 
+                "available_days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+                "announcement": ""
+            },
+            "date_info": {
+                "today": today,
+                "today_available": today_availability,
+                "has_today_restriction": today_availability is not None,
+                "upcoming_restrictions": upcoming_restrictions
+            }
+        }), 200
+        
+    except Exception as e:
+        print(f"Error in /api/public/request-status: {e}")
+        # Return default settings if there's an error
+        return jsonify({
+            "allowed": True,  # Default to allowing requests if there's an error
+            "settings": {
+                "start_time": "09:00:00",
+                "end_time": "17:00:00",
+                "available_days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+                "announcement": ""
+            },
+            "date_info": {
+                "today": datetime.datetime.now().strftime('%Y-%m-%d'),
+                "today_available": None,
+                "has_today_restriction": False,
+                "upcoming_restrictions": []
+            },
+            "error": "Could not fetch current restriction status"
+        }), 200
 
 @request_bp.route("/api/request", methods=["GET"])
 @jwt_required()

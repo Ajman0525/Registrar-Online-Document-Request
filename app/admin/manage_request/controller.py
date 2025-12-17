@@ -70,6 +70,7 @@ def get_requests():
         return jsonify({"error": str(e)}), 500
 
 
+
 @manage_request_bp.route("/api/admin/requests/<request_id>/status", methods=["PUT"])
 @jwt_required()
 def update_request_status(request_id):
@@ -80,6 +81,9 @@ def update_request_status(request_id):
         data = request.get_json()
         new_status = data.get("status")
         payment_status = data.get("payment_status")
+        payment_reference = data.get("payment_reference", "")
+        payment_type = data.get("payment_type")
+        
         if not new_status:
             return jsonify({"error": "Status is required"}), 400
 
@@ -97,7 +101,7 @@ def update_request_status(request_id):
         phone = request_data.get("contact_number")
         full_name = request_data.get("full_name")
 
-        success = ManageRequestModel.update_request_status(request_id, new_status, admin_id, payment_status)
+        success = ManageRequestModel.update_request_status(request_id, new_status, admin_id, payment_status, payment_reference, payment_type)
         
         if success:
             if phone:
@@ -263,11 +267,12 @@ def get_unassigned_requests():
         """
         params = []
         
+
         # Add search condition
         if search:
-            query += " AND (r.full_name ILIKE %s OR r.request_id ILIKE %s)"
+            query += " AND (r.full_name ILIKE %s OR r.student_id ILIKE %s OR r.email ILIKE %s OR r.contact_number ILIKE %s OR r.request_id ILIKE %s)"
             search_param = f"%{search}%"
-            params.extend([search_param, search_param])
+            params.extend([search_param] * 5)
         
         # Add college_code filter
         if college_code and college_code != 'all':
@@ -360,9 +365,11 @@ def get_admins_progress():
     try:
         conn = g.db_conn
         cur = conn.cursor()
-        # Single query to get all admins' progress and max_requests
+
+        # Single query to get all admins' progress, max_requests, and profile pictures
         cur.execute("""
             SELECT a.email,
+                   a.profile_picture,
                    COALESCE(asp.value::int, 10) as max_requests,
                    COALESCE(prog.total, 0) as total,
                    COALESCE(prog.completed, 0) as completed
@@ -378,12 +385,14 @@ def get_admins_progress():
             ) prog ON a.email = prog.admin_id
             ORDER BY a.email
         """)
+
         admins_progress = [
             {
                 "admin_id": row[0],
-                "completed": row[3],
-                "total": row[2],
-                "max_requests": row[1]
+                "profile_picture": row[1],
+                "completed": row[4],
+                "total": row[3],
+                "max_requests": row[2]
             }
             for row in cur.fetchall()
         ]

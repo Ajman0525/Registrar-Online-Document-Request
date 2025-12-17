@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import './Settings.css';
 import { getCSRFToken } from "../../utils/csrf";
@@ -27,17 +28,34 @@ const Settings = () => {
     const [initialAdminFee, setInitialAdminFee] = useState('');
     const [announcement, setAnnouncement] = useState('');
     const [initialAnnouncement, setInitialAnnouncement] = useState('');
+
     const [initialAvailability, setInitialAvailability] = useState({
         startHour: '9', startMinute: '00', startAmpm: 'AM',
         endHour: '5', endMinute: '00', endAmpm: 'PM',
         availableDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
     });
 
+    // Date management state
+    const [dateSettings, setDateSettings] = useState([]);
+    const [selectedDate, setSelectedDate] = useState('');
+    const [dateAvailability, setDateAvailability] = useState(true);
+    const [dateReason, setDateReason] = useState('');
+    const [showDateManagement, setShowDateManagement] = useState(false);
+    const [bulkDateAction, setBulkDateAction] = useState('available'); // 'available' or 'unavailable'
+    const [bulkDateStart, setBulkDateStart] = useState('');
+    const [bulkDateEnd, setBulkDateEnd] = useState('');
+    const [bulkDateReason, setBulkDateReason] = useState('');
+    const [loadingDateOps, setLoadingDateOps] = useState(false);
+
+
     useEffect(() => {
         fetchAdmins();
         fetchSettings();
         fetchAdminFee();
-    }, []);
+        if (showDateManagement) {
+            fetchDateSettings();
+        }
+    }, [showDateManagement]);
 
     const fetchAdmins = async () => {
         try {
@@ -276,12 +294,141 @@ const Settings = () => {
         }
     };
 
+
     const toggleDay = (day) => {
         setAvailableDays(prev =>
             prev.includes(day)
                 ? prev.filter(d => d !== day)
                 : [...prev, day]
         );
+    };
+
+    // Date management functions
+    const fetchDateSettings = async () => {
+        try {
+            const response = await fetch('/api/admin/available-dates', {
+                credentials: 'include'
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setDateSettings(data.date_settings || []);
+            } else {
+                setError('Failed to fetch date settings');
+            }
+        } catch (err) {
+            setError('Error fetching date settings');
+        }
+    };
+
+    const updateDateAvailability = async (e) => {
+        e.preventDefault();
+        if (!selectedDate) return;
+
+        setLoadingDateOps(true);
+        setError('');
+
+        try {
+            const response = await fetch('/api/admin/available-dates', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    "X-CSRF-TOKEN": getCSRFToken(),
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    date: selectedDate,
+                    is_available: dateAvailability,
+                    reason: dateReason
+                }),
+            });
+
+            if (response.ok) {
+                setSelectedDate('');
+                setDateReason('');
+                fetchDateSettings();
+            } else {
+                const errorData = await response.json();
+                setError(errorData.error || 'Failed to update date availability');
+            }
+        } catch (err) {
+            setError('Error updating date availability');
+        } finally {
+            setLoadingDateOps(false);
+        }
+    };
+
+    const deleteDateAvailability = async (dateStr) => {
+        if (!window.confirm(`Remove availability setting for ${dateStr}?`)) return;
+
+        setLoadingDateOps(true);
+        setError('');
+
+        try {
+            const response = await fetch(`/api/admin/available-dates/${dateStr}`, {
+                method: 'DELETE',
+                headers: {
+                    "X-CSRF-TOKEN": getCSRFToken(),
+                },
+                credentials: 'include',
+            });
+
+            if (response.ok) {
+                fetchDateSettings();
+            } else {
+                setError('Failed to delete date availability');
+            }
+        } catch (err) {
+            setError('Error deleting date availability');
+        } finally {
+            setLoadingDateOps(false);
+        }
+    };
+
+    const bulkUpdateDates = async (e) => {
+        e.preventDefault();
+        if (!bulkDateStart || !bulkDateEnd) return;
+
+        setLoadingDateOps(true);
+        setError('');
+
+        // Generate date range
+        const dates = [];
+        const startDate = new Date(bulkDateStart);
+        const endDate = new Date(bulkDateEnd);
+        
+        for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+            dates.push(d.toISOString().split('T')[0]);
+        }
+
+        try {
+            const response = await fetch('/api/admin/available-dates/bulk', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    "X-CSRF-TOKEN": getCSRFToken(),
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    dates: dates,
+                    is_available: bulkDateAction === 'available',
+                    reason: bulkDateReason
+                }),
+            });
+
+            if (response.ok) {
+                setBulkDateStart('');
+                setBulkDateEnd('');
+                setBulkDateReason('');
+                fetchDateSettings();
+            } else {
+                const errorData = await response.json();
+                setError(errorData.error || 'Failed to bulk update dates');
+            }
+        } catch (err) {
+            setError('Error bulk updating dates');
+        } finally {
+            setLoadingDateOps(false);
+        }
     };
 
     const isAvailabilityChanged = 
@@ -455,6 +602,7 @@ const Settings = () => {
                 </form>
             </div>
 
+
             <div className="availability-settings" style={{ marginTop: '20px' }}>
                 <h2>Admin Fee Configuration</h2>
                 <p>Set the administrative fee applied to requests.</p>
@@ -482,6 +630,172 @@ const Settings = () => {
                         </button>
                     </div>
                 </form>
+            </div>
+
+            <div className="availability-settings" style={{ marginTop: '20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <div>
+                        <h2>Date Availability Management</h2>
+                        <p>Configure specific dates as available or unavailable for requests. Date restrictions override time/day restrictions.</p>
+                    </div>
+                    <button 
+                        onClick={() => setShowDateManagement(!showDateManagement)} 
+                        className="add-admin-btn"
+                        style={{ backgroundColor: showDateManagement ? '#dc3545' : '#007bff' }}
+                    >
+                        {showDateManagement ? 'Hide Date Management' : 'Manage Dates'}
+                    </button>
+                </div>
+
+                {showDateManagement && (
+                    <div className="date-management-section">
+                        {/* Single Date Update */}
+                        <div className="date-management-card">
+                            <h3>Update Single Date</h3>
+                            <form onSubmit={updateDateAvailability}>
+                                <div style={{ display: 'flex', gap: '15px', alignItems: 'end', flexWrap: 'wrap' }}>
+                                    <div className="form-group" style={{ marginBottom: 0 }}>
+                                        <label>Date:</label>
+                                        <input 
+                                            type="date" 
+                                            value={selectedDate} 
+                                            onChange={(e) => setSelectedDate(e.target.value)}
+                                            style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+                                        />
+                                    </div>
+                                    <div className="form-group" style={{ marginBottom: 0 }}>
+                                        <label>Status:</label>
+                                        <select 
+                                            value={dateAvailability ? 'available' : 'unavailable'} 
+                                            onChange={(e) => setDateAvailability(e.target.value === 'available')}
+                                            style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+                                        >
+                                            <option value="available">Available</option>
+                                            <option value="unavailable">Unavailable</option>
+                                        </select>
+                                    </div>
+                                    <div className="form-group" style={{ marginBottom: 0, flex: 1 }}>
+                                        <label>Reason (optional):</label>
+                                        <input 
+                                            type="text" 
+                                            value={dateReason} 
+                                            onChange={(e) => setDateReason(e.target.value)}
+                                            placeholder="e.g., Holiday, Maintenance"
+                                            style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc', width: '100%' }}
+                                        />
+                                    </div>
+                                    <button 
+                                        type="submit" 
+                                        className="update-settings-btn"
+                                        disabled={!selectedDate || loadingDateOps}
+                                    >
+                                        {loadingDateOps ? 'Updating...' : 'Update Date'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        {/* Bulk Date Update */}
+                        <div className="date-management-card">
+                            <h3>Bulk Update Date Range</h3>
+                            <form onSubmit={bulkUpdateDates}>
+                                <div style={{ display: 'flex', gap: '15px', alignItems: 'end', flexWrap: 'wrap' }}>
+                                    <div className="form-group" style={{ marginBottom: 0 }}>
+                                        <label>Start Date:</label>
+                                        <input 
+                                            type="date" 
+                                            value={bulkDateStart} 
+                                            onChange={(e) => setBulkDateStart(e.target.value)}
+                                            style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+                                        />
+                                    </div>
+                                    <div className="form-group" style={{ marginBottom: 0 }}>
+                                        <label>End Date:</label>
+                                        <input 
+                                            type="date" 
+                                            value={bulkDateEnd} 
+                                            onChange={(e) => setBulkDateEnd(e.target.value)}
+                                            style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+                                        />
+                                    </div>
+                                    <div className="form-group" style={{ marginBottom: 0 }}>
+                                        <label>Status:</label>
+                                        <select 
+                                            value={bulkDateAction} 
+                                            onChange={(e) => setBulkDateAction(e.target.value)}
+                                            style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+                                        >
+                                            <option value="available">Available</option>
+                                            <option value="unavailable">Unavailable</option>
+                                        </select>
+                                    </div>
+                                    <div className="form-group" style={{ marginBottom: 0, flex: 1 }}>
+                                        <label>Reason (optional):</label>
+                                        <input 
+                                            type="text" 
+                                            value={bulkDateReason} 
+                                            onChange={(e) => setBulkDateReason(e.target.value)}
+                                            placeholder="e.g., Holiday period"
+                                            style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc', width: '100%' }}
+                                        />
+                                    </div>
+                                    <button 
+                                        type="submit" 
+                                        className="update-settings-btn"
+                                        disabled={!bulkDateStart || !bulkDateEnd || loadingDateOps}
+                                    >
+                                        {loadingDateOps ? 'Updating...' : 'Bulk Update'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        {/* Current Date Settings */}
+                        <div className="date-management-card">
+                            <h3>Current Date Settings</h3>
+                            {dateSettings.length === 0 ? (
+                                <p>No specific date settings configured.</p>
+                            ) : (
+                                <div className="date-settings-table-wrapper">
+                                    <table className="date-settings-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Status</th>
+                                                <th>Reason</th>
+                                                <th>Last Updated</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {dateSettings.map((setting) => (
+                                                <tr key={setting.id}>
+                                                    <td>{setting.date}</td>
+                                                    <td>
+                                                        <span className={`status-badge ${setting.is_available ? 'available' : 'unavailable'}`}>
+                                                            {setting.is_available ? 'Available' : 'Unavailable'}
+                                                        </span>
+                                                    </td>
+                                                    <td>{setting.reason || '-'}</td>
+                                                    <td>{setting.updated_at}</td>
+                                                    <td>
+                                                        <button
+                                                            className="delete-btn"
+                                                            onClick={() => deleteDateAvailability(setting.date)}
+                                                            disabled={loadingDateOps}
+                                                        >
+                                                            Remove
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
             </div>
 
             {roleChangeRequest && (
