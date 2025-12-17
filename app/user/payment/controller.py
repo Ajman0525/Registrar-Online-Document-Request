@@ -9,8 +9,6 @@ import hmac
 import hashlib
 from flask_jwt_extended import jwt_required
 
-# Store Maya sandbox IPs to make sure webhooks only come from these addresses
-MAYA_SANDBOX_IPS = ['13.229.160.234', '3.1.199.75']
 # Toggle to true for local testing
 MAYA_DISABLE_SECURITY = os.getenv('MAYA_DISABLE_SECURITY', 'false').lower() == 'true'
 
@@ -38,7 +36,6 @@ def send_whatsapp_payment_confirmation(phone, full_name, request_id):
     return {"status": "success"}
 
 @payment_bp.before_request
-@jwt_required()
 def verify_maya_ip():
     """Verify request comes from Maya servers"""
     if MAYA_DISABLE_SECURITY:
@@ -48,22 +45,9 @@ def verify_maya_ip():
     # Skip IP verification for non-webhook routes if needed
     if request.endpoint != 'payment.maya_webhook':
         return
-    
-    client_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
-    if ',' in client_ip:
-        client_ip = client_ip.split(',')[0].strip()
-    
-    if client_ip not in MAYA_SANDBOX_IPS:
-        try:
-            current_app.logger.warning(f"Blocked webhook from unauthorized IP: {client_ip}")
-        except RuntimeError:
-            # Fallback if app context not available
-            print(f"Blocked webhook from unauthorized IP: {client_ip}")
-        return jsonify({'error': 'Unauthorized'}), 403
 
 
 @payment_bp.route('/maya/webhook', methods=['POST'])
-@jwt_required()
 def maya_webhook():
     """Handle Maya payment webhook"""
     try:
@@ -78,7 +62,7 @@ def maya_webhook():
         current_app.logger.info(f"[MAYA] Payload received: {payload}")
         
         status = payload.get('status')
-        tracking_number = payload.get('trackingNumber')
+        tracking_number = payload.get('requestReferenceNumber') or payload.get('trackingNumber') or payload.get('metadata', {}).get('trackingNumber')
         payment_id = payload.get('id')
         amount = payload.get('totalAmount', {}).get('value')
         student_id = payload.get('studentId') or payload.get('metadata', {}).get('studentId')
@@ -86,7 +70,7 @@ def maya_webhook():
         
         if status == 'PAYMENT_SUCCESS' and tracking_number:
             # Process payment
-            result = Payment.process_webhook_payment(tracking_number, amount, student_id)
+            result = Payment.process_webhook_payment(tracking_number, amount, student_id, payment_id)
             
             if result['success']:
                 current_app.logger.info(
@@ -131,20 +115,21 @@ def verify_signature(payload_bytes, signature):
 
 
 @payment_bp.route('/mark-paid', methods=['POST'])
-@jwt_required()
 def mark_paid_manual():
     try:
         data = request.get_json() or {}
         tracking_number = data.get('trackingNumber') or data.get('tracking_number')
         amount = data.get('amount')
         student_id = data.get('studentId')
+        payment_id = data.get('paymentReference') or data.get('payment_id')
 
-        current_app.logger.info(f"[MAYA][BROWSER] Mark-paid request: tracking={tracking_number}, amount={amount}, student_id={student_id}")
+        print(f"Payment Reference Number: {payment_id}")
+        current_app.logger.info(f"[MAYA][BROWSER] Mark-paid request: tracking={tracking_number}, amount={amount}, student_id={student_id}, payment_id={payment_id}")
 
         if not tracking_number or student_id is None:
             return jsonify({'success': False, 'message': 'trackingNumber and studentId are required'}), 400
 
-        result = Payment.process_webhook_payment(tracking_number, amount, student_id)
+        result = Payment.process_webhook_payment(tracking_number, amount, student_id, payment_id)
         
         if result.get("success"):
             if result.get("was_already_paid"):
@@ -185,7 +170,6 @@ def mark_paid_manual():
 
 
 @payment_bp.route('/mark-document-paid', methods=['POST'])
-@jwt_required()
 def mark_document_paid():
     try:
         data = request.get_json() or {}

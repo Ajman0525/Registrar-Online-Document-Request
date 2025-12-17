@@ -25,10 +25,10 @@ def create_app(test_config=None):
     load_dotenv()
 
     #in production
-    app = Flask(__name__, instance_relative_config=True, static_folder="static/react",  template_folder="static/react" )
+    #app = Flask(__name__, instance_relative_config=True, static_folder="static/react",  template_folder="static/react" )
   
     #in development
-    #app = Flask(__name__, static_folder="../frontend/build/static", template_folder="../frontend/")
+    app = Flask(__name__, static_folder="../frontend/build/static", template_folder="../frontend/build")
     
     
     # =====================
@@ -150,7 +150,13 @@ def create_app(test_config=None):
 
         if path and os.path.exists(os.path.join(app.static_folder, path)):
             return send_from_directory(app.static_folder, path)
-        return send_from_directory(app.template_folder, "index.html")
+        
+        # Serve root files (favicon, manifest, etc.) from template folder (build root)
+        abs_template_folder = os.path.join(app.root_path, app.template_folder)
+        if path and os.path.exists(os.path.join(abs_template_folder, path)):
+            return send_from_directory(abs_template_folder, path)
+            
+        return send_from_directory(abs_template_folder, "index.html")
 
     from .admin.authentication.controller import init_oauth
     init_oauth(app)
@@ -165,5 +171,4 @@ def create_app(test_config=None):
 
     register_error_handlers(app)
 
-    init_oauth(app)
     return app
