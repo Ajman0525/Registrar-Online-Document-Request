@@ -23,6 +23,7 @@ function TrackFlow() {
     const [searchParams] = useSearchParams();
 
     const MAYA_PUBLIC_KEY = 'pk-Z0OSzLvIcOI2UIvDhdTGVVfRSSeiGStnceqwUE7n0Ah';
+    const WEBSITE_LINK = "https://registrar-odr.onrender.com";
 
     // the 'data' parameter will hold the response from the tracking API
     const handleTrackIdSubmit = (data, skipOtp = false) => {
@@ -188,9 +189,9 @@ function TrackFlow() {
                         },
                         // URLs where Maya will redirect after payment
                         redirectUrl: {
-                            success: `${window.location.origin}/user/track?payment=success&tracking=${trackData.trackingNumber}`,
-                            failure: `${window.location.origin}/user/track?payment=failure&tracking=${trackData.trackingNumber}`,
-                            cancel: `${window.location.origin}/user/track?payment=cancel&tracking=${trackData.trackingNumber}`
+                            success: `${WEBSITE_LINK}/user/track?payment=success&tracking=${trackData.trackingNumber}`,
+                            failure: `${WEBSITE_LINK}/user/track?payment=failure&tracking=${trackData.trackingNumber}`,
+                            cancel: `${WEBSITE_LINK}/user/track?payment=cancel&tracking=${trackData.trackingNumber}`
                         }
                     })
                 });
