@@ -1,80 +1,106 @@
+
 from . import authentication_admin_bp
-from flask import jsonify, request, current_app
+from flask import jsonify, request, current_app, redirect, url_for, session
 from flask_jwt_extended import create_access_token, set_access_cookies, jwt_required, get_jwt_identity
 from authlib.integrations.flask_client import OAuth
-from config import GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
+from config import GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, FRONTEND_URL
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 from ..settings.models import Admin
+import secrets
 
+# =========================
+# OAuth setup (will be initialized in create_app)
+# =========================
+oauth = None
+google = None
 
-oauth = OAuth(current_app)
-google = oauth.register(
-   name='google',
-   client_id=GOOGLE_CLIENT_ID,
-   client_secret=GOOGLE_CLIENT_SECRET,
-   authorize_url='https://accounts.google.com/o/oauth2/auth',
-   authorize_params=None,
-   access_token_url='https://accounts.google.com/o/oauth2/token',
-   access_token_params=None,
-   refresh_token_url=None,
-   redirect_uri='http://localhost:8000/api/admin/google/callback',
-   client_kwargs={'scope': 'openid email profile'},
+def init_oauth(app):
+    global oauth, google
+    oauth = OAuth(app)
+    google = oauth.register(
+    name='google',
+    client_id=GOOGLE_CLIENT_ID,
+    client_secret=GOOGLE_CLIENT_SECRET,
+    server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
+    client_kwargs={
+        "scope": "openid email profile"
+    },
+    claims_options={
+        "iss": {
+            "values": [
+                "https://accounts.google.com",
+                "accounts.google.com"
+            ]
+        }
+    }
 )
 
 
-@authentication_admin_bp.route("/api/admin/google-login", methods=["POST"])
-def google_login():
-   """Verify Google ID token and create JWT."""
-   data = request.get_json(silent=True) or {}
-   token = data.get("token")
+# =========================
+# OAuth Redirect Flow
+# =========================
+@authentication_admin_bp.route("/api/admin/google/initiate")
+def initiate_google_login():
+    """Redirect user to Google OAuth 2.0"""
+    state = secrets.token_urlsafe(32)
+    nonce = secrets.token_urlsafe(32)
+    session['oauth_state'] = state
+    session['oauth_nonce'] = nonce
+    redirect_uri = url_for("authentication_admin.google_oauth_callback", _external=True)
+    return google.authorize_redirect(
+        redirect_uri,
+        state=state,
+        nonce=nonce  # send nonce to Google
+    )
 
 
-   if not token:
-       return jsonify({"error": "ID token required"}), 400
+@authentication_admin_bp.route("/api/admin/google/callback")
+def google_oauth_callback():
+    try:
+        state = request.args.get("state")
+        stored_state = session.pop("oauth_state", None)
+        nonce = session.pop("oauth_nonce", None)  # retrieve nonce
+
+        if not state or state != stored_state:
+            frontend_error_url = f"{FRONTEND_URL}/admin/login?error=invalid_state"
+            return redirect(frontend_error_url)
+
+        token = google.authorize_access_token()
+        user_info = google.parse_id_token(token, nonce=nonce)  # pass nonce here
 
 
-   try:
-       # Verify the ID token
-       CLIENT_ID = GOOGLE_CLIENT_ID
-       id_info = id_token.verify_oauth2_token(token, google_requests.Request(), CLIENT_ID)
+    
+        profile_picture = user_info['picture']
+        email = user_info.get("email")
+        hd = user_info.get("hd")
 
-       email = id_info['email']
+        if not email or hd != "g.msuiit.edu.ph":
+            frontend_error_url = f"{FRONTEND_URL}/admin/login?error=unauthorized_domain"
+            return redirect(frontend_error_url)
 
-    # Check if email is authorized (e.g., domain check)
-       if not email.endswith('@g.msuiit.edu.ph'):
-           return jsonify({"error": "Unauthorized email, Please use MyIIT Account"}), 403
+        admin = Admin.get_by_email(email)
+        if not admin:
+            Admin.add(email, "none")
+            frontend_waiting_url = f"{FRONTEND_URL}/admin/waiting"
+            return redirect(frontend_waiting_url)
+        if admin["role"] == "none":
+            frontend_waiting_url = f"{FRONTEND_URL}/admin/waiting"
+            return redirect(frontend_waiting_url)
 
-       # Check if email is in admins table
-       admin = Admin.get_by_email(email)
-       if not admin:
-           # Add email with role "none"
-           Admin.add(email, "none")
-           current_app.logger.info(f"New admin {email} added with role 'none'")
-           return jsonify({"message": "Account created. Waiting for admin approval.", "redirect": "/admin/waiting"}), 201
+        access_token = create_access_token(
+            identity=email,
+            additional_claims={"role": admin["role"]}
+        )
+        frontend_success_url = f"{FRONTEND_URL}/admin/login?oauth=success"
+        response = redirect(frontend_success_url)
+        set_access_cookies(response, access_token)
+        return response
 
-       # Check if role is "none"
-       if admin['role'] == "none":
-           current_app.logger.info(f"Admin {email} has role 'none', redirecting to waiting page.")
-           return jsonify({"message": "Account pending approval.", "redirect": "/admin/waiting"}), 200
-
-       # Create JWT with role from database
-       access_token = create_access_token(
-           identity=email,
-           additional_claims={"role": admin['role']}
-       )
-
-       response = jsonify({"message": "Admin login successful", "role": admin['role']})
-       set_access_cookies(response, access_token)
-
-       current_app.logger.info(f"Admin {email} logged in via Google with role {admin['role']}.")
-       return response, 200
-
-
-   except ValueError as e:
-       current_app.logger.warning(f"Invalid ID token: {e}")
-       return jsonify({"error": "Invalid token"}), 401
-
+    except Exception as e:
+        current_app.logger.error(f"Google OAuth callback error: {e}")
+        frontend_error_url = f"{FRONTEND_URL}/admin/login?error=oauth_error"
+        return redirect(frontend_error_url)
 
 @authentication_admin_bp.route("/api/admin/admins", methods=["GET"])
 @jwt_required()
@@ -144,6 +170,7 @@ def get_current_user():
         current_email = get_jwt_identity()
         admin = Admin.get_by_email(current_email)
         
+
         if admin:
             return jsonify({
                 "email": admin['email'],
@@ -169,3 +196,4 @@ def logout():
     except Exception as e:
         current_app.logger.error(f"Error during logout: {e}")
         return jsonify({"error": "Logout failed"}), 500
+

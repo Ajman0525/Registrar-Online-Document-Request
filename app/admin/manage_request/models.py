@@ -25,10 +25,11 @@ class ManageRequestModel:
                 where_clauses.append("ra.admin_id = %s")
                 params.append(admin_id)
 
+
             if search:
-                where_clauses.append("(r.full_name ILIKE %s OR r.student_id ILIKE %s OR r.email ILIKE %s OR r.contact_number ILIKE %s)")
+                where_clauses.append("(r.full_name ILIKE %s OR r.student_id ILIKE %s OR r.email ILIKE %s OR r.contact_number ILIKE %s OR r.request_id ILIKE %s)")
                 search_param = f"%{search}%"
-                params.extend([search_param] * 4)
+                params.extend([search_param] * 5)
 
             if college_code:
                 where_clauses.append("r.college_code = %s")
@@ -56,12 +57,17 @@ class ManageRequestModel:
             else:
                 join_assignments = ""
 
+
+
             cur.execute(f"""
                 SELECT r.request_id, r.student_id, r.full_name, r.contact_number, r.email,
                        r.preferred_contact, r.status, r.requested_at,r.remarks,
-                       r.total_cost, r.payment_status
+                       r.total_cost, r.payment_status,
+                       ra.admin_id as assigned_admin_id,
+                       a.profile_picture as assigned_admin_profile_picture
                 FROM requests r
-                {join_assignments}
+                LEFT JOIN request_assignments ra ON r.request_id = ra.request_id
+                LEFT JOIN admins a ON ra.admin_id = a.email
                 {where_sql}
                 ORDER BY r.requested_at DESC
                 LIMIT %s OFFSET %s
@@ -145,6 +151,7 @@ class ManageRequestModel:
                     "timestamp": ts.strftime("%Y-%m-%d %H:%M:%S") if ts else None
                 }
 
+
             # --------------------------
             # 8. Assemble results
             # --------------------------
@@ -163,6 +170,8 @@ class ManageRequestModel:
                     "remarks": r[8],
                     "total_cost": r[9],
                     "payment_status": r[10],
+                    "assigned_admin_id": r[11],
+                    "assigned_admin_profile_picture": r[12],
                     "documents": docs_map[rid],
                     "requirements": reqs_map[rid],
                     "uploaded_files": files_map[rid],
@@ -173,8 +182,9 @@ class ManageRequestModel:
         finally:
             cur.close()
 
+
     @staticmethod
-    def update_request_status(request_id, new_status, admin_id=None, payment_status=None):
+    def update_request_status(request_id, new_status, admin_id=None, payment_status=None, payment_reference="", payment_type=None):
         """Update the status of a specific request and log the change."""
         conn = g.db_conn
         cur = conn.cursor()
@@ -182,9 +192,9 @@ class ManageRequestModel:
             if payment_status is not None:
                 cur.execute("""
                     UPDATE requests
-                    SET status = %s, payment_status = %s
+                    SET status = %s, payment_status = %s, payment_reference = %s, payment_type = %s
                     WHERE request_id = %s
-                """, (new_status, payment_status, request_id))
+                """, (new_status, payment_status, payment_reference, payment_type, request_id))
             else:
                 cur.execute("""
                     UPDATE requests
@@ -641,8 +651,9 @@ class ManageRequestModel:
         conn = g.db_conn
         cur = conn.cursor()
         try:
+
             cur.execute("""
-                SELECT request_id, student_id, full_name, contact_number, email, preferred_contact, status, requested_at, remarks, total_cost, payment_status, college_code, order_type, payment_date
+                SELECT request_id, student_id, full_name, contact_number, email, preferred_contact, status, requested_at, remarks, total_cost, payment_status, college_code, order_type, payment_date, payment_reference, payment_type
                 FROM requests
                 WHERE request_id = %s
             """, (request_id,))
@@ -650,6 +661,7 @@ class ManageRequestModel:
 
             if not req:
                 return None
+
 
             request_data = {
                 "request_id": req[0],
@@ -665,7 +677,9 @@ class ManageRequestModel:
                 "payment_status": req[10],
                 "college_code": req[11],
                 "pickup_option": req[12],
-                "payment_date":req[13]
+                "payment_date": req[13],
+                "payment_reference": req[14],
+                "payment_type": req[15]
             }
 
             # Check if request exists in auth_letters table to determine requester type
