@@ -199,7 +199,11 @@ def ready_request_documents_table():
    """
    execute_query(alter_query)
 
-
+    # Add is_done column if it doesn't exist
+   alter_query = """
+   ALTER TABLE request_documents ADD COLUMN IF NOT EXISTS payment_date TIMESTAMP
+   """
+   execute_query(alter_query)
 
 
 #mapping table between requests and requirements with uploaded file paths

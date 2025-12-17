@@ -1,15 +1,19 @@
 
 // Updated React component structure based on provided UI layout
 
+
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getCSRFToken } from "../../../utils/csrf";
+import { useAuth } from "../../../contexts/AuthContext";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
 import "./RequestViewPage.css";
 
 
+
 const RequestViewPage_Pending = ({ request, onRefresh }) => {
   const navigate = useNavigate();
+  const { role } = useAuth();
 
 
 
@@ -417,10 +421,15 @@ const RequestViewPage_Pending = ({ request, onRefresh }) => {
 
 
 
-        <div className="details-buttons">
-          <button className="btn-warning" onClick={handleRequestChanges}>Request Changes</button>
-          <button className="btn-primary" onClick={handleProcessDocument}>Process Document</button>
-        </div>
+
+
+        {/* Only show action buttons for non-auditors */}
+        {role !== 'auditor' && (
+          <div className="details-buttons">
+            <button className="btn-warning" onClick={handleRequestChanges}>Request Changes</button>
+            <button className="btn-primary" onClick={handleProcessDocument}>Process Document</button>
+          </div>
+        )}
 
       </div>
 
