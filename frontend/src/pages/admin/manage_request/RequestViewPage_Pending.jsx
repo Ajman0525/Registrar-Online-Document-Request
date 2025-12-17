@@ -213,8 +213,10 @@ const RequestViewPage_Pending = ({ request, onRefresh, showToast }) => {
   return (
     <div className="request-view-wrapper">
       <div className="left-panel-card">
-        <h1 className="request-username">{request.full_name}</h1>
-        <p className="student-id">{request.student_id || "N/A"}</p>
+        <div className="student-info-section">
+          <h1 className="request-username">{request.full_name}</h1>
+          <p className="student-id">{request.student_id || "N/A"}</p>
+        </div> 
 
         {/* Selected Documents */}
         <section className="section-block">
@@ -224,13 +226,10 @@ const RequestViewPage_Pending = ({ request, onRefresh, showToast }) => {
             request.documents.map((doc, index) => (
               <div key={index} className="document-row">
                 <span>{doc.name} {doc.quantity}x</span>
-                {doc.requires_payment_first && (
-                  <span className="payment-required-badge">Payment Required</span>
-                )}
               </div>
             ))
           ) : (
-            <p>No selected documents</p>
+            <p className="null-text">No selected documents</p>
           )}
         </section>
 
@@ -241,10 +240,10 @@ const RequestViewPage_Pending = ({ request, onRefresh, showToast }) => {
           <hr />
           {request.uploaded_files?.length ? (
             request.uploaded_files.map((file, index) => (
-              <p key={index}>{file.requirement}</p>
+              <p key={index} className="uploaded-file-name">{file.requirement}</p>
             ))
           ) : (
-            <p>No uploaded files</p>
+            <p className="null-text">No uploaded files</p>
           )}
         </section>
 
@@ -268,7 +267,7 @@ const RequestViewPage_Pending = ({ request, onRefresh, showToast }) => {
               </div>
             ))
           ) : (
-            <p>No other documents</p>
+            <p className="null-text">No other documents</p>
           )}
         </section>
 
@@ -335,7 +334,7 @@ const RequestViewPage_Pending = ({ request, onRefresh, showToast }) => {
         <section className="section-block">
           <h2>Preferred Contact</h2>
           <hr />
-          <p>{request.preferred_contact}</p>
+          <p className="preferred-contact">{request.preferred_contact}</p>
         </section>
 
         {/* Price */}
@@ -390,20 +389,20 @@ const RequestViewPage_Pending = ({ request, onRefresh, showToast }) => {
             <span>{request.requested_at}</span>
           </div>
 
-          <div className="details-item">
+          {/* <div className="details-item">
             <span>Payment Date</span>
             <span>{request.payment_date || "Unconfirmed"} </span>
-          </div>
+          </div> */}
 
           {/* <div className="details-item">
             <span>Payment Option</span>
             <span>{request.payment_option || "Unconfirmed"}</span>
           </div> */}
 
-          <div className="details-item">
+          {/* <div className="details-item">
             <span>Pickup Option</span>
             <span>{request.pickup_option || "Unconfirmed"}</span>
-          </div>
+          </div> */}
 
           {/* <div className="details-item">
             <span>Date Released</span>
@@ -492,6 +491,7 @@ const RequestViewPage_Pending = ({ request, onRefresh, showToast }) => {
               {admins.map((admin) => {
                 const isAtCapacity = admin.total >= admin.max_requests;
                 return (
+
                   <div
                     key={admin.admin_id}
                     className={`p-3 border rounded cursor-pointer ${
@@ -503,8 +503,28 @@ const RequestViewPage_Pending = ({ request, onRefresh, showToast }) => {
                     }`}
                     onClick={() => !isAtCapacity && setSelectedAdmin(admin.admin_id)}
                   >
-                    <div className="flex justify-between items-center">
-                      <div>
+                    <div className="flex items-center space-x-3">
+                      <div className="flex-shrink-0">
+                        {admin.profile_picture ? (
+                          <img 
+                            src={admin.profile_picture} 
+                            alt={`${admin.admin_id} profile`}
+                            className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                              e.target.nextSibling.style.display = 'flex';
+                            }}
+                          />
+                        ) : null}
+                        <div 
+                          className={`w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 font-medium ${
+                            admin.profile_picture ? 'hidden' : 'flex'
+                          }`}
+                        >
+                          {admin.admin_id.charAt(0).toUpperCase()}
+                        </div>
+                      </div>
+                      <div className="flex-grow">
                         <div className="font-medium">{admin.admin_id}</div>
                         <div className="text-sm text-gray-600">
                           {admin.completed} / {admin.total} requests completed

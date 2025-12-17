@@ -29,6 +29,9 @@ const RequestViewPage_InProgress = ({ request, onRefresh, showToast }) => {
   const [wrongRequirements, setWrongRequirements] = useState([]);
   const [remarks, setRemarks] = useState("");
   const [submittingChanges, setSubmittingChanges] = useState(false);
+
+  // Payment state
+  const [paymentReference, setPaymentReference] = useState("");
   
   // Changes state
   const [changes, setChanges] = useState([]);
@@ -176,8 +179,10 @@ const RequestViewPage_InProgress = ({ request, onRefresh, showToast }) => {
     };
   };
 
+
+
   // Handle status updates
-  const updateRequestStatus = async (newStatus, paymentStatus = null) => {
+  const updateRequestStatus = async (newStatus, paymentStatus = null, paymentReferenceValue = "", paymentTypeValue = null) => {
     try {
       setLoading(true);
       
@@ -191,7 +196,9 @@ const RequestViewPage_InProgress = ({ request, onRefresh, showToast }) => {
         credentials: 'include',
         body: JSON.stringify({
           status: newStatus,
-          payment_status: paymentStatus
+          payment_status: paymentStatus,
+          payment_reference: paymentReferenceValue,
+          payment_type: paymentTypeValue !== null ? paymentTypeValue : (paymentStatus ? "IN-PERSON" : null)
         })
       });
 
@@ -200,6 +207,7 @@ const RequestViewPage_InProgress = ({ request, onRefresh, showToast }) => {
         setShowDocReadyModal(false);
         setShowPaymentModal(false);
         setShowReleaseModal(false);
+        setPaymentReference(""); // Clear payment reference after successful update
       } else {
         const errorData = await response.json();
         showToast('Failed to update status: ' + (errorData.error || 'Unknown error'), "error");
@@ -216,8 +224,15 @@ const RequestViewPage_InProgress = ({ request, onRefresh, showToast }) => {
     updateRequestStatus("DOC-READY");
   };
 
+
+
+
   const handlePaymentConfirm = () => {
-    updateRequestStatus("DOC-READY", true);
+    if (!paymentReference.trim()) {
+      alert('Please enter a reference number before confirming payment.');
+      return;
+    }
+    updateRequestStatus("DOC-READY", true, paymentReference, "IN-PERSON");
   };
 
 
@@ -377,8 +392,10 @@ const RequestViewPage_InProgress = ({ request, onRefresh, showToast }) => {
     <div className="request-view-wrapper">
       {/* LEFT PANEL */}
       <div className="left-panel-card">
-        <h1 className="request-username">{request.full_name}</h1>
-        <p className="student-id">{request.student_id || "N/A"}</p>
+        <div className="student-info-section">
+          <h1 className="request-username">{request.full_name}</h1>
+          <p className="student-id">{request.student_id || "N/A"}</p>
+        </div>
 
 
 
@@ -400,9 +417,6 @@ const RequestViewPage_InProgress = ({ request, onRefresh, showToast }) => {
                   <span className={`document-name ${doc.is_done ? 'completed' : ''}`}>
                     {doc.name} {doc.quantity}x
                   </span>
-                  {doc.requires_payment_first && (
-                    <span className="payment-required-badge">Payment Required</span>
-                  )}
                 </div>
                 {togglingDocuments[doc.doc_id] && (
                   <div className="loading-spinner-small">⟳</div>
@@ -423,12 +437,12 @@ const RequestViewPage_InProgress = ({ request, onRefresh, showToast }) => {
           {request.uploaded_files?.length ? (
             request.uploaded_files.map((file, index) => (
               <div key={index} className="uploaded-file-row">
-                <span>{file.requirement || file.requirement_name}</span>
+                <span className="uploaded-file-name">{file.requirement || file.requirement_name}</span>
                 <button className="view-btn" onClick={() => window.open(file.file_path || file.url)}>View</button>
               </div>
             ))
           ) : (
-            <p>No uploaded files</p>
+            <p className="null-text">No uploaded files</p>
           )}
         </section>
 
@@ -465,7 +479,7 @@ const RequestViewPage_InProgress = ({ request, onRefresh, showToast }) => {
               </div>
             ))
           ) : (
-            <p>No other documents</p>
+            <p className="null-text">No other documents</p>
           )}
         </section>
 
@@ -508,7 +522,7 @@ const RequestViewPage_InProgress = ({ request, onRefresh, showToast }) => {
               ))}
             </div>
           ) : (
-            <p>No changes recorded for this request</p>
+            <p className="null-text">No changes recorded for this request</p>
           )}
         </section>
 
@@ -533,7 +547,7 @@ const RequestViewPage_InProgress = ({ request, onRefresh, showToast }) => {
         <section className="section-block">
           <h2>Preferred Contact</h2>
           <hr />
-          <p>{request.preferred_contact}</p>
+          <p className="null-text">{request.preferred_contact}</p>
         </section>
 
         {/* Price */}
@@ -553,10 +567,16 @@ const RequestViewPage_InProgress = ({ request, onRefresh, showToast }) => {
 
         <div className="details-grid">
 
+
           <div className="details-item">
             <span>Assignee</span>
             <span className="assignee-tag">
-              <div className="avatar-icon">👤</div> {assigneeInfo?.admin_id.split("@")[0] || "Loading..."}
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 font-medium">
+                  {assigneeInfo?.admin_id ? assigneeInfo.admin_id.charAt(0).toUpperCase() : '?'}
+                </div>
+                <span>{assigneeInfo?.admin_id?.split("@")[0] || "Loading..."}</span>
+              </div>
             </span>
           </div>
 
@@ -586,9 +606,20 @@ const RequestViewPage_InProgress = ({ request, onRefresh, showToast }) => {
             </span>
           </div>
 
+
           <div className="details-item">
             <span>Payment Date</span>
             <span>{request.payment_date || "Unconfirmed"}</span>
+          </div>
+
+          <div className="details-item">
+            <span>Payment Reference</span>
+            <span>{request.payment_reference || "N/A"}</span>
+          </div>
+
+          <div className="details-item">
+            <span>Payment Type</span>
+            <span>{request.payment_type || "N/A"}</span>
           </div>
 
           {/* <div className="details-item">
@@ -682,17 +713,35 @@ const RequestViewPage_InProgress = ({ request, onRefresh, showToast }) => {
         </div>
       )}
 
+
       {/* Payment Confirmation Modal */}
       {showPaymentModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg max-w-md w-full">
-            <h2 className="text-2xl font-bold mb-4">Confirm Payment</h2>
+            <h2 className="text-2xl font-bold mb-4">Payment Confirmation</h2>
             <p className="mb-4 text-gray-600">
-              Are you sure you want to mark this request as paid? This will set the payment status to true.
+              This is only for request paid in the cashier. Provide the reference number below.
             </p>
+            
+
+            <div className="mb-4">
+              <label className="block font-semibold mb-2">Reference Number: <span className="text-red-500">*</span></label>
+              <input 
+                type="text"
+                value={paymentReference}
+                onChange={(e) => setPaymentReference(e.target.value)}
+                className="w-full border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter reference number"
+                required
+              />
+            </div>
+            
             <div className="mt-6 flex justify-end space-x-2">
               <button
-                onClick={() => setShowPaymentModal(false)}
+                onClick={() => {
+                  setShowPaymentModal(false);
+                  setPaymentReference(""); // Clear reference when canceling
+                }}
                 className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
                 disabled={loading}
               >
